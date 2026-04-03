@@ -1,10 +1,11 @@
 import { useState } from "react";
 import {
+  Image,
   Linking,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   useColorScheme,
   View,
 } from "react-native";
@@ -47,45 +48,51 @@ export default function Login() {
     normaltext: {
       marginTop: 25,
       fontSize: 10,
-      color: colorScheme === "dark" ? "white" : "black",
+      color: colorScheme === "dark" ? "lightgray" : "gray",
     },
     urltext: {
       marginLeft: 5,
       marginTop: 25,
+      marginBottom: 100,
       fontSize: 10,
       color: "blue",
       textDecorationLine: "underline",
     },
-    buttonText: {
-      fontSize: 24,
-      color: colorScheme === "dark" ? "white" : "black",
-    },
-    button: {
-      backgroundColor: "green",
-      padding: 12,
-      borderRadius: 10,
-      marginTop: 10,
-    },
     sidebyside: {
       flexDirection: "row",
       justifyContent: "space-between",
+    },
+    logo: {
+      margin: 40,
+      width: 85,
+      height: 85,
+      borderRadius: 100,
     },
   });
 
   return (
     <View style={styles.container}>
       <View style={styles.subcontainer}>
+        <Image
+          source={require("../assets/images/icon.png")}
+          style={styles.logo}
+        />
         <Text style={styles.subtitle}>Login to your Account</Text>
         <TextInput placeholder="Username" style={styles.input} />
         <TextInput placeholder="Password" style={styles.input} />
         {errorMessage && <Text>{errorMessage}</Text>}
         <View style={styles.sidebyside}>
           <Text style={styles.normaltext}>Don't have an account?</Text>
-          <TouchableOpacity
+          <Pressable
             onPress={() => Linking.openURL("https://google.com")}
+            style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
           >
-            <Text style={styles.urltext}>Sign up</Text>
-          </TouchableOpacity>
+            {({ pressed }) => (
+              <Text style={[styles.urltext, pressed && { color: "purple" }]}>
+                Sign up
+              </Text>
+            )}
+          </Pressable>
         </View>
       </View>
     </View>
