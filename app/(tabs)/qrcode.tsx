@@ -6,6 +6,7 @@ import ScreenBrightness from 'react-native-screen-brightness';
 
 export default function QRCodeScreen() {
   let colorScheme = useColorScheme();
+  // Have not yet tested if changing brightness worked or not
   const originalBrightness = useRef<number | null>(null);
 
   useFocusEffect(
@@ -43,8 +44,8 @@ export default function QRCodeScreen() {
             color: colorScheme === "dark" ? "white" : "black",
             fontSize: 25,
           }}
-        >
-          Show your QR (This is a placeholder, we need to figure out how to generate the QR code for each user)
+        > {/* (This is a placeholder, we need to figure out how to generate the QR code for each user) */}
+          Show your QR
         </Text>
       </View>
       <View
