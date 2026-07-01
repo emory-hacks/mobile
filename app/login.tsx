@@ -6,9 +6,12 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   useColorScheme,
   View,
 } from "react-native";
+
+import { addCookie } from "@/utils/login-cookie";
 
 export default function Login() {
   const [email, setEmail] = useState<string>("");
@@ -68,6 +71,13 @@ export default function Login() {
       height: 85,
       borderRadius: 100,
     },
+    button: {
+      marginTop: 10,
+      borderRadius: 9,
+      borderColor: "blue",
+      backgroundColor: "#007AFF",
+      padding: 15,
+    },
   });
 
   return (
@@ -80,7 +90,22 @@ export default function Login() {
         <Text style={styles.subtitle}>Login to your Account</Text>
         <TextInput placeholder="Username" style={styles.input} />
         <TextInput placeholder="Password" style={styles.input} />
-        {errorMessage && <Text>{errorMessage}</Text>}
+        {errorMessage && <Text style={{ color: "red" }}>{errorMessage}</Text>}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={async () => {
+            try {
+              setErrorMessage(null);
+              await addCookie();
+            } catch (error) {
+              setErrorMessage(
+                error instanceof Error ? error.message : "Failed to set cookie"
+              );
+            }
+          }}
+        >
+          <Text style={{ color: "white", textAlign: "center" }}>Login</Text>
+        </TouchableOpacity>
         <View style={styles.sidebyside}>
           <Text style={styles.normaltext}>Don't have an account?</Text>
           <Pressable
