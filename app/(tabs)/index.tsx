@@ -7,8 +7,6 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Link } from "expo-router";
 
-import Login from "../login";
-
 function HomeScreen() {
   return (
     <ParallaxScrollView
@@ -90,8 +88,7 @@ function HomeScreen() {
 }
 
 export default function App() {
-  const isLoggedIn: boolean = false;
-  return isLoggedIn ? <HomeScreen></HomeScreen> : <Login></Login>;
+  return <HomeScreen></HomeScreen>;
 }
 
 const styles = StyleSheet.create({

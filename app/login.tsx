@@ -1,19 +1,23 @@
 import { useState } from "react";
 import {
-  Image,
-  Linking,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useColorScheme,
-  View,
+    Image,
+    Linking,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useColorScheme,
+    View,
 } from "react-native";
 
 import { addCookie } from "@/utils/login-cookie";
 
-export default function Login() {
+type LoginProps = {
+  onLoginSuccess?: () => void;
+};
+
+export default function Login({ onLoginSuccess }: LoginProps) {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -97,9 +101,10 @@ export default function Login() {
             try {
               setErrorMessage(null);
               await addCookie();
+              onLoginSuccess?.();
             } catch (error) {
               setErrorMessage(
-                error instanceof Error ? error.message : "Failed to set cookie"
+                error instanceof Error ? error.message : "Failed to set cookie",
               );
             }
           }}

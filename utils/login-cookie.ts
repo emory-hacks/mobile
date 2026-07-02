@@ -1,1 +1,1 @@
-export { addCookie } from "./login-cookie.native";
+export { addCookie, hasValidToken } from "./login-cookie.native";
