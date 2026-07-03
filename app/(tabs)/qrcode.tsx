@@ -38,14 +38,14 @@ export default function QRCodeScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <View style={{ alignItems: "center", padding: 45 }}>
+      <View style={{ alignItems: "center", paddingTop: 100, paddingBottom: 20 }}>
         <Text
           style={{
             color: colorScheme === "dark" ? "white" : "black",
             fontSize: 25,
           }}
         > {/* (This is a placeholder, we need to figure out how to generate the QR code for each user) */}
-          Show your QR
+          Your Unique QR Code
         </Text>
       </View>
       <View
