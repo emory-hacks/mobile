@@ -1,8 +1,21 @@
 import ScheduleItem from "@/components/schedule-related/schedule-item";
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import MaskedView from "@react-native-masked-view/masked-view";
+import { LinearGradient } from "expo-linear-gradient";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Fake Schedule Items, will receive API calls
 const scheduleItems = [
+  {
+    time: "09:48",
+    title: "For Tokyo",
+    startTime: "00:00",
+    endTime: "00:00",
+    location: "Platform 27",
+    body: "This train has left the station. Please take the next one! JK! This box represents a past event, controlled by a flag called isActive",
+    isActive: false,
+    isPassed: true,
+  },
   {
     time: "09:55",
     title: "For Nagoya",
@@ -74,7 +87,37 @@ function formatDate(date: Date) {
   });
 }
 
+function GradientDateText({
+  date,
+  direction,
+}: {
+  date: string;
+  direction: "yesterday" | "tomorrow";
+}) {
+  const isYesterday = direction === "yesterday";
+
+  return (
+    <MaskedView
+      maskElement={
+        <Text style={[styles.dateText, styles.gradientDateMask]}>{date}</Text>
+      }
+    >
+      <LinearGradient
+        colors={["#d8d8d8", "#8f8f8f"]}
+        start={{ x: isYesterday ? 0 : 1, y: 0.5 }}
+        end={{ x: isYesterday ? 1 : 0, y: 0.5 }}
+      >
+        <Text style={[styles.dateText, styles.transparentDateText]}>
+          {date}
+        </Text>
+      </LinearGradient>
+    </MaskedView>
+  );
+}
+
 export default function ScheduleScreen() {
+  const insets = useSafeAreaInsets();
+
   // Grab today's, yesterday, and tomorrow's date.
   const today = new Date();
   const visibleDates = [
@@ -84,44 +127,56 @@ export default function ScheduleScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <View style={[styles.screen, { paddingTop: insets.top + 16 }]}>
       <View style={styles.dateRow}>
         {visibleDates.map((date, index) => {
           const isToday = index === 1;
 
+          if (isToday) {
+            return (
+              <Text key={date} style={[styles.dateText, styles.todayText]}>
+                {date}
+              </Text>
+            );
+          }
+
           return (
-            <Text
+            <GradientDateText
               key={date}
-              style={[styles.dateText, isToday && styles.todayText]}
-            >
-              {date}
-            </Text>
+              date={date}
+              direction={index === 0 ? "yesterday" : "tomorrow"}
+            />
           );
         })}
       </View>
 
       <View style={styles.panel}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {scheduleItems.map((item, index) => (
-            <ScheduleItem
-              key={`${item.time}-${index}`}
-              time={item.time}
-              title={item.title}
-              startTime={item.startTime}
-              endTime={item.endTime}
-              location={item.location}
-              body={item.body}
-              isActive={item.isActive}
-              isPassed={item.isPassed}
-            />
-          ))}
-        </ScrollView>
+        <View style={styles.panelContent}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: insets.bottom + 32 },
+            ]}
+            showsVerticalScrollIndicator={false}
+          >
+            {scheduleItems.map((item, index) => (
+              <ScheduleItem
+                key={`${item.time}-${index}`}
+                time={item.time}
+                title={item.title}
+                startTime={item.startTime}
+                endTime={item.endTime}
+                location={item.location}
+                body={item.body}
+                isActive={item.isActive}
+                isPassed={item.isPassed}
+              />
+            ))}
+          </ScrollView>
+        </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -132,31 +187,39 @@ const styles = StyleSheet.create({
   },
   panel: {
     flex: 1,
-    marginTop: 0,
-    marginHorizontal: 8,
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    overflow: "hidden",
+    marginTop: 24,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.12,
     shadowRadius: 10,
     elevation: 8,
   },
-  dateRow: { // by Leonardo
-    height: 80,
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "center",
-    gap: 36,
+  panelContent: {
     backgroundColor: "#fff",
-    marginBottom: 32,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    flex: 1,
+    overflow: "hidden",
+  },
+  dateRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "center",
+    gap: 32,
+    backgroundColor: "#fff",
+    paddingTop: 12,
+    paddingBottom: 4,
   },
   dateText: {
     color: "#9d9d9d",
     fontSize: 21,
     fontWeight: "700",
+  },
+  gradientDateMask: {
+    backgroundColor: "transparent",
+  },
+  transparentDateText: {
+    opacity: 0,
   },
   todayText: {
     color: "#000",
@@ -166,6 +229,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 32,
+    paddingTop: 8,
   },
 });
