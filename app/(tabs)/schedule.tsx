@@ -144,13 +144,14 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 8,
   },
-  dateRow: {
-    height: 128,
+  dateRow: { // by Leonardo
+    height: 80,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-end",
     justifyContent: "center",
     gap: 36,
     backgroundColor: "#fff",
+    marginBottom: 32,
   },
   dateText: {
     color: "#9d9d9d",
