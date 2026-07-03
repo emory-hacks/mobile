@@ -1,12 +1,11 @@
 import { useFocusEffect } from "@react-navigation/native";
+import * as Brightness from "expo-brightness";
 import { useCallback, useRef } from "react";
 import { Text, View, useColorScheme } from "react-native";
 import QRCode from "react-native-qrcode-svg";
-import ScreenBrightness from 'react-native-screen-brightness';
 
 export default function QRCodeScreen() {
   let colorScheme = useColorScheme();
-  // Have not yet tested if changing brightness worked or not
   const originalBrightness = useRef<number | null>(null);
 
   useFocusEffect(
@@ -14,10 +13,11 @@ export default function QRCodeScreen() {
       let active = true;
       (async () => {
         if (active) {
-          originalBrightness.current = 0.5;
           try {
-            await ScreenBrightness.setBrightness(1);
-          } catch (e) {
+            // Save the original brightness & set to MAX
+            originalBrightness.current = await Brightness.getBrightnessAsync();
+            await Brightness.setBrightnessAsync(1);
+          } catch {
             // brightness control not available
           }
         }
@@ -27,8 +27,8 @@ export default function QRCodeScreen() {
         active = false;
         if (originalBrightness.current !== null) {
           try {
-            ScreenBrightness.setBrightness(originalBrightness.current);
-          } catch (e) {
+            Brightness.setBrightnessAsync(originalBrightness.current);
+          } catch {
             // brightness control not available
           }
         }
