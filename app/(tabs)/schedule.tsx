@@ -1,8 +1,20 @@
 import ScheduleItem from "@/components/schedule-related/schedule-item";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Animated,
+  Easing,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const ESTIMATED_SCHEDULE_ITEM_HEIGHT = 112;
+const FOCUSED_EVENT_TOP_OFFSET = ESTIMATED_SCHEDULE_ITEM_HEIGHT;
 
 // Fake Schedule Items, will receive API calls
 const scheduleItems = [
@@ -87,6 +99,64 @@ function formatDate(date: Date) {
   });
 }
 
+function isBeforeToday(date: Date) {
+  const today = new Date();
+  const todayStart = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
+  const dateStart = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  );
+
+  return dateStart < todayStart;
+}
+
+function isSameDay(firstDate: Date, secondDate: Date) {
+  return (
+    firstDate.getFullYear() === secondDate.getFullYear() &&
+    firstDate.getMonth() === secondDate.getMonth() &&
+    firstDate.getDate() === secondDate.getDate()
+  );
+}
+
+function toMinutes(time: string) {
+  const [hours = "0", minutes = "0"] = time.split(":");
+
+  return Number(hours) * 60 + Number(minutes);
+}
+
+function getScheduleFocusIndex(items: typeof scheduleItems, selectedDate: Date) {
+  if (items.length === 0) {
+    return -1;
+  }
+
+  const today = new Date();
+  const activeIndex = items.findIndex((item) => item.isActive);
+
+  if (isBeforeToday(selectedDate)) {
+    return -1;
+  }
+
+  if (!isSameDay(selectedDate, today)) {
+    return activeIndex === 0 ? activeIndex : -1;
+  }
+
+  if (activeIndex !== -1) {
+    return activeIndex;
+  }
+
+  const currentMinutes = today.getHours() * 60 + today.getMinutes();
+  const upcomingIndex = items.findIndex(
+    (item) => toMinutes(item.startTime) >= currentMinutes
+  );
+
+  return upcomingIndex === -1 ? items.length - 1 : upcomingIndex;
+}
+
 function GradientDateText({
   date,
   direction,
@@ -117,35 +187,109 @@ function GradientDateText({
 
 export default function ScheduleScreen() {
   const insets = useSafeAreaInsets();
+  const scrollViewRef = useRef<ScrollView>(null);
+  const transitionAnim = useRef(new Animated.Value(1)).current;
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
 
-  // Grab today's, yesterday, and tomorrow's date.
-  const today = new Date();
+  // Grab the selected day, plus the previous and next dates around it.
   const visibleDates = [
-    formatDate(addDays(today, -1)),
-    formatDate(today),
-    formatDate(addDays(today, 1)),
+    addDays(selectedDate, -1),
+    selectedDate,
+    addDays(selectedDate, 1),
   ];
+  const isSelectedDatePast = isBeforeToday(selectedDate);
+  const focusIndex = useMemo(
+    () => getScheduleFocusIndex(scheduleItems, selectedDate),
+    [selectedDate]
+  );
+
+  useEffect(() => {
+    transitionAnim.setValue(0);
+    Animated.timing(transitionAnim, {
+      toValue: 1,
+      duration: 240,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+
+    const scrollTimer = setTimeout(() => {
+      const shouldShowPreviousItem =
+        isSameDay(selectedDate, new Date()) && focusIndex > 0;
+      const focusedOffset = shouldShowPreviousItem
+        ? FOCUSED_EVENT_TOP_OFFSET
+        : 0;
+
+      scrollViewRef.current?.scrollTo({
+        y: Math.max(
+          0,
+          focusIndex * ESTIMATED_SCHEDULE_ITEM_HEIGHT - focusedOffset
+        ),
+        animated: true,
+      });
+    }, 150);
+
+    return () => clearTimeout(scrollTimer);
+  }, [focusIndex, selectedDate, transitionAnim]);
+
+  const transitionStyle = {
+    opacity: transitionAnim,
+    transform: [
+      {
+        translateY: transitionAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [10, 0],
+        }),
+      },
+    ],
+  };
+
+  const selectedDateStyle = {
+    opacity: transitionAnim,
+    transform: [
+      {
+        scale: transitionAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.96, 1],
+        }),
+      },
+    ],
+  };
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + 16 }]}>
       <View style={styles.dateRow}>
         {visibleDates.map((date, index) => {
-          const isToday = index === 1;
+          const formattedDate = formatDate(date);
+          const isSelected = index === 1;
 
-          if (isToday) {
+          if (isSelected) {
             return (
-              <Text key={date} style={[styles.dateText, styles.todayText]}>
-                {date}
-              </Text>
+              <Animated.Text
+                key={formattedDate}
+                style={[
+                  styles.dateText,
+                  styles.selectedDateText,
+                  selectedDateStyle,
+                ]}
+              >
+                {formattedDate}
+              </Animated.Text>
             );
           }
 
           return (
-            <GradientDateText
-              key={date}
-              date={date}
-              direction={index === 0 ? "yesterday" : "tomorrow"}
-            />
+            <Pressable
+              key={formattedDate}
+              accessibilityRole="button"
+              accessibilityLabel={`View schedule for ${formattedDate}`}
+              hitSlop={12}
+              onPress={() => setSelectedDate(date)}
+            >
+              <GradientDateText
+                date={formattedDate}
+                direction={index === 0 ? "yesterday" : "tomorrow"}
+              />
+            </Pressable>
           );
         })}
       </View>
@@ -153,26 +297,40 @@ export default function ScheduleScreen() {
       <View style={styles.panel}>
         <View style={styles.panelContent}>
           <ScrollView
+            ref={scrollViewRef}
             style={styles.scrollView}
             contentContainerStyle={[
               styles.scrollContent,
-              { paddingBottom: insets.bottom + 32 },
+              {
+                paddingBottom: insets.bottom + 32,
+                paddingTop: focusIndex === 0 ? 0 : 8,
+              },
             ]}
             showsVerticalScrollIndicator={false}
           >
-            {scheduleItems.map((item, index) => (
-              <ScheduleItem
-                key={`${item.time}-${index}`}
-                time={item.time}
-                title={item.title}
-                startTime={item.startTime}
-                endTime={item.endTime}
-                location={item.location}
-                body={item.body}
-                isActive={item.isActive}
-                isPassed={item.isPassed}
-              />
-            ))}
+            <Animated.View style={transitionStyle}>
+              {scheduleItems.map((item, index) => {
+                const isFocusedItem = index === focusIndex;
+                const isActive = !isSelectedDatePast && isFocusedItem;
+                const isPassed =
+                  isSelectedDatePast ||
+                  (focusIndex !== -1 && !isActive && index < focusIndex);
+
+                return (
+                  <ScheduleItem
+                    key={`${item.time}-${index}`}
+                    time={item.time}
+                    title={item.title}
+                    startTime={item.startTime}
+                    endTime={item.endTime}
+                    location={item.location}
+                    body={item.body}
+                    isActive={isActive}
+                    isPassed={isPassed}
+                  />
+                );
+              })}
+            </Animated.View>
           </ScrollView>
         </View>
       </View>
@@ -221,7 +379,7 @@ const styles = StyleSheet.create({
   transparentDateText: {
     opacity: 0,
   },
-  todayText: {
+  selectedDateText: {
     color: "#000",
     fontSize: 31,
   },

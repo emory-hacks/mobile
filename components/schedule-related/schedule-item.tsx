@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   passedContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#fbfbfb',
   },
   leftCol: {
     width: 58,
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   passedDivider: {
-    backgroundColor: '#d0d0d0',
+    backgroundColor: '#dedede',
   },
   rightCol: {
     flex: 1,
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   passedTitlePill: {
-    backgroundColor: '#e9e9e9',
+    backgroundColor: '#eeeeee',
   },
   titleText: {
     color: '#fff',
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   passedTitleText: {
-    color: '#fdfdfd',
+    color: '#6f6f6f',
   },
   timeRange: {
     alignItems: 'flex-end',
@@ -202,12 +202,12 @@ const styles = StyleSheet.create({
     color: '#d7d7d7',
   },
   passedText: {
-    color: '#e2e2e2',
+    color: '#8a8a8a',
   },
   passedMetaText: {
-    color: '#e2e2e2',
+    color: '#9a9a9a',
   },
   passedBodyText: {
-    color: '#bcbcbc',
+    color: '#777',
   },
 });
