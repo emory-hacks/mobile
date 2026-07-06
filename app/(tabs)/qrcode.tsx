@@ -1,4 +1,4 @@
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect } from "expo-router";
 import * as Brightness from "expo-brightness";
 import { useCallback, useRef } from "react";
 import { Text, View, useColorScheme } from "react-native";
