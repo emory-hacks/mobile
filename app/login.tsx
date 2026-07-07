@@ -100,7 +100,7 @@ export default function Login() {
           <Text style={{ color: "white", textAlign: "center" }}>Login</Text>
         </TouchableOpacity>
         <View style={styles.sidebyside}>
-          <Text style={styles.normaltext}>Don't have an account?</Text>
+          <Text style={styles.normaltext}>Don&apos;t have an account?</Text>
           <Pressable
             onPress={() => Linking.openURL("https://google.com")}
             style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
