@@ -79,6 +79,44 @@ export default function Login() {
     },
   });
 
+  const computer_ip_address = ""; //for development, DON'T PUSH YOUR IP ADDRESS TO GITHUB!
+
+  const handleLogin = async () => {
+    setErrorMessage(null);
+
+    if (!email || !password) {
+      setErrorMessage("Please enter email and password");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://${computer_ip_address}:8080/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: "token=put_jwt_place_hodler_here",
+          },
+          body: JSON.stringify({ email, password }),
+        },
+      );
+
+      if (!response.ok) {
+        setErrorMessage("Login failed");
+        return;
+      }
+
+      const data = await response.json();
+      const jwt = data.jwt;
+      console.log(jwt);
+
+      router.replace("/(tabs)");
+    } catch {
+      setErrorMessage("Unable to connect to server");
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.subcontainer}>
@@ -87,16 +125,23 @@ export default function Login() {
           style={styles.logo}
         />
         <Text style={styles.subtitle}>Login to your Account</Text>
-        <TextInput placeholder="Username" style={styles.input} />
-        <TextInput placeholder="Password" style={styles.input} />
+        <TextInput
+          placeholder="Email"
+          style={styles.input}
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
+        <TextInput
+          placeholder="Password"
+          style={styles.input}
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
         {errorMessage && <Text style={{ color: "red" }}>{errorMessage}</Text>}
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => {
-            setErrorMessage(null);
-            router.replace("/(tabs)");
-          }}
-        >
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={{ color: "white", textAlign: "center" }}>Login</Text>
         </TouchableOpacity>
         <View style={styles.sidebyside}>
