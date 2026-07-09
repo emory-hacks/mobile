@@ -13,7 +13,7 @@ import {
 } from "react-native";
 
 export default function Login() {
-  const [email, setEmail] = useState<string>("");
+  const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   let colorScheme = useColorScheme();
@@ -84,8 +84,8 @@ export default function Login() {
   const handleLogin = async () => {
     setErrorMessage(null);
 
-    if (!email || !password) {
-      setErrorMessage("Please enter email and password");
+    if (!username || !password) {
+      setErrorMessage("Please enter username and password");
       return;
     }
 
@@ -98,7 +98,7 @@ export default function Login() {
             "Content-Type": "application/json",
             Cookie: "token=put_jwt_place_hodler_here",
           },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ username, password }),
         },
       );
 
@@ -126,10 +126,10 @@ export default function Login() {
         />
         <Text style={styles.subtitle}>Login to your Account</Text>
         <TextInput
-          placeholder="Email"
+          placeholder="Username"
           style={styles.input}
-          value={email}
-          onChangeText={setEmail}
+          value={username}
+          onChangeText={setUsername}
           autoCapitalize="none"
           keyboardType="email-address"
         />
