@@ -11,8 +11,9 @@ import {
   View,
 } from "react-native";
 
-export default function Login() {
+export default function Signup() {
   const [username, setUsername] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   let colorScheme = useColorScheme();
@@ -80,37 +81,32 @@ export default function Login() {
 
   const computer_ip_address = ""; //for development, DON'T PUSH YOUR IP ADDRESS TO GITHUB!
 
-  const handleLogin = async () => {
+  const handleSignup = async () => {
     setErrorMessage(null);
 
-    if (!username || !password) {
-      setErrorMessage("Please enter username and password");
+    if (!username || !email || !password) {
+      setErrorMessage("Please enter username, email, and password");
       return;
     }
 
     try {
       const response = await fetch(
-        `http://${computer_ip_address}:8080/auth/login`,
+        `http://${computer_ip_address}:8080/api/users/register`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Cookie: "token=put_jwt_place_hodler_here",
           },
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify({ username, email, password }),
         },
       );
 
       if (!response.ok) {
-        setErrorMessage("Login failed");
+        setErrorMessage("Signup failed");
         return;
       }
 
-      const data = await response.json();
-      const jwt = data.jwt;
-      console.log(jwt);
-
-      router.replace("/(tabs)");
+      router.replace("/login");
     } catch {
       setErrorMessage("Unable to connect to server");
     }
@@ -123,12 +119,19 @@ export default function Login() {
           source={require("../assets/images/icon.png")}
           style={styles.logo}
         />
-        <Text style={styles.subtitle}>Login to your Account</Text>
+        <Text style={styles.subtitle}>Create your Account</Text>
         <TextInput
           placeholder="Username"
           style={styles.input}
           value={username}
           onChangeText={setUsername}
+          autoCapitalize="none"
+        />
+        <TextInput
+          placeholder="Email"
+          style={styles.input}
+          value={email}
+          onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
         />
@@ -140,18 +143,18 @@ export default function Login() {
           secureTextEntry
         />
         {errorMessage && <Text style={{ color: "red" }}>{errorMessage}</Text>}
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={{ color: "white", textAlign: "center" }}>Login</Text>
+        <TouchableOpacity style={styles.button} onPress={handleSignup}>
+          <Text style={{ color: "white", textAlign: "center" }}>Sign up</Text>
         </TouchableOpacity>
         <View style={styles.sidebyside}>
-          <Text style={styles.normaltext}>Don&apos;t have an account?</Text>
+          <Text style={styles.normaltext}>Already have an account?</Text>
           <Pressable
-            onPress={() => router.push("/signup")}
+            onPress={() => router.push("/login")}
             style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
           >
             {({ pressed }) => (
               <Text style={[styles.urltext, pressed && { color: "purple" }]}>
-                Sign up
+                Log in
               </Text>
             )}
           </Pressable>
