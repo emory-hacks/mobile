@@ -33,30 +33,74 @@ export default function ScheduleItem({
       accessibilityState={{ disabled: isPassed }}
     >
       <View style={styles.leftCol}>
-        <Text style={[styles.timeLabel, isDark && styles.activeText]}>
+        <Text
+          style={[
+            styles.timeLabel,
+            isDark && styles.activeText,
+            isPassed && styles.passedText,
+          ]}
+        >
           {time}
         </Text>
       </View>
 
-      <View style={[styles.verticalDivider, isDark && styles.activeDivider]} />
+      <View
+        style={[
+          styles.verticalDivider,
+          isDark && styles.activeDivider,
+          isPassed && styles.passedDivider,
+        ]}
+      />
 
       <View style={styles.rightCol}>
         <View style={styles.topRow}>
-          <View style={[styles.titlePill, isDark && styles.activeTitlePill]}>
-            <Text style={[styles.titleText, isDark && styles.activeTitleText]}>
+          <View
+            style={[
+              styles.titlePill,
+              isDark && styles.activeTitlePill,
+              isPassed && styles.passedTitlePill,
+            ]}
+          >
+            <Text
+              style={[
+                styles.titleText,
+                isDark && styles.activeTitleText,
+                isPassed && styles.passedTitleText,
+              ]}
+            >
               {title}
             </Text>
           </View>
           <View style={styles.timeRange}>
-            <Text style={[styles.timeRangeText, isDark && styles.activeMetaText]}>
+            <Text
+              style={[
+                styles.timeRangeText,
+                isDark && styles.activeMetaText,
+                isPassed && styles.passedMetaText,
+              ]}
+            >
               {startTime} ~ {endTime}
             </Text>
-            <Text style={[styles.locationText, isDark && styles.activeMetaText]}>
+            <Text
+              style={[
+                styles.locationText,
+                isDark && styles.activeMetaText,
+                isPassed && styles.passedMetaText,
+              ]}
+            >
               {location}
             </Text>
           </View>
         </View>
-        <Text style={[styles.bodyText, isDark && styles.activeText]}>{body}</Text>
+        <Text
+          style={[
+            styles.bodyText,
+            isDark && styles.activeText,
+            isPassed && styles.passedBodyText,
+          ]}
+        >
+          {body}
+        </Text>
       </View>
     </View>
   );
@@ -68,12 +112,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     paddingVertical: 15,
     paddingHorizontal: 12,
+    position: 'relative',
   },
   activeContainer: {
     backgroundColor: '#000',
   },
   passedContainer: {
-    opacity: 0.2,
+    backgroundColor: '#fbfbfb',
   },
   leftCol: {
     width: 58,
@@ -87,16 +132,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   verticalDivider: {
+    bottom: 0,
+    left: 80,
+    position: 'absolute',
+    top: 0,
     width: 1,
     backgroundColor: '#000',
-    marginHorizontal: 10,
   },
   activeDivider: {
     backgroundColor: '#fff',
   },
+  passedDivider: {
+    backgroundColor: '#dedede',
+  },
   rightCol: {
     flex: 1,
     gap: 9,
+    marginLeft: 21,
   },
   topRow: {
     flexDirection: 'row',
@@ -112,6 +164,9 @@ const styles = StyleSheet.create({
   activeTitlePill: {
     backgroundColor: '#fff',
   },
+  passedTitlePill: {
+    backgroundColor: '#eeeeee',
+  },
   titleText: {
     color: '#fff',
     fontSize: 12,
@@ -119,6 +174,9 @@ const styles = StyleSheet.create({
   },
   activeTitleText: {
     color: '#000',
+  },
+  passedTitleText: {
+    color: '#6f6f6f',
   },
   timeRange: {
     alignItems: 'flex-end',
@@ -142,5 +200,14 @@ const styles = StyleSheet.create({
   },
   activeMetaText: {
     color: '#d7d7d7',
+  },
+  passedText: {
+    color: '#8a8a8a',
+  },
+  passedMetaText: {
+    color: '#9a9a9a',
+  },
+  passedBodyText: {
+    color: '#777',
   },
 });

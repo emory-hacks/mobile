@@ -1,9 +1,14 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect, useState } from 'react';
+import { Image, StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+
+SplashScreen.preventAutoHideAsync();
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -11,6 +16,21 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const [isSplashReady, setIsSplashReady] = useState(false);
+
+  useEffect(() => {
+    SplashScreen.hideAsync();
+
+    const splashTimer = setTimeout(() => {
+      setIsSplashReady(true);
+    }, 2500);
+
+    return () => clearTimeout(splashTimer);
+  }, []);
+
+  if (!isSplashReady) {
+    return <LandingSplash />;
+  }
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -22,3 +42,38 @@ export default function RootLayout() {
     </ThemeProvider>
   );
 }
+
+function LandingSplash() {
+  return (
+    <View style={styles.splashContainer}>
+      <View style={styles.logoPlaceholder}>
+        <Image
+          source={require('@/assets/images/icon.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  splashContainer: {
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  logoPlaceholder: {
+    alignItems: 'center',
+    backgroundColor: '#f2f5f8',
+    borderRadius: 24,
+    height: 128,
+    justifyContent: 'center',
+    width: 128,
+  },
+  logo: {
+    height: 84,
+    width: 84,
+  },
+});
