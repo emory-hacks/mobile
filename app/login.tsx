@@ -1,3 +1,8 @@
+import {
+  Fredoka_600SemiBold,
+  Fredoka_700Bold,
+  useFonts,
+} from "@expo-google-fonts/fredoka";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -16,6 +21,10 @@ export default function Login() {
   const [password, setPassword] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   let colorScheme = useColorScheme();
+  const [fontsLoaded] = useFonts({
+    Fredoka_600SemiBold,
+    Fredoka_700Bold,
+  });
 
   const styles = StyleSheet.create({
     container: {
@@ -39,12 +48,16 @@ export default function Login() {
       fontSize: 16,
       color: "gray",
     },
-    subtitle: {
-      width: "80%",
+    subtitle1: {
+      fontFamily: "Fredoka_700Bold",
       fontSize: 20,
-      color: colorScheme === "dark" ? "white" : "black",
-      marginBottom: 15,
-      marginLeft: 10,
+      color: "black",
+    },
+    subtitle2: {
+      fontFamily: "Fredoka_700Bold",
+      fontSize: 20,
+      color: "#A3CE26",
+      marginBottom: 70,
     },
     normaltext: {
       marginTop: 25,
@@ -116,6 +129,10 @@ export default function Login() {
     }
   };
 
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.subcontainer}>
@@ -123,7 +140,8 @@ export default function Login() {
           source={require("../assets/images/icon.png")}
           style={styles.logo}
         />
-        <Text style={styles.subtitle}>Login to your Account</Text>
+        <Text style={styles.subtitle1}>Welcome to</Text>
+        <Text style={styles.subtitle2}>Emory Hacks !</Text>
         <TextInput
           placeholder="Username"
           style={styles.input}
