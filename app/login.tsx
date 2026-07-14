@@ -64,10 +64,10 @@ export default function Login() {
       justifyContent: "space-between",
     },
     logo: {
-      margin: 40,
-      width: 85,
-      height: 85,
-      borderRadius: 100,
+      width: 230,
+      height: 72,
+      marginBottom: 50,
+      resizeMode: "contain",
     },
     button: {
       marginTop: 10,
