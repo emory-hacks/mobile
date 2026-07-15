@@ -1,3 +1,9 @@
+import {
+  Fredoka_600SemiBold,
+  Fredoka_700Bold,
+  useFonts,
+} from "@expo-google-fonts/fredoka";
+import { Image as ExpoImage } from "expo-image";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -7,21 +13,24 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  useColorScheme,
   View,
 } from "react-native";
 
 export default function Login() {
-  const [username, setUsername] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  let colorScheme = useColorScheme();
+  const [fontsLoaded] = useFonts({
+    Fredoka_600SemiBold,
+    Fredoka_700Bold,
+  });
 
   const styles = StyleSheet.create({
     container: {
       flex: 1,
       justifyContent: "center",
       alignItems: "stretch",
+      backgroundColor: "#fff",
     },
     subcontainer: {
       flex: 1,
@@ -31,50 +40,90 @@ export default function Login() {
     input: {
       width: "80%",
       height: 45,
-      margin: 8,
-      borderWidth: 1,
+      margin: 6,
+      borderWidth: 0,
       padding: 10,
-      borderColor: colorScheme === "dark" ? "white" : "black",
+      borderColor: "black",
       borderRadius: 9,
       fontSize: 16,
       color: "gray",
+      backgroundColor: "#eaeaea",
     },
-    subtitle: {
-      width: "80%",
+    subtitle1: {
+      fontFamily: "Fredoka_700Bold",
       fontSize: 20,
-      color: colorScheme === "dark" ? "white" : "black",
-      marginBottom: 15,
-      marginLeft: 10,
+      color: "black",
+    },
+    subtitle2: {
+      fontFamily: "Fredoka_700Bold",
+      fontSize: 20,
+      color: "#A3CE26",
+      marginBottom: 40,
     },
     normaltext: {
       marginTop: 25,
       fontSize: 10,
-      color: colorScheme === "dark" ? "lightgray" : "gray",
+      color: "black",
     },
     urltext: {
       marginLeft: 5,
       marginTop: 25,
       marginBottom: 100,
       fontSize: 10,
-      color: "blue",
-      textDecorationLine: "underline",
+      color: "#99c024",
+    },
+    copyright: {
+      fontSize: 10,
+      color: "#a4a4a4",
+      margin: 50,
     },
     sidebyside: {
       flexDirection: "row",
       justifyContent: "space-between",
     },
     logo: {
-      margin: 40,
-      width: 85,
-      height: 85,
-      borderRadius: 100,
+      width: "80%",
+      height: 72,
+      marginBottom: 50,
+      marginTop: 125,
+      resizeMode: "contain",
     },
     button: {
-      marginTop: 10,
+      width: "80%",
+      marginTop: 20,
       borderRadius: 9,
-      borderColor: "blue",
-      backgroundColor: "#007AFF",
-      padding: 15,
+      backgroundColor: "#A3CE26",
+      padding: 10,
+    },
+    orRow: {
+      width: "80%",
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: 28,
+      marginBottom: 20,
+    },
+    orLine: {
+      flex: 1,
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: "#c8c8c8",
+    },
+    orText: {
+      marginHorizontal: 14,
+      fontSize: 15,
+      color: "#111",
+    },
+    socialRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 36,
+    },
+    socialButton: {
+      padding: 4,
+    },
+    socialIcon: {
+      width: 28,
+      height: 28,
     },
   });
 
@@ -83,8 +132,8 @@ export default function Login() {
   const handleLogin = async () => {
     setErrorMessage(null);
 
-    if (!username || !password) {
-      setErrorMessage("Please enter username and password");
+    if (!email || !password) {
+      setErrorMessage("Please enter email and password");
       return;
     }
 
@@ -95,9 +144,8 @@ export default function Login() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Cookie: "token=put_jwt_place_hodler_here",
           },
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify({ email, password }),
         },
       );
 
@@ -116,6 +164,10 @@ export default function Login() {
     }
   };
 
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.subcontainer}>
@@ -123,12 +175,13 @@ export default function Login() {
           source={require("../assets/images/icon.png")}
           style={styles.logo}
         />
-        <Text style={styles.subtitle}>Login to your Account</Text>
+        <Text style={styles.subtitle1}>Welcome to</Text>
+        <Text style={styles.subtitle2}>Emory Hacks !</Text>
         <TextInput
-          placeholder="Username"
+          placeholder="Email@email.com"
           style={styles.input}
-          value={username}
-          onChangeText={setUsername}
+          value={email}
+          onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
         />
@@ -141,8 +194,68 @@ export default function Login() {
         />
         {errorMessage && <Text style={{ color: "red" }}>{errorMessage}</Text>}
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={{ color: "white", textAlign: "center" }}>Login</Text>
+          <Text
+            style={{
+              color: "white",
+              textAlign: "center",
+              fontSize: 17,
+            }}
+          >
+            Sign in
+          </Text>
         </TouchableOpacity>
+        <View style={styles.orRow}>
+          <View style={styles.orLine} />
+          <Text style={styles.orText}>or</Text>
+          <View style={styles.orLine} />
+        </View>
+        <View style={styles.socialRow}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Sign in with Google"
+            style={({ pressed }) => [
+              styles.socialButton,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
+            onPress={() => {}}
+          >
+            <ExpoImage
+              source={require("../assets/images/google-icon.svg")}
+              style={styles.socialIcon}
+              contentFit="contain"
+            />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Sign in with Apple"
+            style={({ pressed }) => [
+              styles.socialButton,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
+            onPress={() => {}}
+          >
+            <ExpoImage
+              source={require("../assets/images/apple-icon.svg")}
+              style={styles.socialIcon}
+              contentFit="contain"
+            />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Sign in with GitHub"
+            style={({ pressed }) => [
+              styles.socialButton,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
+            onPress={() => {}}
+          >
+            <ExpoImage
+              source={require("../assets/images/github-icon.svg")}
+              style={styles.socialIcon}
+              contentFit="contain"
+            />
+          </Pressable>
+        </View>
         <View style={styles.sidebyside}>
           <Text style={styles.normaltext}>Don&apos;t have an account?</Text>
           <Pressable
@@ -156,6 +269,11 @@ export default function Login() {
             )}
           </Pressable>
         </View>
+      </View>
+      <View style={{ justifyContent: "center", alignItems: "center" }}>
+        <Text style={styles.copyright}>
+          @ 2026 Emory Hacks. All rights reserved
+        </Text>
       </View>
     </View>
   );

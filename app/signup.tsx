@@ -1,81 +1,137 @@
+import {
+  Fredoka_600SemiBold,
+  Fredoka_700Bold,
+  useFonts,
+} from "@expo-google-fonts/fredoka";
+import { Image as ExpoImage } from "expo-image";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
   Image,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  useColorScheme,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function Signup() {
+  const insets = useSafeAreaInsets();
   const [username, setUsername] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  let colorScheme = useColorScheme();
+  const [fontsLoaded] = useFonts({
+    Fredoka_600SemiBold,
+    Fredoka_700Bold,
+  });
 
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      justifyContent: "center",
-      alignItems: "stretch",
+      backgroundColor: "#fff",
     },
-    subcontainer: {
-      flex: 1,
-      justifyContent: "center",
+    scrollContent: {
+      flexGrow: 1,
       alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: 16,
     },
     input: {
       width: "80%",
       height: 45,
-      margin: 8,
-      borderWidth: 1,
+      margin: 6,
+      borderWidth: 0,
       padding: 10,
-      borderColor: colorScheme === "dark" ? "white" : "black",
+      borderColor: "black",
       borderRadius: 9,
       fontSize: 16,
       color: "gray",
+      backgroundColor: "#eaeaea",
     },
-    subtitle: {
-      width: "80%",
+    passwordInput: {
+      marginTop: 18,
+    },
+    subtitle1: {
+      fontFamily: "Fredoka_700Bold",
       fontSize: 20,
-      color: colorScheme === "dark" ? "white" : "black",
-      marginBottom: 15,
-      marginLeft: 10,
+      color: "black",
+    },
+    subtitle2: {
+      fontFamily: "Fredoka_700Bold",
+      fontSize: 20,
+      color: "#A3CE26",
+      marginBottom: 40,
     },
     normaltext: {
       marginTop: 25,
       fontSize: 10,
-      color: colorScheme === "dark" ? "lightgray" : "gray",
+      color: "black",
     },
     urltext: {
       marginLeft: 5,
       marginTop: 25,
-      marginBottom: 100,
       fontSize: 10,
-      color: "blue",
-      textDecorationLine: "underline",
+      color: "#99c024",
+    },
+    copyright: {
+      fontSize: 10,
+      color: "#a4a4a4",
+      marginTop: 48,
+      marginBottom: 24,
+      textAlign: "center",
     },
     sidebyside: {
       flexDirection: "row",
       justifyContent: "space-between",
+      marginTop: 8,
     },
     logo: {
-      margin: 40,
-      width: 85,
-      height: 85,
-      borderRadius: 100,
+      width: "70%",
+      height: 90,
+      marginBottom: 32,
+      resizeMode: "contain",
     },
     button: {
-      marginTop: 10,
+      width: "80%",
+      marginTop: 20,
       borderRadius: 9,
-      borderColor: "blue",
-      backgroundColor: "#007AFF",
-      padding: 15,
+      backgroundColor: "#A3CE26",
+      padding: 10,
+    },
+    orRow: {
+      width: "80%",
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: 28,
+      marginBottom: 20,
+    },
+    orLine: {
+      flex: 1,
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: "#c8c8c8",
+    },
+    orText: {
+      marginHorizontal: 14,
+      fontSize: 15,
+      color: "#111",
+    },
+    socialRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 36,
+    },
+    socialButton: {
+      padding: 4,
+    },
+    socialIcon: {
+      width: 28,
+      height: 28,
     },
   });
 
@@ -84,8 +140,13 @@ export default function Signup() {
   const handleSignup = async () => {
     setErrorMessage(null);
 
-    if (!username || !email || !password) {
-      setErrorMessage("Please enter username, email, and password");
+    if (!username || !email || !password || !confirmPassword) {
+      setErrorMessage("Please fill in all fields");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMessage("Passwords do not match");
       return;
     }
 
@@ -112,23 +173,38 @@ export default function Signup() {
     }
   };
 
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <View style={styles.container}>
-      <View style={styles.subcontainer}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: insets.top + 24,
+            paddingBottom: insets.bottom + 16,
+          },
+        ]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <Image
           source={require("../assets/images/icon.png")}
           style={styles.logo}
         />
-        <Text style={styles.subtitle}>Create your Account</Text>
+        <Text style={styles.subtitle1}>Welcome to</Text>
+        <Text style={styles.subtitle2}>Emory Hacks !</Text>
         <TextInput
-          placeholder="Username"
+          placeholder="@Name"
           style={styles.input}
           value={username}
           onChangeText={setUsername}
           autoCapitalize="none"
         />
         <TextInput
-          placeholder="Email"
+          placeholder="Email@email.com"
           style={styles.input}
           value={email}
           onChangeText={setEmail}
@@ -137,15 +213,82 @@ export default function Signup() {
         />
         <TextInput
           placeholder="Password"
-          style={styles.input}
+          style={[styles.input, styles.passwordInput]}
           value={password}
           onChangeText={setPassword}
           secureTextEntry
         />
+        <TextInput
+          placeholder="Check the password"
+          style={styles.input}
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          secureTextEntry
+        />
         {errorMessage && <Text style={{ color: "red" }}>{errorMessage}</Text>}
         <TouchableOpacity style={styles.button} onPress={handleSignup}>
-          <Text style={{ color: "white", textAlign: "center" }}>Sign up</Text>
+          <Text
+            style={{
+              color: "white",
+              textAlign: "center",
+              fontSize: 17,
+            }}
+          >
+            Create an account
+          </Text>
         </TouchableOpacity>
+        <View style={styles.orRow}>
+          <View style={styles.orLine} />
+          <Text style={styles.orText}>or</Text>
+          <View style={styles.orLine} />
+        </View>
+        <View style={styles.socialRow}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Sign up with Google"
+            style={({ pressed }) => [
+              styles.socialButton,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
+            onPress={() => {}}
+          >
+            <ExpoImage
+              source={require("../assets/images/google-icon.svg")}
+              style={styles.socialIcon}
+              contentFit="contain"
+            />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Sign up with Apple"
+            style={({ pressed }) => [
+              styles.socialButton,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
+            onPress={() => {}}
+          >
+            <ExpoImage
+              source={require("../assets/images/apple-icon.svg")}
+              style={styles.socialIcon}
+              contentFit="contain"
+            />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Sign up with GitHub"
+            style={({ pressed }) => [
+              styles.socialButton,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
+            onPress={() => {}}
+          >
+            <ExpoImage
+              source={require("../assets/images/github-icon.svg")}
+              style={styles.socialIcon}
+              contentFit="contain"
+            />
+          </Pressable>
+        </View>
         <View style={styles.sidebyside}>
           <Text style={styles.normaltext}>Already have an account?</Text>
           <Pressable
@@ -159,7 +302,10 @@ export default function Signup() {
             )}
           </Pressable>
         </View>
-      </View>
+        <Text style={styles.copyright}>
+          @ 2026 Emory Hacks. All rights reserved
+        </Text>
+      </ScrollView>
     </View>
   );
 }
