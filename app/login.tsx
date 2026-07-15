@@ -40,12 +40,13 @@ export default function Login() {
       width: "80%",
       height: 45,
       margin: 8,
-      borderWidth: 1,
+      borderWidth: 0,
       padding: 10,
       borderColor: "black",
       borderRadius: 9,
       fontSize: 16,
       color: "gray",
+      backgroundColor: "#d0cece",
     },
     subtitle1: {
       fontFamily: "Fredoka_700Bold",
@@ -82,11 +83,11 @@ export default function Login() {
       resizeMode: "contain",
     },
     button: {
-      marginTop: 10,
+      width: "80%",
+      marginTop: 20,
       borderRadius: 9,
-      borderColor: "blue",
-      backgroundColor: "#007AFF",
-      padding: 15,
+      backgroundColor: "#A3CE26",
+      padding: 10,
     },
   });
 
@@ -142,7 +143,7 @@ export default function Login() {
         <Text style={styles.subtitle1}>Welcome to</Text>
         <Text style={styles.subtitle2}>Emory Hacks !</Text>
         <TextInput
-          placeholder="Username"
+          placeholder="Email@email.com"
           style={styles.input}
           value={username}
           onChangeText={setUsername}
@@ -158,7 +159,15 @@ export default function Login() {
         />
         {errorMessage && <Text style={{ color: "red" }}>{errorMessage}</Text>}
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={{ color: "white", textAlign: "center" }}>Login</Text>
+          <Text
+            style={{
+              color: "white",
+              textAlign: "center",
+              fontSize: 17,
+            }}
+          >
+            Sign in
+          </Text>
         </TouchableOpacity>
         <View style={styles.sidebyside}>
           <Text style={styles.normaltext}>Don&apos;t have an account?</Text>
