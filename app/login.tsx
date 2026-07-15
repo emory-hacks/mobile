@@ -82,7 +82,7 @@ export default function Login() {
       justifyContent: "space-between",
     },
     logo: {
-      width: 230,
+      width: "80%",
       height: 72,
       marginBottom: 50,
       marginTop: 125,
