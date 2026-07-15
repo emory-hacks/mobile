@@ -3,6 +3,7 @@ import {
   Fredoka_700Bold,
   useFonts,
 } from "@expo-google-fonts/fredoka";
+import { Image as ExpoImage } from "expo-image";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -39,14 +40,14 @@ export default function Login() {
     input: {
       width: "80%",
       height: 45,
-      margin: 8,
+      margin: 6,
       borderWidth: 0,
       padding: 10,
       borderColor: "black",
       borderRadius: 9,
       fontSize: 16,
       color: "gray",
-      backgroundColor: "#d0cece",
+      backgroundColor: "#eaeaea",
     },
     subtitle1: {
       fontFamily: "Fredoka_700Bold",
@@ -57,20 +58,24 @@ export default function Login() {
       fontFamily: "Fredoka_700Bold",
       fontSize: 20,
       color: "#A3CE26",
-      marginBottom: 70,
+      marginBottom: 40,
     },
     normaltext: {
       marginTop: 25,
       fontSize: 10,
-      color: "gray",
+      color: "black",
     },
     urltext: {
       marginLeft: 5,
       marginTop: 25,
       marginBottom: 100,
       fontSize: 10,
-      color: "blue",
-      textDecorationLine: "underline",
+      color: "#99c024",
+    },
+    copyright: {
+      fontSize: 10,
+      color: "#a4a4a4",
+      margin: 50,
     },
     sidebyside: {
       flexDirection: "row",
@@ -80,6 +85,7 @@ export default function Login() {
       width: 230,
       height: 72,
       marginBottom: 50,
+      marginTop: 125,
       resizeMode: "contain",
     },
     button: {
@@ -88,6 +94,36 @@ export default function Login() {
       borderRadius: 9,
       backgroundColor: "#A3CE26",
       padding: 10,
+    },
+    orRow: {
+      width: "80%",
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: 28,
+      marginBottom: 20,
+    },
+    orLine: {
+      flex: 1,
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: "#c8c8c8",
+    },
+    orText: {
+      marginHorizontal: 14,
+      fontSize: 15,
+      color: "#111",
+    },
+    socialRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 36,
+    },
+    socialButton: {
+      padding: 4,
+    },
+    socialIcon: {
+      width: 28,
+      height: 28,
     },
   });
 
@@ -169,6 +205,58 @@ export default function Login() {
             Sign in
           </Text>
         </TouchableOpacity>
+        <View style={styles.orRow}>
+          <View style={styles.orLine} />
+          <Text style={styles.orText}>or</Text>
+          <View style={styles.orLine} />
+        </View>
+        <View style={styles.socialRow}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Sign in with Google"
+            style={({ pressed }) => [
+              styles.socialButton,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
+            onPress={() => {}}
+          >
+            <ExpoImage
+              source={require("../assets/images/google-icon.svg")}
+              style={styles.socialIcon}
+              contentFit="contain"
+            />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Sign in with Apple"
+            style={({ pressed }) => [
+              styles.socialButton,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
+            onPress={() => {}}
+          >
+            <ExpoImage
+              source={require("../assets/images/apple-icon.svg")}
+              style={styles.socialIcon}
+              contentFit="contain"
+            />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Sign in with GitHub"
+            style={({ pressed }) => [
+              styles.socialButton,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
+            onPress={() => {}}
+          >
+            <ExpoImage
+              source={require("../assets/images/github-icon.svg")}
+              style={styles.socialIcon}
+              contentFit="contain"
+            />
+          </Pressable>
+        </View>
         <View style={styles.sidebyside}>
           <Text style={styles.normaltext}>Don&apos;t have an account?</Text>
           <Pressable
@@ -182,6 +270,11 @@ export default function Login() {
             )}
           </Pressable>
         </View>
+      </View>
+      <View style={{ justifyContent: "center", alignItems: "center" }}>
+        <Text style={styles.copyright}>
+          @ 2026 Emory Hacks. All rights reserved
+        </Text>
       </View>
     </View>
   );
