@@ -17,7 +17,7 @@ import {
 } from "react-native";
 
 export default function Login() {
-  const [username, setUsername] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [fontsLoaded] = useFonts({
@@ -132,8 +132,8 @@ export default function Login() {
   const handleLogin = async () => {
     setErrorMessage(null);
 
-    if (!username || !password) {
-      setErrorMessage("Please enter username and password");
+    if (!email || !password) {
+      setErrorMessage("Please enter email and password");
       return;
     }
 
@@ -144,9 +144,8 @@ export default function Login() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Cookie: "token=put_jwt_place_hodler_here",
           },
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify({ email, password }),
         },
       );
 
@@ -181,8 +180,8 @@ export default function Login() {
         <TextInput
           placeholder="Email@email.com"
           style={styles.input}
-          value={username}
-          onChangeText={setUsername}
+          value={email}
+          onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
         />
