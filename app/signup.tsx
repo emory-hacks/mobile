@@ -7,7 +7,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  useColorScheme,
   View,
 } from "react-native";
 
@@ -16,13 +15,13 @@ export default function Signup() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  let colorScheme = useColorScheme();
 
   const styles = StyleSheet.create({
     container: {
       flex: 1,
       justifyContent: "center",
       alignItems: "stretch",
+      backgroundColor: "#fff",
     },
     subcontainer: {
       flex: 1,
@@ -35,7 +34,7 @@ export default function Signup() {
       margin: 8,
       borderWidth: 1,
       padding: 10,
-      borderColor: colorScheme === "dark" ? "white" : "black",
+      borderColor: "black",
       borderRadius: 9,
       fontSize: 16,
       color: "gray",
@@ -43,14 +42,14 @@ export default function Signup() {
     subtitle: {
       width: "80%",
       fontSize: 20,
-      color: colorScheme === "dark" ? "white" : "black",
+      color: "black",
       marginBottom: 15,
       marginLeft: 10,
     },
     normaltext: {
       marginTop: 25,
       fontSize: 10,
-      color: colorScheme === "dark" ? "lightgray" : "gray",
+      color: "gray",
     },
     urltext: {
       marginLeft: 5,

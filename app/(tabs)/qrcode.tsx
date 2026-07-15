@@ -1,11 +1,10 @@
 import { useFocusEffect } from "@react-navigation/native";
 import * as Brightness from "expo-brightness";
 import { useCallback, useRef } from "react";
-import { Text, View, useColorScheme } from "react-native";
+import { Text, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 
 export default function QRCodeScreen() {
-  let colorScheme = useColorScheme();
   const originalBrightness = useRef<number | null>(null);
 
   useFocusEffect(
@@ -37,11 +36,11 @@ export default function QRCodeScreen() {
   );
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <View style={{ alignItems: "center", paddingTop: 100, paddingBottom: 20 }}>
         <Text
           style={{
-            color: colorScheme === "dark" ? "white" : "black",
+            color: "black",
             fontSize: 25,
           }}
         > {/* (This is a placeholder, we need to figure out how to generate the QR code for each user) */}
