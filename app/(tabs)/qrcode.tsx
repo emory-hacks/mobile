@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function QRCodeScreen() {
   const originalBrightness = useRef<number | null>(null);
-  const isAdmin = false;
+  const isAdmin = true;
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
   const [searchQuery, setSearchQuery] = useState("");
@@ -79,8 +79,26 @@ export default function QRCodeScreen() {
     setCameraActive(true);
   }, [cameraActive, permission?.granted, requestPermission]);
 
+  const handleDismissScanResult = useCallback(() => {
+    setScanned(false);
+  }, []);
+
   if (isAdmin) {
     const cameraReady = cameraActive && permission?.granted && isFocused;
+
+    // Placeholder attendee data until QR lookup is wired up
+    const scannedAttendee = {
+      username: "@Name",
+      teamName: "Team Name",
+      points: 72,
+      maxPoints: 100,
+      checkInValid: true,
+      email: "jyweva@ewha.ac.kr",
+    };
+    const progress = Math.min(
+      scannedAttendee.points / scannedAttendee.maxPoints,
+      1.0,
+    );
 
     return (
       <View style={styles.pageContainer}>
@@ -148,38 +166,122 @@ export default function QRCodeScreen() {
           </View>
         </View>
 
-        <View style={styles.scannerSection}>
-          <View style={styles.scannerViewport}>
-            {cameraReady ? (
-              <CameraView
-                style={StyleSheet.absoluteFillObject}
-                facing="back"
-                barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
-                onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
-              />
-            ) : (
-              <View style={styles.scannerPlaceholder} />
-            )}
+        {scanned ? (
+          <View style={styles.profileSection}>
+            <View style={styles.profileTopRow}>
+              <Pressable
+                onPress={handleDismissScanResult}
+                hitSlop={12}
+                accessibilityRole="button"
+                accessibilityLabel="Back to scanner"
+                style={styles.backButton}
+              >
+                <Ionicons name="arrow-back" size={28} color="#111" />
+              </Pressable>
+              <View style={styles.profileAvatar} />
+            </View>
 
-            <Pressable
-              style={styles.crosshair}
-              onPress={handleStartCamera}
-              disabled={cameraReady}
-              pointerEvents={cameraReady ? "none" : "auto"}
-              accessibilityRole="button"
-              accessibilityLabel="Start camera"
-            >
-              <View style={styles.crosshairHorizontal} />
-              <View style={styles.crosshairVertical} />
-            </Pressable>
+            <View style={styles.profileIdentity}>
+              <View style={styles.usernameRow}>
+                <Text style={styles.username}>{scannedAttendee.username}</Text>
+                <View style={styles.verifiedBadge}>
+                  <Ionicons name="checkmark" size={12} color="#fff" />
+                </View>
+              </View>
+              <View style={styles.teamBadge}>
+                <Text style={styles.teamBadgeText}>
+                  {scannedAttendee.teamName}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.pointsRow}>
+              <View style={styles.pointsBadge}>
+                <Text style={styles.pointsBadgeText}>
+                  {scannedAttendee.points} points
+                </Text>
+              </View>
+              <View style={styles.progressColumn}>
+                <View style={styles.progressLabels}>
+                  <Text style={styles.progressLabelMuted}>0</Text>
+                  <Text
+                    style={[
+                      styles.progressLabelCurrent,
+                      { left: `${progress * 100}%` },
+                    ]}
+                  >
+                    {scannedAttendee.points}
+                  </Text>
+                  <Text style={styles.progressLabelMuted}>
+                    {scannedAttendee.maxPoints}
+                  </Text>
+                </View>
+                <View style={styles.progressTrack}>
+                  <View
+                    style={[
+                      styles.progressFill,
+                      { width: `${progress * 100}%` },
+                    ]}
+                  />
+                  <View
+                    style={[
+                      styles.progressThumb,
+                      { left: `${progress * 100}%` },
+                    ]}
+                  />
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.detailList}>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Check in</Text>
+                <View style={styles.validBadge}>
+                  <Text style={styles.validBadgeText}>
+                    {scannedAttendee.checkInValid ? "Valid" : "Invalid"}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Email</Text>
+                <Text style={styles.detailValue}>{scannedAttendee.email}</Text>
+              </View>
+            </View>
           </View>
+        ) : (
+          <View style={styles.scannerSection}>
+            <View style={styles.scannerViewport}>
+              {cameraReady ? (
+                <CameraView
+                  style={StyleSheet.absoluteFillObject}
+                  facing="back"
+                  barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
+                  onBarcodeScanned={handleBarcodeScanned}
+                />
+              ) : (
+                <View style={styles.scannerPlaceholder} />
+              )}
 
-          <Text style={styles.instructionText}>
-            Please scan the{" "}
-            <Text style={styles.instructionHighlight}>QR code</Text> with your
-            camera.
-          </Text>
-        </View>
+              <Pressable
+                style={styles.crosshair}
+                onPress={handleStartCamera}
+                disabled={cameraReady}
+                pointerEvents={cameraReady ? "none" : "auto"}
+                accessibilityRole="button"
+                accessibilityLabel="Start camera"
+              >
+                <View style={styles.crosshairHorizontal} />
+                <View style={styles.crosshairVertical} />
+              </Pressable>
+            </View>
+
+            <Text style={styles.instructionText}>
+              Please scan the{" "}
+              <Text style={styles.instructionHighlight}>QR code</Text> with your
+              camera.
+            </Text>
+          </View>
+        )}
       </View>
     );
   }
@@ -330,6 +432,154 @@ const styles = StyleSheet.create({
   },
   instructionHighlight: {
     color: "#A3CE26",
+    fontWeight: "600",
+  },
+  profileSection: {
+    flex: 1,
+    backgroundColor: "#fff",
+    marginTop: 16,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 28,
+    paddingTop: 20,
+    paddingBottom: 24,
+  },
+  profileTopRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  backButton: {
+    paddingTop: 4,
+  },
+  profileAvatar: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: "#A3CE26",
+  },
+  profileIdentity: {
+    marginTop: -20,
+    gap: 10,
+  },
+  usernameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  username: {
+    fontSize: 36,
+    fontWeight: "700",
+    color: "#111",
+  },
+  verifiedBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "#A3CE26",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  teamBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#A3CE26",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+  },
+  teamBadgeText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  pointsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 28,
+    gap: 16,
+  },
+  pointsBadge: {
+    backgroundColor: "#A3CE26",
+    borderRadius: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+  },
+  pointsBadgeText: {
+    color: "#fff",
+    fontSize: 22,
+    fontWeight: "700",
+  },
+  progressColumn: {
+    flex: 1,
+    paddingTop: 4,
+  },
+  progressLabels: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 6,
+    position: "relative",
+    height: 16,
+  },
+  progressLabelMuted: {
+    fontSize: 12,
+    color: "#c0c0c0",
+  },
+  progressLabelCurrent: {
+    position: "absolute",
+    fontSize: 12,
+    color: "#A3CE26",
+    fontWeight: "600",
+    transform: [{ translateX: -8 }],
+  },
+  progressTrack: {
+    height: 3,
+    backgroundColor: "#111",
+    borderRadius: 2,
+    justifyContent: "center",
+  },
+  progressFill: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: "#A3CE26",
+    borderRadius: 2,
+  },
+  progressThumb: {
+    position: "absolute",
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#A3CE26",
+    marginLeft: -7,
+  },
+  detailList: {
+    marginTop: 36,
+    gap: 22,
+  },
+  detailRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  detailLabel: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111",
+  },
+  detailValue: {
+    fontSize: 15,
+    color: "#b0b0b0",
+  },
+  validBadge: {
+    backgroundColor: "#A3CE26",
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+  },
+  validBadgeText: {
+    color: "#fff",
+    fontSize: 14,
     fontWeight: "600",
   },
 });
