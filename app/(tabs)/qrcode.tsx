@@ -1,22 +1,20 @@
 import { Fredoka_700Bold, useFonts } from "@expo-google-fonts/fredoka";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect, useIsFocused } from "@react-navigation/native";
-import { CameraView, useCameraPermissions, type BarcodeScanningResult } from "expo-camera";
 import * as Brightness from "expo-brightness";
-import { useCallback, useRef, useState } from "react";
 import {
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+  CameraView,
+  useCameraPermissions,
+  type BarcodeScanningResult,
+} from "expo-camera";
+import { useCallback, useRef, useState } from "react";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function QRCodeScreen() {
   const originalBrightness = useRef<number | null>(null);
-  const isAdmin = true;
+  const isAdmin = false;
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
   const [searchQuery, setSearchQuery] = useState("");
@@ -60,12 +58,15 @@ export default function QRCodeScreen() {
     }, [isAdmin]),
   );
 
-  const handleBarcodeScanned = useCallback((result: BarcodeScanningResult) => {
-    if (scanned) return;
-    setScanned(true);
-    // TODO: handle scanned QR data (e.g. look up attendee)
-    console.log("Scanned QR:", result.data);
-  }, [scanned]);
+  const handleBarcodeScanned = useCallback(
+    (result: BarcodeScanningResult) => {
+      if (scanned) return;
+      setScanned(true);
+      // TODO: handle scanned QR data (e.g. look up attendee)
+      console.log("Scanned QR:", result.data);
+    },
+    [scanned],
+  );
 
   const handleStartCamera = useCallback(async () => {
     if (cameraActive && permission?.granted) return;
@@ -82,10 +83,10 @@ export default function QRCodeScreen() {
     const cameraReady = cameraActive && permission?.granted && isFocused;
 
     return (
-      <View style={styles.adminContainer}>
+      <View style={styles.pageContainer}>
         <View
           style={[
-            styles.adminHeader,
+            styles.pageHeader,
             { paddingTop: Math.max(insets.top, 16) + 8 },
           ]}
         >
@@ -184,45 +185,56 @@ export default function QRCodeScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+    <View style={styles.pageContainer}>
       <View
-        style={{ alignItems: "center", paddingTop: 100, paddingBottom: 20 }}
+        style={[
+          styles.pageHeader,
+          { paddingTop: Math.max(insets.top, 16) + 8 },
+        ]}
       >
-        <Text
-          style={{
-            color: "black",
-            fontSize: 25,
-          }}
-        >
-          {" "}
-          {/* (This is a placeholder, we need to figure out how to generate the QR code for each user) */}
-          Your Unique QR Code
-        </Text>
+        <View style={styles.titleRow}>
+          <Text
+            style={[
+              styles.scanTitle,
+              fontsLoaded && { fontFamily: "Fredoka_700Bold" },
+            ]}
+          >
+            Show
+          </Text>
+        </View>
       </View>
       <View
-        style={{ flex: 0.8, alignItems: "center", justifyContent: "center" }}
+        style={{ flex: 0.9, alignItems: "center", justifyContent: "center" }}
       >
         <View
-          style={{ backgroundColor: "white", padding: 10, borderRadius: 10 }}
+          style={{
+            backgroundColor: "#f7f7f7",
+            padding: 20,
+            borderRadius: 10,
+          }}
         >
           <QRCode
             value="https://expo.dev"
-            size={200}
-            color="black"
+            size={250}
+            color="#A3CE26"
             backgroundColor="white"
           />
         </View>
+        <Text style={styles.instructionText}>
+          Please show your{" "}
+          <Text style={styles.instructionHighlight}>QR code</Text> to a leader.
+        </Text>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  adminContainer: {
+  pageContainer: {
     flex: 1,
     backgroundColor: "#ececec",
   },
-  adminHeader: {
+  pageHeader: {
     backgroundColor: "#fff",
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,

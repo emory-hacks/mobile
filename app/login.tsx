@@ -127,7 +127,7 @@ export default function Login() {
     },
   });
 
-  const computer_ip_address = ""; //for development, DON'T PUSH YOUR IP ADDRESS TO GITHUB!
+  const computer_ip_address = "10.44.216.198"; //for development, DON'T PUSH YOUR IP ADDRESS TO GITHUB!
 
   const handleLogin = async () => {
     setErrorMessage(null);
