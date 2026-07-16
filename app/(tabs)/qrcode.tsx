@@ -1,9 +1,16 @@
 import { Fredoka_700Bold, useFonts } from "@expo-google-fonts/fredoka";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useIsFocused } from "@react-navigation/native";
+import { CameraView, useCameraPermissions, type BarcodeScanningResult } from "expo-camera";
 import * as Brightness from "expo-brightness";
 import { useCallback, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -11,14 +18,21 @@ export default function QRCodeScreen() {
   const originalBrightness = useRef<number | null>(null);
   const isAdmin = true;
   const insets = useSafeAreaInsets();
+  const isFocused = useIsFocused();
   const [searchQuery, setSearchQuery] = useState("");
+  const [scanned, setScanned] = useState(false);
+  const [cameraActive, setCameraActive] = useState(false);
+  const [permission, requestPermission] = useCameraPermissions();
   const [fontsLoaded] = useFonts({
     Fredoka_700Bold,
   });
 
   useFocusEffect(
     useCallback(() => {
-      if (isAdmin) return;
+      if (isAdmin) {
+        setScanned(false);
+        return;
+      }
 
       let active = true;
       (async () => {
@@ -46,7 +60,27 @@ export default function QRCodeScreen() {
     }, [isAdmin]),
   );
 
+  const handleBarcodeScanned = useCallback((result: BarcodeScanningResult) => {
+    if (scanned) return;
+    setScanned(true);
+    // TODO: handle scanned QR data (e.g. look up attendee)
+    console.log("Scanned QR:", result.data);
+  }, [scanned]);
+
+  const handleStartCamera = useCallback(async () => {
+    if (cameraActive && permission?.granted) return;
+
+    if (!permission?.granted) {
+      const result = await requestPermission();
+      if (!result.granted) return;
+    }
+
+    setCameraActive(true);
+  }, [cameraActive, permission?.granted, requestPermission]);
+
   if (isAdmin) {
+    const cameraReady = cameraActive && permission?.granted && isFocused;
+
     return (
       <View style={styles.adminContainer}>
         <View
@@ -111,6 +145,39 @@ export default function QRCodeScreen() {
               )}
             </Pressable>
           </View>
+        </View>
+
+        <View style={styles.scannerSection}>
+          <View style={styles.scannerViewport}>
+            {cameraReady ? (
+              <CameraView
+                style={StyleSheet.absoluteFillObject}
+                facing="back"
+                barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
+                onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
+              />
+            ) : (
+              <View style={styles.scannerPlaceholder} />
+            )}
+
+            <Pressable
+              style={styles.crosshair}
+              onPress={handleStartCamera}
+              disabled={cameraReady}
+              pointerEvents={cameraReady ? "none" : "auto"}
+              accessibilityRole="button"
+              accessibilityLabel="Start camera"
+            >
+              <View style={styles.crosshairHorizontal} />
+              <View style={styles.crosshairVertical} />
+            </Pressable>
+          </View>
+
+          <Text style={styles.instructionText}>
+            Please scan the{" "}
+            <Text style={styles.instructionHighlight}>QR code</Text> with your
+            camera.
+          </Text>
         </View>
       </View>
     );
@@ -204,5 +271,53 @@ const styles = StyleSheet.create({
   },
   searchButtonActive: {
     backgroundColor: "#d8d8d8",
+  },
+  scannerSection: {
+    flex: 1,
+    paddingHorizontal: 28,
+    paddingTop: 28,
+    paddingBottom: 24,
+    alignItems: "center",
+  },
+  scannerViewport: {
+    flex: 1,
+    width: "100%",
+    maxHeight: 520,
+    borderRadius: 28,
+    overflow: "hidden",
+    backgroundColor: "#f2f2f2",
+  },
+  scannerPlaceholder: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#f2f2f2",
+  },
+  crosshair: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  crosshairHorizontal: {
+    position: "absolute",
+    width: 28,
+    height: 1.5,
+    backgroundColor: "#b0b0b0",
+    borderRadius: 1,
+  },
+  crosshairVertical: {
+    position: "absolute",
+    width: 1.5,
+    height: 28,
+    backgroundColor: "#b0b0b0",
+    borderRadius: 1,
+  },
+  instructionText: {
+    marginTop: 20,
+    fontSize: 16,
+    color: "#111",
+    textAlign: "center",
+  },
+  instructionHighlight: {
+    color: "#A3CE26",
+    fontWeight: "600",
   },
 });

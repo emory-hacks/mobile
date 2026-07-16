@@ -39,6 +39,14 @@
             "backgroundColor": "#000000"
           }
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan QR codes",
+          "barcodeScannerEnabled": true,
+          "recordAudioAndroid": false
+        }
       ]
     ],
     "experiments": {
