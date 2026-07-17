@@ -59,6 +59,7 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen name="home-page" options={{ href: null }} />
     </Tabs>
   );
 }
