@@ -19,7 +19,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: NAV_ICON_COLOR,
         tabBarInactiveTintColor: NAV_ICON_COLOR,
         tabBarIconStyle: {
-          transform: [{ translateY: insets.bottom / 3 }],
+          transform: [{ translateY: insets.bottom / 2 }],
         },
         tabBarShowLabel: false,
         tabBarStyle: {
