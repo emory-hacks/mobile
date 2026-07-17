@@ -6,15 +6,21 @@ import {
 } from "@/components/navigation/tab-bar-icons";
 import { Tabs } from "expo-router";
 import React from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const NAV_ICON_COLOR = "#A3CE26";
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: NAV_ICON_COLOR,
         tabBarInactiveTintColor: NAV_ICON_COLOR,
+        tabBarIconStyle: {
+          transform: [{ translateY: insets.bottom / 3 }],
+        },
         tabBarShowLabel: false,
         tabBarStyle: {
           backgroundColor: "#fff",
@@ -31,7 +37,7 @@ export default function TabLayout() {
         options={{
           title: "Schedule",
           tabBarIcon: ({ focused }) => (
-            <CalendarTabIcon color={NAV_ICON_COLOR} filled={focused} />
+            <CalendarTabIcon filled={focused} />
           ),
         }}
       />
@@ -40,7 +46,7 @@ export default function TabLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ focused }) => (
-            <HomeTabIcon color={NAV_ICON_COLOR} filled={focused} />
+            <HomeTabIcon filled={focused} />
           ),
         }}
       />
@@ -49,7 +55,7 @@ export default function TabLayout() {
         options={{
           title: "QR Code",
           tabBarIcon: ({ focused }) => (
-            <ScanTabIcon color={NAV_ICON_COLOR} filled={focused} />
+            <ScanTabIcon filled={focused} />
           ),
         }}
       />
