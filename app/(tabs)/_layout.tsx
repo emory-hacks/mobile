@@ -1,15 +1,33 @@
 import { HapticTab } from "@/components/haptic-tab";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
+import {
+  CalendarTabIcon,
+  HomeTabIcon,
+  ScanTabIcon,
+} from "@/components/navigation/tab-bar-icons";
 import { Tabs } from "expo-router";
 import React from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const NAV_ICON_COLOR = "#A3CE26";
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.light.tint,
-        tabBarStyle: { backgroundColor: "#fff" },
+        tabBarActiveTintColor: NAV_ICON_COLOR,
+        tabBarInactiveTintColor: NAV_ICON_COLOR,
+        tabBarIconStyle: {
+          transform: [{ translateY: insets.bottom / 2 }],
+        },
+        tabBarShowLabel: false,
+        tabBarStyle: {
+          backgroundColor: "#fff",
+          borderTopWidth: 0,
+          elevation: 0,
+          shadowOpacity: 0,
+        },
         headerShown: false,
         tabBarButton: HapticTab,
       }}
@@ -18,8 +36,8 @@ export default function TabLayout() {
         name="schedule"
         options={{
           title: "Schedule",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="calendar" color={color} />
+          tabBarIcon: ({ focused }) => (
+            <CalendarTabIcon filled={focused} />
           ),
         }}
       />
@@ -27,8 +45,8 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
+          tabBarIcon: ({ focused }) => (
+            <HomeTabIcon filled={focused} />
           ),
         }}
       />
@@ -36,8 +54,8 @@ export default function TabLayout() {
         name="qrcode"
         options={{
           title: "QR Code",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="qrcode" color={color} />
+          tabBarIcon: ({ focused }) => (
+            <ScanTabIcon filled={focused} />
           ),
         }}
       />
