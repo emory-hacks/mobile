@@ -6,6 +6,7 @@ import {
 import { Grandstander_900Black } from "@expo-google-fonts/grandstander";
 import { useFonts } from "expo-font";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -20,6 +21,7 @@ const FOLLOWING_NOTICES = TEST_NOTICES.slice(1);
 
 export default function HomePage() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [isNoticeExpanded, setIsNoticeExpanded] = useState(false);
   const [fontsLoaded] = useFonts({
     AlanSans_400Regular,
@@ -37,7 +39,7 @@ export default function HomePage() {
       <View style={{ paddingTop: insets.top }}>
         <ProfileComponent
           name="Taeeun K."
-          onSettingsPress={() => {}}
+          onSettingsPress={() => router.push("/settings")}
           teamName="Team Name"
         />
       </View>
@@ -145,8 +147,8 @@ const styles = StyleSheet.create({
   },
   noticeItem: {
     borderBottomColor: "#DADADA",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    minHeight: 132,
+    borderBottomWidth: 1,
+    minHeight: 126,
     paddingHorizontal: 4,
     paddingVertical: 18,
   },

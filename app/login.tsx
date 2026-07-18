@@ -158,7 +158,7 @@ export default function Login() {
       const jwt = data.jwt;
       console.log(jwt);
 
-      router.replace("/(tabs)");
+      router.replace("/(tabs)/(home)");
     } catch {
       setErrorMessage("Unable to connect to server");
     }

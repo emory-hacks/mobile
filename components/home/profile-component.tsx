@@ -16,19 +16,21 @@ export function ProfileComponent({
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        <Pressable
-          accessibilityLabel="Open settings"
-          accessibilityRole="button"
-          hitSlop={12}
-          onPress={onSettingsPress}
-          style={styles.settingsButton}
-        >
-          <Ionicons color="#111111" name="settings-outline" size={26} />
-        </Pressable>
+        <View style={styles.headingRow}>
+          <Text style={styles.greeting}>Hello!</Text>
+          <Pressable
+            accessibilityLabel="Open settings"
+            accessibilityRole="button"
+            hitSlop={12}
+            onPress={onSettingsPress}
+            style={styles.settingsButton}
+          >
+            <Ionicons color="#111111" name="settings-outline" size={26} />
+          </Pressable>
+        </View>
 
         <View style={styles.content}>
           <View style={styles.copy}>
-            <Text style={styles.greeting}>Hello!</Text>
             <Text style={styles.name}>{name}</Text>
             <View style={styles.teamPill}>
               <Text style={styles.teamText}>{teamName}</Text>
@@ -99,7 +101,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 24,
     paddingBottom: 32,
     paddingHorizontal: 32,
-    paddingTop: 12,
+    paddingTop: 31,
     zIndex: 1,
   },
   container: {
@@ -110,7 +112,6 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     flexDirection: "row",
     justifyContent: "space-between",
-    minHeight: 132,
   },
   copy: {
     alignItems: "flex-start",
@@ -123,6 +124,11 @@ const styles = StyleSheet.create({
     fontSize: 40,
     lineHeight: 44,
   },
+  headingRow: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
   name: {
     color: "#080808",
     fontFamily: "Grandstander_900Black",
@@ -131,13 +137,9 @@ const styles = StyleSheet.create({
   },
   settingsButton: {
     alignItems: "center",
-    height: 36,
+    height: 26,
     justifyContent: "center",
-    position: "absolute",
-    right: 32,
-    top: 12,
-    width: 36,
-    zIndex: 1,
+    width: 26,
   },
   teamPill: {
     backgroundColor: "#9BD31B",

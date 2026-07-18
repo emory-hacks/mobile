@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useRef } from "react";
+import { Animated, Pressable, StyleSheet, Text } from "react-native";
 
 import type { Notice } from "@/constants/test-notices";
 
@@ -8,23 +9,39 @@ type NoticeBarProps = {
 };
 
 export function NoticeBar({ notice, onPress }: NoticeBarProps) {
+  const pressProgress = useRef(new Animated.Value(0)).current;
+  const backgroundColor = pressProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["#FF6048", "#C93D2A"],
+  });
+
+  const animatePress = (toValue: number, duration: number) => {
+    Animated.timing(pressProgress, {
+      duration,
+      toValue,
+      useNativeDriver: false,
+    }).start();
+  };
+
   return (
     <Pressable
       accessibilityHint="Opens or closes the featured notice"
       accessibilityLabel={`Featured notice: ${notice.title}`}
       accessibilityRole="button"
       onPress={onPress}
+      onPressIn={() => animatePress(1, 150)}
+      onPressOut={() => animatePress(0, 220)}
       style={styles.container}
     >
-      <View style={styles.alertBadge}>
+      <Animated.View style={[styles.alertBadge, { backgroundColor }]}>
         <Text style={styles.alertMark}>!</Text>
-      </View>
-      <View style={styles.content}>
+      </Animated.View>
+      <Animated.View style={[styles.content, { backgroundColor }]}>
         <Text style={styles.title}>{notice.title}</Text>
         <Text numberOfLines={1} style={styles.preview}>
           {notice.preview}
         </Text>
-      </View>
+      </Animated.View>
     </Pressable>
   );
 }
@@ -33,7 +50,6 @@ const styles = StyleSheet.create({
   alertBadge: {
     alignItems: "center",
     alignSelf: "stretch",
-    backgroundColor: "#FF6048",
     borderRadius: 10,
     justifyContent: "center",
     width: 46,
@@ -50,7 +66,6 @@ const styles = StyleSheet.create({
   },
   content: {
     alignItems: "center",
-    backgroundColor: "#FF6048",
     borderRadius: 10,
     flex: 1,
     flexDirection: "row",

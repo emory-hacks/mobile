@@ -15,20 +15,20 @@ export const TEST_NOTICES: Notice[] = [
     author: "@KORAIL",
     date: "2026.8.7",
     detailParagraphs: [
-      "The 11:36 Gyeongui–Jungang Line service toward Munsan is delayed by approximately 25 minutes due to a signal inspection near Digital Media City Station.",
+      "The 11:36 Gyeongui–Jungang Line service toward Deokso is delayed by approximately 25 minutes due to a signal inspection near Digital Media City Station.",
       "Passengers should check the station display before boarding. Trains may remain crowded while the timetable returns to normal. We are working to restore service as quickly as possible. ",
       "Please consider using an alternative route, such as A'REX or Line 6, to reach your destination. ",
       "We apologize for the inconvenience.",
     ],
     id: "gyeongui-jungang-delay",
     preview:
-      "The 11:36 Gyeongui–Jungang Line service toward Munsan is delayed by 25 minutes.",
+      "The 11:36 Gyeongui–Jungang Line service toward Deokso is delayed by 25 minutes.",
     teamName: "KORAIL Updates",
     time: "11:30",
     title: "Gyeongui–Jungang Line Delayed",
   },
   {
-    author: "@KORAIL",
+    author: "@SeoulMetro",
     date: "2026.8.7",
     detailParagraphs: [
       "Line 1 trains toward Incheon are experiencing delays of 15 to 20 minutes following a train inspection at Seoul Station.",
