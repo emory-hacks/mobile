@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function QRCodeScreen() {
   const originalBrightness = useRef<number | null>(null);
-  const isAdmin = true;
+  const isAdmin = false;
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
   const [searchQuery, setSearchQuery] = useState("");
@@ -324,7 +324,8 @@ export default function QRCodeScreen() {
         </View>
         <Text style={styles.instructionText}>
           Please show your{" "}
-          <Text style={styles.instructionHighlight}>QR code</Text> to a leader.
+          <Text style={styles.instructionHighlight}>QR code</Text> to an
+          organizer
         </Text>
       </View>
     </View>
@@ -429,6 +430,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#111",
     textAlign: "center",
+    marginLeft: 5,
+    marginRight: 5,
   },
   instructionHighlight: {
     color: "#A3CE26",
