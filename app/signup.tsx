@@ -78,6 +78,12 @@ export default function Signup() {
       fontSize: 10,
       color: "#99c024",
     },
+    error: {
+      color: "red",
+      marginLeft: "15%",
+      marginRight: "15%",
+      textAlign: "center",
+    },
     copyright: {
       fontSize: 10,
       color: "#a4a4a4",
@@ -137,6 +143,24 @@ export default function Signup() {
 
   const computer_ip_address = ""; //for development, DON'T PUSH YOUR IP ADDRESS TO GITHUB!
 
+  const invalidPassword = (password: string) => {
+    let hasAlpha = false; // anything that's alphabetic
+    let hasNumber = false; // anything that's a number
+    let hasSpecial = false; // anything that's not alphanumeric nor number
+    for (let letter of password) {
+      if (/^[a-zA-Z]$/.test(letter)) {
+        hasAlpha = true;
+      }
+      if (/^[0-9]$/.test(letter)) {
+        hasNumber = true;
+      }
+      if (/^\S$/.test(letter)) {
+        hasSpecial = true;
+      }
+    }
+    return !(hasAlpha && hasNumber && hasSpecial);
+  };
+
   const handleSignup = async () => {
     setErrorMessage(null);
 
@@ -147,6 +171,18 @@ export default function Signup() {
 
     if (password !== confirmPassword) {
       setErrorMessage("Passwords do not match");
+      return;
+    }
+
+    if (password.length < 8) {
+      setErrorMessage("Password must be at least 8 characters long");
+      return;
+    }
+
+    if (invalidPassword(password)) {
+      setErrorMessage(
+        "Password must contain a letter, number, and special character",
+      );
       return;
     }
 
@@ -225,7 +261,7 @@ export default function Signup() {
           onChangeText={setConfirmPassword}
           secureTextEntry
         />
-        {errorMessage && <Text style={{ color: "red" }}>{errorMessage}</Text>}
+        {errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
         <TouchableOpacity style={styles.button} onPress={handleSignup}>
           <Text
             style={{
