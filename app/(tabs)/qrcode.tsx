@@ -8,13 +8,20 @@ import {
   type BarcodeScanningResult,
 } from "expo-camera";
 import { useCallback, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import QRCode from "react-native-qrcode-svg";
+import {
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function QRCodeScreen() {
   const originalBrightness = useRef<number | null>(null);
   const isAdmin = false;
+  const computer_ip_address = "";
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
   const [searchQuery, setSearchQuery] = useState("");
@@ -24,6 +31,7 @@ export default function QRCodeScreen() {
   const [fontsLoaded] = useFonts({
     Fredoka_700Bold,
   });
+  const [qrCode, setQrCode] = useState("");
 
   useFocusEffect(
     useCallback(() => {
@@ -43,6 +51,29 @@ export default function QRCodeScreen() {
             // brightness control not available
           }
         }
+      })();
+
+      (async () => {
+        const response = await fetch(
+          `http://${computer_ip_address}:8080/api/users/me/qr`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          },
+        );
+        if (!response.ok) {
+          return;
+        }
+
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const dataUri = reader.result as string;
+          setQrCode(dataUri);
+        };
+        reader.readAsDataURL(blob);
       })();
 
       return () => {
@@ -308,19 +339,13 @@ export default function QRCodeScreen() {
       <View
         style={{ flex: 0.9, alignItems: "center", justifyContent: "center" }}
       >
-        <View
-          style={{
-            backgroundColor: "#f7f7f7",
-            padding: 20,
-            borderRadius: 10,
-          }}
-        >
-          <QRCode
-            value="https://expo.dev"
-            size={250}
-            color="#A3CE26"
-            backgroundColor="white"
-          />
+        <View>
+          {qrCode ? (
+            <Image
+              source={{ uri: qrCode }}
+              style={{ width: 300, height: 300, borderRadius: 10 }}
+            />
+          ) : null}
         </View>
         <Text style={styles.instructionText}>
           Please show your{" "}
