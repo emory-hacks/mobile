@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { saveJwt } from "../utils/auth-token";
 
 export default function Login() {
   const [email, setEmail] = useState<string>("");
@@ -155,9 +156,17 @@ export default function Login() {
       }
 
       const data = await response.json();
-      const jwt = data.jwt;
-      console.log(jwt);
+      const jwt = data.token;
 
+      if (!jwt) {
+        setErrorMessage("Login failed");
+        return;
+      }
+
+      console.log(jwt);
+      console.log("\n");
+
+      await saveJwt(jwt);
       router.replace("/(tabs)/(home)");
     } catch {
       setErrorMessage("Unable to connect to server");

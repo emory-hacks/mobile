@@ -9,6 +9,7 @@ import { useFonts } from "expo-font";
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { clearJwt } from "../../../utils/auth-token";
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -37,7 +38,10 @@ export default function SettingsScreen() {
               accessibilityLabel="Log out"
               accessibilityRole="button"
               hitSlop={8}
-              onPress={() => {}}
+              onPress={async () => {
+                await clearJwt();
+                router.replace("/login");
+              }}
               style={({ pressed }) => [
                 styles.logoutButton,
                 pressed && styles.pressed,
