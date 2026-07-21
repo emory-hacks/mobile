@@ -7,7 +7,7 @@ import { Grandstander_900Black } from "@expo-google-fonts/grandstander";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFonts } from "expo-font";
 import { useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { clearJwt } from "../../../utils/auth-token";
 
@@ -19,6 +19,20 @@ export default function SettingsScreen() {
     AlanSans_700Bold,
     Grandstander_900Black,
   });
+
+  const handleLogout = () => {
+    Alert.alert("Log out", "Are you sure you want to log out?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Log out",
+        style: "destructive",
+        onPress: async () => {
+          await clearJwt();
+          router.replace("/login");
+        },
+      },
+    ]);
+  };
 
   if (!fontsLoaded) {
     return <View style={styles.screen} />;
@@ -38,10 +52,7 @@ export default function SettingsScreen() {
               accessibilityLabel="Log out"
               accessibilityRole="button"
               hitSlop={8}
-              onPress={async () => {
-                await clearJwt();
-                router.replace("/login");
-              }}
+              onPress={handleLogout}
               style={({ pressed }) => [
                 styles.logoutButton,
                 pressed && styles.pressed,
