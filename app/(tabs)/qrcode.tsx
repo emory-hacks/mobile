@@ -7,7 +7,7 @@ import {
   useCameraPermissions,
   type BarcodeScanningResult,
 } from "expo-camera";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Image,
   Pressable,
@@ -17,10 +17,10 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getRole } from "@/utils/auth-token";
 
 export default function QRCodeScreen() {
   const originalBrightness = useRef<number | null>(null);
-  const isAdmin = true;
   const computer_ip_address = "192.168.1.126";
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
@@ -32,11 +32,19 @@ export default function QRCodeScreen() {
     Fredoka_700Bold,
   });
   const [qrCode, setQrCode] = useState("");
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const role = await getRole();
+      setIsAdmin(!!role && role.toUpperCase().includes("ADMIN"));
+    })();
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
-      if (isAdmin) {
-        setScanned(false);
+      if (isAdmin !== false) {
+        if (isAdmin) setScanned(false);
         return;
       }
 
@@ -134,6 +142,10 @@ export default function QRCodeScreen() {
   const handleDismissScanResult = useCallback(() => {
     setScanned(false);
   }, []);
+
+  if (isAdmin === null) {
+    return <View style={styles.pageContainer} />;
+  }
 
   if (isAdmin) {
     const cameraReady = cameraActive && permission?.granted && isFocused;

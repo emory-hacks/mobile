@@ -2,6 +2,7 @@ import * as SecureStore from "expo-secure-store";
 
 const JWT_KEY = "jwt";
 const EMAIL_KEY = "email";
+const ROLE_KEY = "role";
 
 export async function saveJwt(token: string): Promise<void> {
   await SecureStore.setItemAsync(JWT_KEY, token);
@@ -25,4 +26,16 @@ export async function getEmail(): Promise<string | null> {
 
 export async function clearEmail(): Promise<void> {
   await SecureStore.deleteItemAsync(EMAIL_KEY);
+}
+
+export async function saveRole(role: string): Promise<void> {
+  await SecureStore.setItemAsync(ROLE_KEY, role);
+}
+
+export async function getRole(): Promise<string | null> {
+  return SecureStore.getItemAsync(ROLE_KEY);
+}
+
+export async function clearRole(): Promise<void> {
+  await SecureStore.deleteItemAsync(ROLE_KEY);
 }

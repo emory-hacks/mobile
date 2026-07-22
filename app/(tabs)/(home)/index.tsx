@@ -15,7 +15,7 @@ import { NoticeBar } from "@/components/home/notice-bar";
 import { NoticeDetailComponent } from "@/components/home/notice-detail-component";
 import { ProfileComponent } from "@/components/home/profile-component";
 import { TEST_NOTICES } from "@/constants/test-notices";
-import { getEmail, getJwt } from "@/utils/auth-token";
+import { getEmail, getJwt, saveRole } from "@/utils/auth-token";
 
 const FEATURED_NOTICE = TEST_NOTICES[0];
 const FOLLOWING_NOTICES = TEST_NOTICES.slice(1);
@@ -36,6 +36,7 @@ export default function HomePage() {
     (async () => {
       const jwt = await getJwt();
       const email = await getEmail();
+
       if (!jwt || !email) return;
 
       const response = await fetch(
@@ -51,6 +52,7 @@ export default function HomePage() {
       if (!response.ok) return;
 
       const userData = await response.json();
+      await saveRole(String(userData.role ?? ""));
       console.log("role:", userData.role);
     })();
   }, []);
