@@ -15,7 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { saveJwt } from "../utils/auth-token";
+import { saveEmail, saveJwt } from "../utils/auth-token";
 
 export default function Login() {
   const [email, setEmail] = useState<string>("");
@@ -128,7 +128,7 @@ export default function Login() {
     },
   });
 
-  const computer_ip_address = ""; //for development, DON'T PUSH YOUR IP ADDRESS TO GITHUB!
+  const computer_ip_address = "192.168.1.126"; //for development, DON'T PUSH YOUR IP ADDRESS TO GITHUB!
 
   const handleLogin = async () => {
     setErrorMessage(null);
@@ -163,10 +163,8 @@ export default function Login() {
         return;
       }
 
-      console.log(jwt);
-      console.log("\n");
-
       await saveJwt(jwt);
+      await saveEmail(email);
       router.replace("/(tabs)/(home)");
     } catch {
       setErrorMessage("Unable to connect to server");

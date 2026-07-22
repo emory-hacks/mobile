@@ -20,8 +20,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function QRCodeScreen() {
   const originalBrightness = useRef<number | null>(null);
-  const isAdmin = false;
-  const computer_ip_address = "";
+  const isAdmin = true;
+  const computer_ip_address = "192.168.1.126";
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
   const [searchQuery, setSearchQuery] = useState("");
@@ -93,8 +93,29 @@ export default function QRCodeScreen() {
     (result: BarcodeScanningResult) => {
       if (scanned) return;
       setScanned(true);
-      // TODO: handle scanned QR data (e.g. look up attendee)
-      console.log("Scanned QR:", result.data);
+
+      (async () => {
+        try {
+          await fetch(
+            `http://${computer_ip_address}:8080/api/admin/award-points-fast`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                token: result.data,
+                amount: 1,
+                eventId: "temp",
+              }),
+            },
+          );
+          await console.log(result.data);
+        } catch {
+          // request failed
+          console.log("Scanning failed");
+        }
+      })();
     },
     [scanned],
   );

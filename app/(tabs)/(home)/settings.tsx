@@ -9,7 +9,7 @@ import { useFonts } from "expo-font";
 import { useRouter } from "expo-router";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { clearJwt } from "../../../utils/auth-token";
+import { clearEmail, clearJwt } from "../../../utils/auth-token";
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -28,6 +28,7 @@ export default function SettingsScreen() {
         style: "destructive",
         onPress: async () => {
           await clearJwt();
+          await clearEmail();
           router.replace("/login");
         },
       },

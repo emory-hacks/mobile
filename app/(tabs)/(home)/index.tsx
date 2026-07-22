@@ -1,13 +1,13 @@
 import {
-    AlanSans_400Regular,
-    AlanSans_500Medium,
-    AlanSans_700Bold,
+  AlanSans_400Regular,
+  AlanSans_500Medium,
+  AlanSans_700Bold,
 } from "@expo-google-fonts/alan-sans"; // fonts
 import { Grandstander_900Black } from "@expo-google-fonts/grandstander";
 import { useFonts } from "expo-font";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -15,9 +15,11 @@ import { NoticeBar } from "@/components/home/notice-bar";
 import { NoticeDetailComponent } from "@/components/home/notice-detail-component";
 import { ProfileComponent } from "@/components/home/profile-component";
 import { TEST_NOTICES } from "@/constants/test-notices";
+import { getEmail, getJwt } from "@/utils/auth-token";
 
 const FEATURED_NOTICE = TEST_NOTICES[0];
 const FOLLOWING_NOTICES = TEST_NOTICES.slice(1);
+const computer_ip_address = "192.168.1.126";
 
 export default function HomePage() {
   const insets = useSafeAreaInsets();
@@ -29,6 +31,29 @@ export default function HomePage() {
     AlanSans_700Bold,
     Grandstander_900Black,
   });
+
+  useEffect(() => {
+    (async () => {
+      const jwt = await getJwt();
+      const email = await getEmail();
+      if (!jwt || !email) return;
+
+      const response = await fetch(
+        `http://${computer_ip_address}:8080/api/users/${email}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${jwt}`,
+          },
+        },
+      );
+      if (!response.ok) return;
+
+      const userData = await response.json();
+      console.log("role:", userData.role);
+    })();
+  }, []);
 
   if (!fontsLoaded) {
     return <View style={styles.screen} />;
