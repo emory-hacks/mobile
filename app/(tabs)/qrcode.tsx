@@ -1,5 +1,5 @@
 import { computer_ip_address } from "@/constants/computer-ip";
-import { getRole } from "@/utils/auth-token";
+import { getJwt, getRole } from "@/utils/auth-token";
 import { Fredoka_700Bold, useFonts } from "@expo-google-fonts/fredoka";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect, useIsFocused } from "@react-navigation/native";
@@ -64,12 +64,14 @@ export default function QRCodeScreen() {
       })();
 
       (async () => {
+        const jwt = await getJwt();
         const response = await fetch(
           `http://${computer_ip_address}:8080/api/users/me/qr`,
           {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
+              Cookie: `token=${jwt}`,
             },
           },
         );
