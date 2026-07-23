@@ -4,10 +4,12 @@ import {
   AlanSans_700Bold,
 } from "@expo-google-fonts/alan-sans"; // fonts
 import { Grandstander_900Black } from "@expo-google-fonts/grandstander";
+import { useFocusEffect } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { fetch } from "expo/fetch";
+import { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -19,7 +21,7 @@ import { getEmail, getJwt, saveRole } from "@/utils/auth-token";
 
 const FEATURED_NOTICE = TEST_NOTICES[0];
 const FOLLOWING_NOTICES = TEST_NOTICES.slice(1);
-const computer_ip_address = "192.168.1.126";
+const computer_ip_address = "";
 
 export default function HomePage() {
   const insets = useSafeAreaInsets();
@@ -32,30 +34,49 @@ export default function HomePage() {
     Grandstander_900Black,
   });
 
-  useEffect(() => {
-    (async () => {
-      const jwt = await getJwt();
-      const email = await getEmail();
+  useFocusEffect(
+    //this will mount every time the tab is focused on. change back to useEffect
+    //for production and make it remount after ever log in! Maybe when jwt changes?
+    useCallback(() => {
+      let active = true;
 
-      if (!jwt || !email) return;
+      (async () => {
+        const jwt = await getJwt();
+        const email = await getEmail();
 
-      const response = await fetch(
-        `http://${computer_ip_address}:8080/api/users/${email}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${jwt}`,
+        if (!jwt || !email || !active) return;
+
+        // Use expo/fetch + credentials: "omit" so a manual Cookie header is sent.
+        // RN's built-in fetch treats Cookie as managed and often strips it (403).
+        const response = await fetch(
+          `http://${computer_ip_address}:8080/api/users/${email}`,
+          {
+            method: "GET",
+            credentials: "omit",
+            headers: {
+              "Content-Type": "application/json",
+              Cookie: `token=${jwt}`,
+            },
           },
-        },
-      );
-      if (!response.ok) return;
+        );
 
-      const userData = await response.json();
-      await saveRole(String(userData.role ?? ""));
-      console.log("role:", userData.role);
-    })();
-  }, []);
+        if (!response.ok) {
+          console.log(response.status, await response.text());
+          return;
+        }
+
+        const userData = await response.json();
+        if (!active) return;
+
+        await saveRole(userData.role);
+        console.log(userData);
+      })();
+
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
 
   if (!fontsLoaded) {
     return <View style={styles.screen} />;

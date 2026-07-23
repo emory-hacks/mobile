@@ -1,3 +1,4 @@
+import { getRole } from "@/utils/auth-token";
 import { Fredoka_700Bold, useFonts } from "@expo-google-fonts/fredoka";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect, useIsFocused } from "@react-navigation/native";
@@ -17,11 +18,10 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { getRole } from "@/utils/auth-token";
 
 export default function QRCodeScreen() {
   const originalBrightness = useRef<number | null>(null);
-  const computer_ip_address = "192.168.1.126";
+  const computer_ip_address = "";
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
   const [searchQuery, setSearchQuery] = useState("");
@@ -32,14 +32,16 @@ export default function QRCodeScreen() {
     Fredoka_700Bold,
   });
   const [qrCode, setQrCode] = useState("");
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(false);
 
   useEffect(() => {
     (async () => {
       const role = await getRole();
-      setIsAdmin(!!role && role.toUpperCase().includes("ADMIN"));
+      setIsAdmin(!!role && role.includes("admin"));
     })();
   }, []);
+
+  console.log(`is admin: ${isAdmin}`);
 
   useFocusEffect(
     useCallback(() => {

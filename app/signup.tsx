@@ -141,7 +141,7 @@ export default function Signup() {
     },
   });
 
-  const computer_ip_address = "192.168.1.126"; //for development, DON'T PUSH YOUR IP ADDRESS TO GITHUB!
+  const computer_ip_address = ""; //for development, DON'T PUSH YOUR IP ADDRESS TO GITHUB!
 
   const invalidPassword = (password: string) => {
     let hasAlpha = false; // anything that's alphabetic

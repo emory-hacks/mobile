@@ -128,7 +128,7 @@ export default function Login() {
     },
   });
 
-  const computer_ip_address = "192.168.1.126"; //for development, DON'T PUSH YOUR IP ADDRESS TO GITHUB!
+  const computer_ip_address = ""; //for development, DON'T PUSH YOUR IP ADDRESS TO GITHUB!
 
   const handleLogin = async () => {
     setErrorMessage(null);
@@ -165,6 +165,7 @@ export default function Login() {
 
       await saveJwt(jwt);
       await saveEmail(email);
+      console.log(jwt);
       router.replace("/(tabs)/(home)");
     } catch {
       setErrorMessage("Unable to connect to server");
