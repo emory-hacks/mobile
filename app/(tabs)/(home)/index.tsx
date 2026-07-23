@@ -72,7 +72,11 @@ export default function HomePage() {
         if (!active) return;
 
         await saveRole(userData.role);
-        await saveInfo("name", userData.name);
+        await saveInfo("name", userData.name ?? "");
+        await saveInfo("id", String(userData.id ?? ""));
+        await saveInfo("teamName", userData.teamName ?? "");
+        await saveInfo("checkedIn", String(!!userData.checkedIn));
+        console.log(String(!!userData.checkedIn));
         setName(userData.name);
         setTeamName(userData.teamName);
       })();
