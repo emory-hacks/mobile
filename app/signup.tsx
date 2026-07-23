@@ -1,3 +1,4 @@
+import { computer_ip_address } from "@/constants/computer-ip";
 import {
   Fredoka_600SemiBold,
   Fredoka_700Bold,
@@ -17,11 +18,10 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { computer_ip_address } from "@/constants/computer-ip";
 
 export default function Signup() {
   const insets = useSafeAreaInsets();
-  const [username, setUsername] = useState<string>("");
+  const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
@@ -163,7 +163,7 @@ export default function Signup() {
   const handleSignup = async () => {
     setErrorMessage(null);
 
-    if (!username || !email || !password || !confirmPassword) {
+    if (!name || !email || !password || !confirmPassword) {
       setErrorMessage("Please fill in all fields");
       return;
     }
@@ -193,7 +193,7 @@ export default function Signup() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ username, email, password }),
+          body: JSON.stringify({ name, email, password }),
         },
       );
 
@@ -234,8 +234,8 @@ export default function Signup() {
         <TextInput
           placeholder="@Name"
           style={styles.input}
-          value={username}
-          onChangeText={setUsername}
+          value={name}
+          onChangeText={setName}
           autoCapitalize="none"
         />
         <TextInput
