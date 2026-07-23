@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { computer_ip_address } from "@/constants/computer-ip";
 import { saveEmail, saveJwt } from "../utils/auth-token";
 
 export default function Login() {
@@ -127,8 +128,6 @@ export default function Login() {
       height: 28,
     },
   });
-
-  const computer_ip_address = ""; //for development, DON'T PUSH YOUR IP ADDRESS TO GITHUB!
 
   const handleLogin = async () => {
     setErrorMessage(null);

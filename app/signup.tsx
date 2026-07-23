@@ -17,6 +17,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { computer_ip_address } from "@/constants/computer-ip";
 
 export default function Signup() {
   const insets = useSafeAreaInsets();
@@ -140,8 +141,6 @@ export default function Signup() {
       height: 28,
     },
   });
-
-  const computer_ip_address = ""; //for development, DON'T PUSH YOUR IP ADDRESS TO GITHUB!
 
   const invalidPassword = (password: string) => {
     let hasAlpha = false; // anything that's alphabetic

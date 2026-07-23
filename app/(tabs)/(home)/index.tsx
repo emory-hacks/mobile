@@ -16,12 +16,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NoticeBar } from "@/components/home/notice-bar";
 import { NoticeDetailComponent } from "@/components/home/notice-detail-component";
 import { ProfileComponent } from "@/components/home/profile-component";
+import { computer_ip_address } from "@/constants/computer-ip";
 import { TEST_NOTICES } from "@/constants/test-notices";
 import { getEmail, getJwt, saveRole } from "@/utils/auth-token";
+import { saveInfo } from "@/utils/user-info";
 
 const FEATURED_NOTICE = TEST_NOTICES[0];
 const FOLLOWING_NOTICES = TEST_NOTICES.slice(1);
-const computer_ip_address = "";
 
 export default function HomePage() {
   const insets = useSafeAreaInsets();
@@ -33,6 +34,8 @@ export default function HomePage() {
     AlanSans_700Bold,
     Grandstander_900Black,
   });
+  const [name, setName] = useState("");
+  const [teamName, setTeamName] = useState("");
 
   useFocusEffect(
     //this will mount every time the tab is focused on. change back to useEffect
@@ -69,7 +72,9 @@ export default function HomePage() {
         if (!active) return;
 
         await saveRole(userData.role);
-        console.log(userData);
+        await saveInfo("name", userData.name);
+        setName(userData.name);
+        setTeamName(userData.teamName);
       })();
 
       return () => {
@@ -86,9 +91,9 @@ export default function HomePage() {
     <View style={styles.screen}>
       <View style={{ paddingTop: insets.top }}>
         <ProfileComponent
-          name="Taeeun K."
+          name={name}
           onSettingsPress={() => router.push("/settings")}
-          teamName="Team Name"
+          teamName={teamName}
         />
       </View>
 
