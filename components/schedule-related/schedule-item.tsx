@@ -1,213 +1,283 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from "expo-linear-gradient";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 type Props = {
+  activeDate?: string;
+  body?: string;
+  endTime?: string;
+  isActive?: boolean;
+  isExpanded?: boolean;
+  isPassed?: boolean;
+  location?: string;
+  onPress?: () => void;
+  startTime?: string;
   time?: string;
   title?: string;
-  startTime?: string;
-  endTime?: string;
-  location?: string;
-  body?: string;
-  isActive?: boolean;
-  isPassed?: boolean;
 };
 
 export default function ScheduleItem({
-  time = '00:00',
-  title = 'Schedule Title',
-  startTime = '00:00',
-  endTime = '00:00',
-  location = 'space',
-  body = 'Write down the body of the schedule. The administrator can provide the body in a unified format or the user can write it as a memo function.',
+  activeDate = "2026.8.7",
+  body = "Write down the body of the schedule. The administrator can provide the body in a unified format or the user can write it as a memo function.",
+  endTime = "00:00",
   isActive = false,
+  isExpanded = false,
   isPassed = false,
+  location = "Space",
+  onPress,
+  startTime = "00:00",
+  time = "00:00",
+  title = "Schedule Title",
 }: Props) {
-  const isDark = isActive && !isPassed;
-
   return (
-    <View
-      style={[
+    <Pressable
+      accessibilityHint={
+        isPassed
+          ? "Past event. Tap to expand or collapse."
+          : "Tap to expand or collapse."
+      }
+      accessibilityLabel={`${title}, ${time}`}
+      accessibilityRole="button"
+      accessibilityState={{ expanded: isExpanded }}
+      onPress={onPress}
+      style={({ pressed }) => [
         styles.container,
-        isDark && styles.activeContainer,
-        isPassed && styles.passedContainer,
+        isActive && styles.activeContainer,
+        pressed && styles.pressedContainer,
       ]}
-      accessibilityState={{ disabled: isPassed }}
     >
-      <View style={styles.leftCol}>
-        <Text
-          style={[
-            styles.timeLabel,
-            isDark && styles.activeText,
-            isPassed && styles.passedText,
-          ]}
-        >
+      <View style={styles.leftColumn}>
+        {isActive && <Text style={styles.activeDate}>{activeDate}</Text>}
+        <Text style={[styles.timeLabel, isActive && styles.activeText]}>
           {time}
         </Text>
       </View>
 
+      {isActive ? (
+        <LinearGradient
+          colors={["#A3CE26", "#FFFFFF", "#FFFFFF", "#A3CE26"]}
+          end={{ x: 0.5, y: 1 }}
+          locations={[0, 0.12, 0.88, 1]}
+          start={{ x: 0.5, y: 0 }}
+          style={styles.timeline}
+        />
+      ) : (
+        <View style={[styles.timeline, styles.inactiveTimeline]} />
+      )}
+
       <View
         style={[
-          styles.verticalDivider,
-          isDark && styles.activeDivider,
-          isPassed && styles.passedDivider,
+          styles.details,
+          isExpanded && styles.expandedDetails,
         ]}
-      />
+      >
+        <View
+          style={[
+            styles.titlePill,
+            isActive && styles.activeTitlePill,
+            isExpanded && styles.expandedTitlePill,
+          ]}
+        >
+          <Text
+            numberOfLines={1}
+            style={[
+              styles.titleText,
+              isActive && styles.activeTitleText,
+              isExpanded && styles.expandedTitleText,
+            ]}
+          >
+            {title}
+          </Text>
+        </View>
 
-      <View style={styles.rightCol}>
-        <View style={styles.topRow}>
+        <View
+          style={[
+            styles.metadataRow,
+            isExpanded && styles.expandedMetadataRow,
+          ]}
+        >
           <View
             style={[
-              styles.titlePill,
-              isDark && styles.activeTitlePill,
-              isPassed && styles.passedTitlePill,
+              styles.metadataPill,
+              isActive && styles.activeMetadataPill,
+              isExpanded && styles.expandedMetadataPill,
             ]}
           >
             <Text
               style={[
-                styles.titleText,
-                isDark && styles.activeTitleText,
-                isPassed && styles.passedTitleText,
-              ]}
-            >
-              {title}
-            </Text>
-          </View>
-          <View style={styles.timeRange}>
-            <Text
-              style={[
-                styles.timeRangeText,
-                isDark && styles.activeMetaText,
-                isPassed && styles.passedMetaText,
-              ]}
-            >
-              {startTime} ~ {endTime}
-            </Text>
-            <Text
-              style={[
-                styles.locationText,
-                isDark && styles.activeMetaText,
-                isPassed && styles.passedMetaText,
+                styles.metadataText,
+                isActive && styles.activeMetadataText,
+                isExpanded && styles.expandedMetadataText,
               ]}
             >
               {location}
             </Text>
           </View>
+          <View
+            style={[
+              styles.metadataPill,
+              isActive && styles.activeMetadataPill,
+              isExpanded && styles.expandedMetadataPill,
+            ]}
+          >
+            <Text
+              style={[
+                styles.metadataText,
+                isActive && styles.activeMetadataText,
+                isExpanded && styles.expandedMetadataText,
+              ]}
+            >
+              {startTime} ~ {endTime}
+            </Text>
+          </View>
         </View>
+
+        {/* The API sends one complete body; collapsed rows only clamp its lines. */}
         <Text
+          numberOfLines={isExpanded ? undefined : 2}
           style={[
             styles.bodyText,
-            isDark && styles.activeText,
-            isPassed && styles.passedBodyText,
+            isActive && styles.activeText,
+            isExpanded && styles.expandedBodyText,
           ]}
         >
           {body}
         </Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    paddingVertical: 15,
-    paddingHorizontal: 12,
-    position: 'relative',
-  },
   activeContainer: {
-    backgroundColor: '#000',
+    backgroundColor: "#A3CE26",
   },
-  passedContainer: {
-    backgroundColor: '#fbfbfb',
-  },
-  leftCol: {
-    width: 58,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingTop: 3,
-  },
-  timeLabel: {
-    color: '#000',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  verticalDivider: {
-    bottom: 0,
-    left: 80,
-    position: 'absolute',
-    top: 0,
-    width: 1,
-    backgroundColor: '#000',
-  },
-  activeDivider: {
-    backgroundColor: '#fff',
-  },
-  passedDivider: {
-    backgroundColor: '#dedede',
-  },
-  rightCol: {
-    flex: 1,
-    gap: 9,
-    marginLeft: 21,
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-  },
-  titlePill: {
-    backgroundColor: '#000',
-    borderRadius: 50,
-    paddingHorizontal: 14,
-    paddingVertical: 5,
-  },
-  activeTitlePill: {
-    backgroundColor: '#fff',
-  },
-  passedTitlePill: {
-    backgroundColor: '#eeeeee',
-  },
-  titleText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  activeTitleText: {
-    color: '#000',
-  },
-  passedTitleText: {
-    color: '#6f6f6f',
-  },
-  timeRange: {
-    alignItems: 'flex-end',
-  },
-  timeRangeText: {
-    color: '#8f8f8f',
+  activeDate: {
+    color: "#FFFFFF",
+    fontFamily: "AlanSans_700Bold",
     fontSize: 9,
+    lineHeight: 12,
   },
-  locationText: {
-    color: '#8f8f8f',
-    fontSize: 9,
+  activeMetadataPill: {
+    backgroundColor: "#87C27C",
   },
-  bodyText: {
-    color: '#000',
-    fontSize: 11,
-    textAlign: 'justify',
-    lineHeight: 15,
+  activeMetadataText: {
+    color: "#FFFFFF",
   },
   activeText: {
-    color: '#fff',
+    color: "#FFFFFF",
   },
-  activeMetaText: {
-    color: '#d7d7d7',
+  activeTitlePill: {
+    backgroundColor: "#FFFFFF",
   },
-  passedText: {
-    color: '#8a8a8a',
+  activeTitleText: {
+    color: "#000000",
   },
-  passedMetaText: {
-    color: '#9a9a9a',
+  bodyText: {
+    color: "#000000",
+    fontFamily: "AlanSans_400Regular",
+    fontSize: 11,
+    lineHeight: 15,
+    marginTop: 3,
   },
-  passedBodyText: {
-    color: '#777',
+  container: {
+    backgroundColor: "#FFFFFF",
+    flexDirection: "row",
+    minHeight: 112,
+    position: "relative",
+  },
+  details: {
+    alignItems: "flex-start",
+    flex: 1,
+    paddingBottom: 14,
+    paddingLeft: 12,
+    paddingRight: 28,
+    paddingTop: 14,
+  },
+  expandedBodyText: {
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 12,
+  },
+  expandedDetails: {
+    paddingBottom: 20,
+    paddingTop: 16,
+  },
+  expandedMetadataPill: {
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  expandedMetadataRow: {
+    gap: 6,
+    marginTop: 7,
+  },
+  expandedMetadataText: {
+    fontSize: 12,
+    lineHeight: 15,
+  },
+  expandedTitlePill: {
+    borderRadius: 11,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  expandedTitleText: {
+    fontSize: 19,
+    lineHeight: 23,
+  },
+  inactiveTimeline: {
+    backgroundColor: "#A3CE26",
+  },
+  leftColumn: {
+    alignItems: "flex-end",
+    height: 112,
+    paddingRight: 8,
+    paddingTop: 16,
+    width: 96,
+  },
+  metadataPill: {
+    backgroundColor: "#F3F3F3",
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  metadataRow: {
+    flexDirection: "row",
+    gap: 4,
+    marginTop: 5,
+  },
+  metadataText: {
+    color: "#A6A6A6",
+    fontFamily: "AlanSans_400Regular",
+    fontSize: 9,
+    lineHeight: 11,
+  },
+  pressedContainer: {
+    opacity: 0.82,
+  },
+  timeline: {
+    height: 112,
+    left: 96,
+    position: "absolute",
+    top: 0,
+    width: 1,
+  },
+  timeLabel: {
+    color: "#000000",
+    fontFamily: "AlanSans_700Bold",
+    fontSize: 10,
+    lineHeight: 13,
+  },
+  titlePill: {
+    backgroundColor: "#A6A6A6",
+    borderRadius: 9,
+    maxWidth: "100%",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  titleText: {
+    color: "#FFFFFF",
+    fontFamily: "AlanSans_700Bold",
+    fontSize: 13,
+    lineHeight: 16,
   },
 });

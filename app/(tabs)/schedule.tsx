@@ -1,5 +1,13 @@
 import ScheduleItem from "@/components/schedule-related/schedule-item";
+import {
+  AlanSans_400Regular,
+  AlanSans_500Medium,
+  AlanSans_700Bold,
+} from "@expo-google-fonts/alan-sans";
+import { Grandstander_900Black } from "@expo-google-fonts/grandstander";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import MaskedView from "@react-native-masked-view/masked-view";
+import { useFonts } from "expo-font";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -16,9 +24,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 const ESTIMATED_SCHEDULE_ITEM_HEIGHT = 112;
 const FOCUSED_EVENT_TOP_OFFSET = ESTIMATED_SCHEDULE_ITEM_HEIGHT;
 
-// Fake Schedule Items, will receive API calls
+// Backend contract: every event should include a stable, unique database ID.
+// Do not generate IDs during render; React and the expand state both rely on them.
 const scheduleItems = [
   {
+    id: "tokyo-0948",
     time: "09:48",
     title: "For Tokyo",
     startTime: "00:00",
@@ -29,6 +39,7 @@ const scheduleItems = [
     isPassed: true,
   },
   {
+    id: "nagoya-0955",
     time: "09:55",
     title: "For Nagoya",
     startTime: "00:00",
@@ -39,15 +50,17 @@ const scheduleItems = [
     isPassed: true,
   },
   {
+    id: "tokyo-1013",
     time: "10:13",
     title: "For Tokyo",
     startTime: "00:00",
     endTime: "00:00",
     location: "Platform 25",
-    body: "We will be stopping at Kyoto, Nagoya, Shin-Yokohama, and Shinagawa. Non-reserved seats are in car number 1 to 3.",
+    body: "We will be stopping at Kyoto, Nagoya, Shin-Yokohama, and Shinagawa. Non-reserved seats are in cars 1 to 3. Please keep your ticket with you until you leave the station. Passengers transferring at Tokyo should follow the signs on the platform.",
     isActive: true,
   },
   {
+    id: "out-of-service-1050",
     time: "10:50",
     title: "Out of Service",
     startTime: "00:00",
@@ -55,6 +68,7 @@ const scheduleItems = [
     location: "Platform 26",
   },
   {
+    id: "tokyo-1110",
     time: "11:10",
     title: "For Tokyo",
     startTime: "00:00",
@@ -62,6 +76,7 @@ const scheduleItems = [
     location: "Platform 25",
   },
   {
+    id: "out-of-service-1125",
     time: "11:25",
     title: "Out of Service",
     startTime: "00:00",
@@ -69,6 +84,7 @@ const scheduleItems = [
     location: "Platform 26",
   },
   {
+    id: "tokyo-1135",
     time: "11:35",
     title: "For Tokyo",
     startTime: "00:00",
@@ -76,6 +92,7 @@ const scheduleItems = [
     location: "Platform 25",
   },
   {
+    id: "nagoya-1150",
     time: "11:50",
     title: "For Nagoya",
     startTime: "00:00",
@@ -93,10 +110,11 @@ function addDays(date: Date, days: number) {
 
 // Format as MM/DD
 function formatDate(date: Date) {
-  return date.toLocaleDateString("en-US", {
-    month: "2-digit",
-    day: "2-digit",
-  });
+  return `${date.getMonth() + 1}/${date.getDate()}`;
+}
+
+function formatFullDate(date: Date) {
+  return `${date.getFullYear()}.${date.getMonth() + 1}.${date.getDate()}`;
 }
 
 function isBeforeToday(date: Date) {
@@ -173,7 +191,10 @@ function GradientDateText({
       }
     >
       <LinearGradient
-        colors={["#d8d8d8", "#8f8f8f"]}
+        colors={[
+          "rgba(163, 206, 38, 0.12)",
+          "rgba(163, 206, 38, 0.72)",
+        ]}
         start={{ x: isYesterday ? 0 : 1, y: 0.5 }}
         end={{ x: isYesterday ? 1 : 0, y: 0.5 }}
       >
@@ -190,6 +211,16 @@ export default function ScheduleScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const transitionAnim = useRef(new Animated.Value(1)).current;
   const [selectedDate, setSelectedDate] = useState(() => new Date());
+  // null means every event is collapsed; otherwise this stores the backend ID.
+  const [expandedScheduleId, setExpandedScheduleId] = useState<string | null>(
+    null
+  );
+  const [fontsLoaded] = useFonts({
+    AlanSans_400Regular,
+    AlanSans_500Medium,
+    AlanSans_700Bold,
+    Grandstander_900Black,
+  });
 
   // Grab the selected day, plus the previous and next dates around it.
   const visibleDates = [
@@ -255,43 +286,69 @@ export default function ScheduleScreen() {
     ],
   };
 
+  const selectDate = (date: Date) => {
+    // A new date receives a different schedule, so do not keep a stale event open.
+    setExpandedScheduleId(null);
+    setSelectedDate(date);
+  };
+
+  const toggleSchedule = (scheduleId: string) => {
+    setExpandedScheduleId((currentId) =>
+      currentId === scheduleId ? null : scheduleId
+    );
+  };
+
+  if (!fontsLoaded) {
+    return <View style={styles.screen} />;
+  }
+
   return (
-    <View style={[styles.screen, { paddingTop: insets.top + 16 }]}>
-      <View style={styles.dateRow}>
-        {visibleDates.map((date, index) => {
-          const formattedDate = formatDate(date);
-          const isSelected = index === 1;
+    <View style={styles.screen}>
+      <View style={[styles.header, { paddingTop: insets.top + 62 }]}>
+        <View
+          accessibilityLabel="Settings"
+          accessibilityRole="image"
+          style={[styles.settingsIcon, { top: insets.top + 20 }]}
+        >
+          <Ionicons color="#000000" name="settings-outline" size={26} />
+        </View>
 
-          if (isSelected) {
+        <View style={styles.dateRow}>
+          {visibleDates.map((date, index) => {
+            const formattedDate = formatDate(date);
+            const isSelected = index === 1;
+
+            if (isSelected) {
+              return (
+                <Animated.Text
+                  key={formattedDate}
+                  style={[
+                    styles.dateText,
+                    styles.selectedDateText,
+                    selectedDateStyle,
+                  ]}
+                >
+                  {formattedDate}
+                </Animated.Text>
+              );
+            }
+
             return (
-              <Animated.Text
+              <Pressable
                 key={formattedDate}
-                style={[
-                  styles.dateText,
-                  styles.selectedDateText,
-                  selectedDateStyle,
-                ]}
+                accessibilityRole="button"
+                accessibilityLabel={`View schedule for ${formattedDate}`}
+                hitSlop={12}
+                onPress={() => selectDate(date)}
               >
-                {formattedDate}
-              </Animated.Text>
+                <GradientDateText
+                  date={formattedDate}
+                  direction={index === 0 ? "yesterday" : "tomorrow"}
+                />
+              </Pressable>
             );
-          }
-
-          return (
-            <Pressable
-              key={formattedDate}
-              accessibilityRole="button"
-              accessibilityLabel={`View schedule for ${formattedDate}`}
-              hitSlop={12}
-              onPress={() => setSelectedDate(date)}
-            >
-              <GradientDateText
-                date={formattedDate}
-                direction={index === 0 ? "yesterday" : "tomorrow"}
-              />
-            </Pressable>
-          );
-        })}
+          })}
+        </View>
       </View>
 
       <View style={styles.panel}>
@@ -303,7 +360,6 @@ export default function ScheduleScreen() {
               styles.scrollContent,
               {
                 paddingBottom: insets.bottom + 32,
-                paddingTop: focusIndex === 0 ? 0 : 8,
               },
             ]}
             showsVerticalScrollIndicator={false}
@@ -318,7 +374,7 @@ export default function ScheduleScreen() {
 
                 return (
                   <ScheduleItem
-                    key={`${item.time}-${index}`}
+                    key={item.id}
                     time={item.time}
                     title={item.title}
                     startTime={item.startTime}
@@ -326,12 +382,26 @@ export default function ScheduleScreen() {
                     location={item.location}
                     body={item.body}
                     isActive={isActive}
+                    isExpanded={expandedScheduleId === item.id}
                     isPassed={isPassed}
+                    activeDate={formatFullDate(selectedDate)}
+                    onPress={() => toggleSchedule(item.id)}
                   />
                 );
               })}
             </Animated.View>
           </ScrollView>
+
+          <LinearGradient
+            colors={[
+              "rgba(255, 255, 255, 0)",
+              "rgba(255, 255, 255, 0.72)",
+              "rgba(255, 255, 255, 0.98)",
+            ]}
+            locations={[0, 0.55, 1]}
+            pointerEvents="none"
+            style={styles.scheduleFade}
+          />
         </View>
       </View>
     </View>
@@ -340,38 +410,41 @@ export default function ScheduleScreen() {
 
 const styles = StyleSheet.create({
   screen: {
-    flex: 1,
     backgroundColor: "#fff",
+    flex: 1,
+  },
+  header: {
+    backgroundColor: "#FFFFFF",
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    elevation: 8,
+    paddingBottom: 28,
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.14,
+    shadowRadius: 8,
+    zIndex: 2,
   },
   panel: {
     flex: 1,
-    marginTop: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    elevation: 8,
   },
   panelContent: {
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    backgroundColor: "#FFFFFF",
     flex: 1,
     overflow: "hidden",
+    position: "relative",
   },
   dateRow: {
+    alignItems: "flex-end",
     flexDirection: "row",
-    alignItems: "baseline",
+    gap: 12,
     justifyContent: "center",
-    gap: 32,
-    backgroundColor: "#fff",
-    paddingTop: 12,
-    paddingBottom: 4,
   },
   dateText: {
-    color: "#9d9d9d",
-    fontSize: 21,
-    fontWeight: "700",
+    color: "#A3CE26",
+    fontFamily: "Grandstander_900Black",
+    fontSize: 48,
+    lineHeight: 58,
   },
   gradientDateMask: {
     backgroundColor: "transparent",
@@ -380,13 +453,29 @@ const styles = StyleSheet.create({
     opacity: 0,
   },
   selectedDateText: {
-    color: "#000",
-    fontSize: 31,
+    color: "#A3CE26",
+    fontSize: 56,
+    lineHeight: 72,
+  },
+  settingsIcon: {
+    alignItems: "center",
+    height: 32,
+    justifyContent: "center",
+    position: "absolute",
+    right: 28,
+    width: 32,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 8,
+    paddingTop: 0,
+  },
+  scheduleFade: {
+    bottom: 0,
+    height: 120,
+    left: 0,
+    position: "absolute",
+    right: 0,
   },
 });
