@@ -1,4 +1,4 @@
-import { computer_ip_address } from "@/constants/computer-ip";
+import { API_BASE_URL } from "@/constants/computer-ip";
 import {
   Fredoka_600SemiBold,
   Fredoka_700Bold,
@@ -187,7 +187,7 @@ export default function Signup() {
 
     try {
       const response = await fetch(
-        `http://${computer_ip_address}:8080/api/users/register`,
+        `${API_BASE_URL}/api/users/register`,
         {
           method: "POST",
           headers: {

@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NoticeBar } from "@/components/home/notice-bar";
 import { NoticeDetailComponent } from "@/components/home/notice-detail-component";
 import { ProfileComponent } from "@/components/home/profile-component";
-import { computer_ip_address } from "@/constants/computer-ip";
+import { API_BASE_URL } from "@/constants/computer-ip";
 import { TEST_NOTICES } from "@/constants/test-notices";
 import { getEmail, getJwt, saveRole } from "@/utils/auth-token";
 import { saveInfo } from "@/utils/user-info";
@@ -52,7 +52,7 @@ export default function HomePage() {
         // Use expo/fetch + credentials: "omit" so a manual Cookie header is sent.
         // RN's built-in fetch treats Cookie as managed and often strips it (403).
         const response = await fetch(
-          `http://${computer_ip_address}:8080/api/users/${email}`,
+          `${API_BASE_URL}/api/users/${email}`,
           {
             method: "GET",
             credentials: "omit",

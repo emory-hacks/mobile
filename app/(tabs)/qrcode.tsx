@@ -1,4 +1,4 @@
-import { computer_ip_address } from "@/constants/computer-ip";
+import { API_BASE_URL } from "@/constants/computer-ip";
 import { getJwt, getRole } from "@/utils/auth-token";
 import { Fredoka_700Bold, useFonts } from "@expo-google-fonts/fredoka";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -66,7 +66,7 @@ export default function QRCodeScreen() {
       (async () => {
         const jwt = await getJwt();
         const response = await fetch(
-          `http://${computer_ip_address}:8080/api/users/me/qr`,
+          `${API_BASE_URL}/api/users/me/qr`,
           {
             method: "GET",
             headers: {
@@ -109,7 +109,7 @@ export default function QRCodeScreen() {
       (async () => {
         try {
           await fetch(
-            `http://${computer_ip_address}:8080/api/admin/award-points-fast`,
+            `${API_BASE_URL}/api/admin/award-points-fast`,
             {
               method: "POST",
               headers: {

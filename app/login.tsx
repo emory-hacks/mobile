@@ -15,7 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { computer_ip_address } from "@/constants/computer-ip";
+import { API_BASE_URL } from "@/constants/computer-ip";
 import { saveEmail, saveJwt } from "../utils/auth-token";
 
 export default function Login() {
@@ -139,7 +139,7 @@ export default function Login() {
 
     try {
       const response = await fetch(
-        `http://${computer_ip_address}:8080/auth/login`,
+        `${API_BASE_URL}/auth/login`,
         {
           method: "POST",
           headers: {
