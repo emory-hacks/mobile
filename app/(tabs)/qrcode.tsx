@@ -65,17 +65,15 @@ export default function QRCodeScreen() {
 
       (async () => {
         const jwt = await getJwt();
-        const response = await fetch(
-          `${API_BASE_URL}/api/users/me/qr`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Cookie: `token=${jwt}`,
-            },
+        const response = await fetch(`${API_BASE_URL}/api/users/me/qr`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `token=${jwt}`,
           },
-        );
+        });
         if (!response.ok) {
+          console.log(response);
           return;
         }
 
@@ -108,20 +106,17 @@ export default function QRCodeScreen() {
 
       (async () => {
         try {
-          await fetch(
-            `${API_BASE_URL}/api/admin/award-points-fast`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                token: result.data,
-                amount: 1,
-                eventId: "temp",
-              }),
+          await fetch(`${API_BASE_URL}/api/admin/award-points-fast`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
             },
-          );
+            body: JSON.stringify({
+              token: result.data,
+              amount: 1,
+              eventId: "temp",
+            }),
+          });
           await console.log(result.data);
         } catch {
           // request failed
