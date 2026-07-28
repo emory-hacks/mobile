@@ -180,23 +180,6 @@ export default function QRCodeScreen() {
             >
               Scan
             </Text>
-            <Pressable
-              hitSlop={12}
-              accessibilityRole="button"
-              accessibilityLabel="Settings"
-              style={({ pressed, hovered }) => [
-                styles.settingsButton,
-                (pressed || hovered) && styles.settingsButtonActive,
-              ]}
-            >
-              {({ pressed, hovered }) => (
-                <Ionicons
-                  name="settings-outline"
-                  size={26}
-                  color={pressed || hovered ? "#000" : "#333"}
-                />
-              )}
-            </Pressable>
           </View>
 
           <View style={styles.searchRow}>
@@ -425,13 +408,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     color: "#333",
-  },
-  settingsButton: {
-    padding: 4,
-    borderRadius: 8,
-  },
-  settingsButtonActive: {
-    backgroundColor: "#e8e8e8",
   },
   searchButton: {
     width: 44,
