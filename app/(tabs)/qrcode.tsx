@@ -1,5 +1,6 @@
 import { API_BASE_URL } from "@/constants/computer-ip";
 import { getJwt, getRole } from "@/utils/auth-token";
+import { saveInfo } from "@/utils/user-info";
 import { Fredoka_700Bold, useFonts } from "@expo-google-fonts/fredoka";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect, useIsFocused } from "@react-navigation/native";
@@ -22,12 +23,37 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+type ScannedAttendee = {
+  name: string;
+  teamName: string;
+  points: number;
+  maxPoints: number;
+  checkInValid: boolean;
+  email: string;
+};
+
+function attendeeFromApi(data: Record<string, unknown>): ScannedAttendee {
+  const rawName = String(data.name ?? "");
+  const name = rawName.startsWith("@") ? rawName : `@${rawName}`;
+
+  return {
+    name,
+    teamName: String(data.teamName ?? ""),
+    points: Number(data.points ?? data.totalPoints ?? 0),
+    maxPoints: Number(data.maxPoints ?? 100),
+    checkInValid: Boolean(data.checkedIn ?? data.checkInValid ?? false),
+    email: String(data.email ?? ""),
+  };
+}
+
 export default function QRCodeScreen() {
   const originalBrightness = useRef<number | null>(null);
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
   const [searchQuery, setSearchQuery] = useState("");
   const [scanned, setScanned] = useState(false);
+  const [scannedAttendee, setScannedAttendee] =
+    useState<ScannedAttendee | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const [fontsLoaded] = useFonts({
@@ -111,24 +137,44 @@ export default function QRCodeScreen() {
   const handleBarcodeScanned = useCallback(
     (result: BarcodeScanningResult) => {
       if (scanned) return;
-      setScanned(true);
 
       (async () => {
         try {
-          await fetch(`${API_BASE_URL}/api/admin/award-points-fast`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
+          const jwt = await getJwt();
+          if (!jwt) return;
+
+          const response = await fetch(
+            `${API_BASE_URL}/api/admin/award-points-fast`,
+            {
+              method: "POST",
+              credentials: "omit",
+              headers: {
+                "Content-Type": "application/json",
+                Cookie: `token=${jwt}`,
+              },
+              body: JSON.stringify({
+                token: result.data,
+                amount: 1, //eventually make api call to see what event delta gets (based on current time)
+                eventId: "temp",
+              }),
             },
-            body: JSON.stringify({
-              token: result.data,
-              amount: 1,
-              eventId: "temp",
-            }),
-          });
-          await console.log(result.data);
+          );
+
+          if (!response.ok) {
+            console.log(response.status, await response.text());
+            return;
+          }
+
+          const data = (await response.json()) as Record<string, unknown>;
+          const payload = (data.user ?? data.data ?? data) as Record<
+            string,
+            unknown
+          >;
+          const attendee = attendeeFromApi(payload);
+          await saveInfo("points", String(attendee.points));
+          setScannedAttendee(attendee);
+          setScanned(true);
         } catch {
-          // request failed
           console.log("Scanning failed");
         }
       })();
@@ -157,20 +203,9 @@ export default function QRCodeScreen() {
 
   if (isAdmin) {
     const cameraReady = cameraActive && permission?.granted && isFocused;
-
-    // Placeholder attendee data until QR lookup is wired up
-    const scannedAttendee = {
-      username: "@Name",
-      teamName: "Team Name",
-      points: 72,
-      maxPoints: 100,
-      checkInValid: true,
-      email: "jyweva@ewha.ac.kr",
-    };
-    const progress = Math.min(
-      scannedAttendee.points / scannedAttendee.maxPoints,
-      1.0,
-    );
+    const progress = scannedAttendee
+      ? Math.min(scannedAttendee.points / scannedAttendee.maxPoints, 1.0)
+      : 0;
 
     return (
       <View style={styles.pageContainer}>
@@ -238,7 +273,7 @@ export default function QRCodeScreen() {
           </View>
         </View>
 
-        {scanned ? (
+        {scanned && scannedAttendee ? (
           <View style={styles.profileSection}>
             <View style={styles.profileTopRow}>
               <Pressable
@@ -255,7 +290,7 @@ export default function QRCodeScreen() {
 
             <View style={styles.profileIdentity}>
               <View style={styles.usernameRow}>
-                <Text style={styles.username}>{scannedAttendee.username}</Text>
+                <Text style={styles.username}>{scannedAttendee.name}</Text>
                 <View style={styles.verifiedBadge}>
                   <Ionicons name="checkmark" size={12} color="#fff" />
                 </View>
