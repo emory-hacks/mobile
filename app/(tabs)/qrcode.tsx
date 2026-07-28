@@ -9,8 +9,10 @@ import {
   useCameraPermissions,
   type BarcodeScanningResult,
 } from "expo-camera";
+import { fetch } from "expo/fetch";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Alert,
   Image,
   Pressable,
   StyleSheet,
@@ -40,8 +42,6 @@ export default function QRCodeScreen() {
       setIsAdmin(!!role && role.includes("admin"));
     })();
   }, []);
-
-  console.log(`is admin: ${isAdmin}`);
 
   useFocusEffect(
     useCallback(() => {
@@ -98,6 +98,27 @@ export default function QRCodeScreen() {
       };
     }, [isAdmin]),
   );
+
+  const handleSearchUser = async () => {
+    const jwt = await getJwt();
+    const response = await fetch(`${API_BASE_URL}/api/users/${searchQuery}`, {
+      method: "GET",
+      credentials: "omit",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: `token=${jwt}`,
+      },
+    });
+    if (!response.ok) {
+      if (response.status === 404) {
+        Alert.alert("User not found");
+        return;
+      }
+      console.log(response.status, await response.text());
+      return;
+    }
+    console.log("success!", await response.json());
+  };
 
   const handleBarcodeScanned = useCallback(
     (result: BarcodeScanningResult) => {
@@ -200,6 +221,7 @@ export default function QRCodeScreen() {
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Search"
+              onPress={handleSearchUser}
             >
               {({ pressed, hovered }) => (
                 <Ionicons
