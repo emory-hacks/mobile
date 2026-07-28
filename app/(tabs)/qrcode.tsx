@@ -3,12 +3,14 @@ import { getJwt, getRole } from "@/utils/auth-token";
 import { Fredoka_700Bold, useFonts } from "@expo-google-fonts/fredoka";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect, useIsFocused } from "@react-navigation/native";
+import { Buffer } from "buffer";
 import * as Brightness from "expo-brightness";
 import {
   CameraView,
   useCameraPermissions,
   type BarcodeScanningResult,
 } from "expo-camera";
+import { fetch } from "expo/fetch";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Image,
@@ -64,26 +66,33 @@ export default function QRCodeScreen() {
       })();
 
       (async () => {
-        const jwt = await getJwt();
-        const response = await fetch(`${API_BASE_URL}/api/users/me/qr`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Cookie: `token=${jwt}`,
-          },
-        });
-        if (!response.ok) {
-          console.log(response);
-          return;
-        }
+        try {
+          const jwt = await getJwt();
+          if (!jwt) return;
 
-        const blob = await response.blob();
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const dataUri = reader.result as string;
-          setQrCode(dataUri);
-        };
-        reader.readAsDataURL(blob);
+          // Use expo/fetch + credentials: "omit" so manual Cookie header is sent.
+          const response = await fetch(`${API_BASE_URL}/api/users/me/qr`, {
+            method: "GET",
+            credentials: "omit",
+            headers: {
+              "Content-Type": "application/json",
+              Cookie: `token=${jwt}`,
+            },
+          });
+
+          if (!response.ok) {
+            console.log(response.status, await response.text());
+            return;
+          }
+
+          const contentType =
+            response.headers.get("content-type") ?? "image/png";
+          const arrayBuffer = await response.arrayBuffer();
+          const base64 = Buffer.from(arrayBuffer).toString("base64");
+          setQrCode(`data:${contentType};base64,${base64}`);
+        } catch (error) {
+          console.log("Failed to load QR code", error);
+        }
       })();
 
       return () => {
