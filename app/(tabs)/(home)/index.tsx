@@ -1,20 +1,25 @@
 import {
-    AlanSans_400Regular,
-    AlanSans_500Medium,
-    AlanSans_700Bold,
+  AlanSans_400Regular,
+  AlanSans_500Medium,
+  AlanSans_700Bold,
 } from "@expo-google-fonts/alan-sans"; // fonts
 import { Grandstander_900Black } from "@expo-google-fonts/grandstander";
+import { useFocusEffect } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { fetch } from "expo/fetch";
+import { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { NoticeBar } from "@/components/home/notice-bar";
 import { NoticeDetailComponent } from "@/components/home/notice-detail-component";
 import { ProfileComponent } from "@/components/home/profile-component";
+import { API_BASE_URL } from "@/constants/computer-ip";
 import { TEST_NOTICES } from "@/constants/test-notices";
+import { getEmail, getJwt, saveRole } from "@/utils/auth-token";
+import { saveInfo } from "@/utils/user-info";
 
 const FEATURED_NOTICE = TEST_NOTICES[0];
 const FOLLOWING_NOTICES = TEST_NOTICES.slice(1);
@@ -29,6 +34,58 @@ export default function HomePage() {
     AlanSans_700Bold,
     Grandstander_900Black,
   });
+  const [name, setName] = useState("");
+  const [teamName, setTeamName] = useState("");
+
+  useFocusEffect(
+    //this will mount every time the tab is focused on. change back to useEffect
+    //for production and make it remount after ever log in! Maybe when jwt changes?
+    useCallback(() => {
+      let active = true;
+
+      (async () => {
+        const jwt = await getJwt();
+        const email = await getEmail();
+
+        if (!jwt || !email || !active) return;
+
+        // Use expo/fetch + credentials: "omit" so a manual Cookie header is sent.
+        // RN's built-in fetch treats Cookie as managed and often strips it (403).
+        const response = await fetch(
+          `${API_BASE_URL}/api/users/${email}`,
+          {
+            method: "GET",
+            credentials: "omit",
+            headers: {
+              "Content-Type": "application/json",
+              Cookie: `token=${jwt}`,
+            },
+          },
+        );
+
+        if (!response.ok) {
+          console.log(response.status, await response.text());
+          return;
+        }
+
+        const userData = await response.json();
+        if (!active) return;
+
+        await saveRole(userData.role);
+        await saveInfo("name", userData.name ?? "");
+        await saveInfo("id", String(userData.id ?? ""));
+        await saveInfo("teamName", userData.teamName ?? "");
+        await saveInfo("checkedIn", String(!!userData.checkedIn));
+        console.log(String(!!userData.checkedIn));
+        setName(userData.name);
+        setTeamName(userData.teamName);
+      })();
+
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
 
   if (!fontsLoaded) {
     return <View style={styles.screen} />;
@@ -38,9 +95,9 @@ export default function HomePage() {
     <View style={styles.screen}>
       <View style={{ paddingTop: insets.top }}>
         <ProfileComponent
-          name="Taeeun K."
+          name={name}
           onSettingsPress={() => router.push("/settings")}
-          teamName="Team Name"
+          teamName={teamName}
         />
       </View>
 

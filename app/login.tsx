@@ -15,6 +15,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { API_BASE_URL } from "@/constants/computer-ip";
+import { saveEmail, saveJwt } from "../utils/auth-token";
 
 export default function Login() {
   const [email, setEmail] = useState<string>("");
@@ -127,8 +129,6 @@ export default function Login() {
     },
   });
 
-  const computer_ip_address = ""; //for development, DON'T PUSH YOUR IP ADDRESS TO GITHUB!
-
   const handleLogin = async () => {
     setErrorMessage(null);
 
@@ -139,7 +139,7 @@ export default function Login() {
 
     try {
       const response = await fetch(
-        `http://${computer_ip_address}:8080/auth/login`,
+        `${API_BASE_URL}/auth/login`,
         {
           method: "POST",
           headers: {
@@ -155,9 +155,16 @@ export default function Login() {
       }
 
       const data = await response.json();
-      const jwt = data.jwt;
-      console.log(jwt);
+      const jwt = data.token;
 
+      if (!jwt) {
+        setErrorMessage("Login failed");
+        return;
+      }
+
+      await saveJwt(jwt);
+      await saveEmail(email);
+      console.log(jwt);
       router.replace("/(tabs)/(home)");
     } catch {
       setErrorMessage("Unable to connect to server");

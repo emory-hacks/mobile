@@ -1,3 +1,5 @@
+import { API_BASE_URL } from "@/constants/computer-ip";
+import { getJwt, getRole } from "@/utils/auth-token";
 import { Fredoka_700Bold, useFonts } from "@expo-google-fonts/fredoka";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect, useIsFocused } from "@react-navigation/native";
@@ -7,14 +9,19 @@ import {
   useCameraPermissions,
   type BarcodeScanningResult,
 } from "expo-camera";
-import { useCallback, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import QRCode from "react-native-qrcode-svg";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function QRCodeScreen() {
   const originalBrightness = useRef<number | null>(null);
-  const isAdmin = false;
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
   const [searchQuery, setSearchQuery] = useState("");
@@ -24,11 +31,22 @@ export default function QRCodeScreen() {
   const [fontsLoaded] = useFonts({
     Fredoka_700Bold,
   });
+  const [qrCode, setQrCode] = useState("");
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(false);
+
+  useEffect(() => {
+    (async () => {
+      const role = await getRole();
+      setIsAdmin(!!role && role.includes("admin"));
+    })();
+  }, []);
+
+  console.log(`is admin: ${isAdmin}`);
 
   useFocusEffect(
     useCallback(() => {
-      if (isAdmin) {
-        setScanned(false);
+      if (isAdmin !== false) {
+        if (isAdmin) setScanned(false);
         return;
       }
 
@@ -43,6 +61,29 @@ export default function QRCodeScreen() {
             // brightness control not available
           }
         }
+      })();
+
+      (async () => {
+        const jwt = await getJwt();
+        const response = await fetch(`${API_BASE_URL}/api/users/me/qr`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `token=${jwt}`,
+          },
+        });
+        if (!response.ok) {
+          console.log(response);
+          return;
+        }
+
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const dataUri = reader.result as string;
+          setQrCode(dataUri);
+        };
+        reader.readAsDataURL(blob);
       })();
 
       return () => {
@@ -62,8 +103,26 @@ export default function QRCodeScreen() {
     (result: BarcodeScanningResult) => {
       if (scanned) return;
       setScanned(true);
-      // TODO: handle scanned QR data (e.g. look up attendee)
-      console.log("Scanned QR:", result.data);
+
+      (async () => {
+        try {
+          await fetch(`${API_BASE_URL}/api/admin/award-points-fast`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              token: result.data,
+              amount: 1,
+              eventId: "temp",
+            }),
+          });
+          await console.log(result.data);
+        } catch {
+          // request failed
+          console.log("Scanning failed");
+        }
+      })();
     },
     [scanned],
   );
@@ -82,6 +141,10 @@ export default function QRCodeScreen() {
   const handleDismissScanResult = useCallback(() => {
     setScanned(false);
   }, []);
+
+  if (isAdmin === null) {
+    return <View style={styles.pageContainer} />;
+  }
 
   if (isAdmin) {
     const cameraReady = cameraActive && permission?.granted && isFocused;
@@ -308,19 +371,13 @@ export default function QRCodeScreen() {
       <View
         style={{ flex: 0.9, alignItems: "center", justifyContent: "center" }}
       >
-        <View
-          style={{
-            backgroundColor: "#f7f7f7",
-            padding: 20,
-            borderRadius: 10,
-          }}
-        >
-          <QRCode
-            value="https://expo.dev"
-            size={250}
-            color="#A3CE26"
-            backgroundColor="white"
-          />
+        <View>
+          {qrCode ? (
+            <Image
+              source={{ uri: qrCode }}
+              style={{ width: 300, height: 300, borderRadius: 10 }}
+            />
+          ) : null}
         </View>
         <Text style={styles.instructionText}>
           Please show your{" "}

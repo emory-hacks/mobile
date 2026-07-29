@@ -7,8 +7,11 @@ import { Grandstander_900Black } from "@expo-google-fonts/grandstander";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFonts } from "expo-font";
 import { useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { clearEmail, clearJwt, clearRole, getEmail } from "../../../utils/auth-token";
+import { getInfo } from "../../../utils/user-info";
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -18,6 +21,37 @@ export default function SettingsScreen() {
     AlanSans_700Bold,
     Grandstander_900Black,
   });
+  const [name, setName] = useState("");
+  const [id, setId] = useState("");
+  const [email, setEmail] = useState("");
+  const [teamName, setTeamName] = useState("");
+  const [checkedIn, setCheckedIn] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      setName((await getInfo("name")) ?? "");
+      setId((await getInfo("id")) ?? "");
+      setEmail((await getEmail()) ?? "");
+      setTeamName((await getInfo("teamName")) ?? "");
+      setCheckedIn((await getInfo("checkedIn")) === "true");
+    })();
+  }, []);
+
+  const handleLogout = () => {
+    Alert.alert("Log out", "Are you sure you want to log out?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Log out",
+        style: "destructive",
+        onPress: async () => {
+          await clearJwt();
+          await clearEmail();
+          await clearRole();
+          router.replace("/login");
+        },
+      },
+    ]);
+  };
 
   if (!fontsLoaded) {
     return <View style={styles.screen} />;
@@ -28,7 +62,7 @@ export default function SettingsScreen() {
       <View style={styles.content}>
         <View style={styles.profileHeader}>
           <View style={styles.identity}>
-            <Text style={styles.name}>Taeeun K.</Text>
+            <Text style={styles.name}>{name}</Text>
             <Text style={styles.profileLabel}>Profile</Text>
           </View>
 
@@ -37,7 +71,7 @@ export default function SettingsScreen() {
               accessibilityLabel="Log out"
               accessibilityRole="button"
               hitSlop={8}
-              onPress={() => {}}
+              onPress={handleLogout}
               style={({ pressed }) => [
                 styles.logoutButton,
                 pressed && styles.pressed,
@@ -68,14 +102,19 @@ export default function SettingsScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Information</Text>
-          <InfoRow label="ID" value="@Name" />
-          <InfoRow label="Email" value="jyweva@ewha.ac.kr" />
+          <InfoRow label="ID" value={id} />
+          <InfoRow label="Email" value={email} />
         </View>
 
         <View style={[styles.section, styles.activitySection]}>
           <Text style={styles.sectionTitle}>Activity</Text>
-          <InfoRow label="Team" pill value="Team Name" />
-          <InfoRow label="Check in" pill value="Valid" />
+          <InfoRow label="Team" pill value={teamName} />
+          <InfoRow
+            label="Check in"
+            pill
+            pillColor={checkedIn ? undefined : "#E53935"}
+            value={checkedIn ? "Valid" : "Invalid"}
+          />
         </View>
       </View>
     </SafeAreaView>
@@ -85,15 +124,16 @@ export default function SettingsScreen() {
 type InfoRowProps = {
   label: string;
   pill?: boolean;
+  pillColor?: string;
   value: string;
 };
 
-function InfoRow({ label, pill = false, value }: InfoRowProps) {
+function InfoRow({ label, pill = false, pillColor, value }: InfoRowProps) {
   return (
     <View style={styles.infoRow}>
       <Text style={styles.infoLabel}>{label}</Text>
       {pill ? (
-        <View style={styles.pill}>
+        <View style={[styles.pill, pillColor ? { backgroundColor: pillColor } : null]}>
           <Text style={styles.pillText}>{value}</Text>
         </View>
       ) : (

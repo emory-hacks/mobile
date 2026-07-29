@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "@/constants/computer-ip";
 import {
   Fredoka_600SemiBold,
   Fredoka_700Bold,
@@ -20,7 +21,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function Signup() {
   const insets = useSafeAreaInsets();
-  const [username, setUsername] = useState<string>("");
+  const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
@@ -141,8 +142,6 @@ export default function Signup() {
     },
   });
 
-  const computer_ip_address = ""; //for development, DON'T PUSH YOUR IP ADDRESS TO GITHUB!
-
   const invalidPassword = (password: string) => {
     let hasAlpha = false; // anything that's alphabetic
     let hasNumber = false; // anything that's a number
@@ -164,7 +163,7 @@ export default function Signup() {
   const handleSignup = async () => {
     setErrorMessage(null);
 
-    if (!username || !email || !password || !confirmPassword) {
+    if (!name || !email || !password || !confirmPassword) {
       setErrorMessage("Please fill in all fields");
       return;
     }
@@ -187,16 +186,13 @@ export default function Signup() {
     }
 
     try {
-      const response = await fetch(
-        `http://${computer_ip_address}:8080/api/users/register`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ username, email, password }),
+      const response = await fetch(`${API_BASE_URL}/api/users/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({ name, email, password }),
+      });
 
       if (!response.ok) {
         setErrorMessage("Signup failed");
@@ -235,8 +231,8 @@ export default function Signup() {
         <TextInput
           placeholder="@Name"
           style={styles.input}
-          value={username}
-          onChangeText={setUsername}
+          value={name}
+          onChangeText={setName}
           autoCapitalize="none"
         />
         <TextInput
