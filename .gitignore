@@ -41,6 +41,3 @@ app-example
 # generated native folders
 /ios
 /android
-
-# ip-address constant
-constants/computer-ip.ts
