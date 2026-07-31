@@ -6,7 +6,7 @@ import {
 import { Grandstander_900Black } from "@expo-google-fonts/grandstander";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFonts } from "expo-font";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -18,8 +18,23 @@ import {
 } from "../../../utils/auth-token";
 import { getInfo } from "../../../utils/user-info";
 
+function paramValue(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) return value[0] ?? "";
+  return value ?? "";
+}
+
 export default function SettingsScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{
+    name?: string;
+    email?: string;
+    teamName?: string;
+    points?: string;
+    checkedIn?: string;
+    fromScan?: string;
+  }>();
+  const fromScan = paramValue(params.fromScan) === "1";
+
   const [fontsLoaded] = useFonts({
     AlanSans_400Regular,
     AlanSans_500Medium,
@@ -27,20 +42,36 @@ export default function SettingsScreen() {
     Grandstander_900Black,
   });
   const [name, setName] = useState("");
-  const [id, setId] = useState("");
   const [email, setEmail] = useState("");
   const [teamName, setTeamName] = useState("");
+  const [points, setPoints] = useState("0");
   const [checkedIn, setCheckedIn] = useState(false);
 
   useEffect(() => {
+    if (fromScan) {
+      setName(paramValue(params.name));
+      setEmail(paramValue(params.email));
+      setTeamName(paramValue(params.teamName));
+      setPoints(paramValue(params.points) || "0");
+      setCheckedIn(paramValue(params.checkedIn) === "true");
+      return;
+    }
+
     (async () => {
       setName((await getInfo("name")) ?? "");
-      setId((await getInfo("id")) ?? "");
       setEmail((await getEmail()) ?? "");
       setTeamName((await getInfo("teamName")) ?? "");
+      setPoints((await getInfo("points")) ?? "0");
       setCheckedIn((await getInfo("checkedIn")) === "true");
     })();
-  }, []);
+  }, [
+    fromScan,
+    params.name,
+    params.email,
+    params.teamName,
+    params.points,
+    params.checkedIn,
+  ]);
 
   const handleLogout = () => {
     Alert.alert("Log out", "Are you sure you want to log out?", [
@@ -72,18 +103,20 @@ export default function SettingsScreen() {
           </View>
 
           <View style={styles.profileActions}>
-            <Pressable
-              accessibilityLabel="Log out"
-              accessibilityRole="button"
-              hitSlop={8}
-              onPress={handleLogout}
-              style={({ pressed }) => [
-                styles.logoutButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.logoutText}>LOGOUT</Text>
-            </Pressable>
+            {!fromScan ? (
+              <Pressable
+                accessibilityLabel="Log out"
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={handleLogout}
+                style={({ pressed }) => [
+                  styles.logoutButton,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text style={styles.logoutText}>LOGOUT</Text>
+              </Pressable>
+            ) : null}
 
             <View accessibilityLabel="Profile picture" style={styles.avatar}>
               <View style={styles.avatarHead} />
@@ -112,6 +145,7 @@ export default function SettingsScreen() {
 
         <View style={[styles.section, styles.activitySection]}>
           <Text style={styles.sectionTitle}>Activity</Text>
+          <InfoRow label="Points" value={points} />
           <InfoRow label="Team" pill value={teamName} />
           <InfoRow
             label="Check in"
