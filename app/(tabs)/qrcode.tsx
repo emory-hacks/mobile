@@ -14,6 +14,8 @@ import {
 import { fetch } from "expo/fetch";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   Image,
   Pressable,
   StyleSheet,
@@ -48,10 +50,12 @@ function attendeeFromApi(data: Record<string, unknown>): ScannedAttendee {
 
 export default function QRCodeScreen() {
   const originalBrightness = useRef<number | null>(null);
+  const scanLock = useRef(false);
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
   const [searchQuery, setSearchQuery] = useState("");
   const [scanned, setScanned] = useState(false);
+  const [isLoadingScan, setIsLoadingScan] = useState(false);
   const [scannedAttendee, setScannedAttendee] =
     useState<ScannedAttendee | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
@@ -74,7 +78,11 @@ export default function QRCodeScreen() {
   useFocusEffect(
     useCallback(() => {
       if (isAdmin !== false) {
-        if (isAdmin) setScanned(false);
+        if (isAdmin) {
+          setScanned(false);
+          setIsLoadingScan(false);
+          scanLock.current = false;
+        }
         return;
       }
 
@@ -136,12 +144,31 @@ export default function QRCodeScreen() {
 
   const handleBarcodeScanned = useCallback(
     (result: BarcodeScanningResult) => {
-      if (scanned) return;
+      if (scanLock.current) return;
+      scanLock.current = true;
+      setIsLoadingScan(true);
+
+      const showScanFailure = (message: string) => {
+        setIsLoadingScan(false);
+        setCameraActive(false);
+        Alert.alert("Scan failed", message, [
+          {
+            text: "OK",
+            onPress: () => {
+              scanLock.current = false;
+              setCameraActive(true);
+            },
+          },
+        ]);
+      };
 
       (async () => {
         try {
           const jwt = await getJwt();
-          if (!jwt) return;
+          if (!jwt) {
+            showScanFailure("Not authenticated.");
+            return;
+          }
 
           const response = await fetch(
             `${API_BASE_URL}/api/admin/award-points-fast`,
@@ -155,13 +182,14 @@ export default function QRCodeScreen() {
               body: JSON.stringify({
                 token: result.data,
                 amount: 1, //eventually make api call to see what event delta gets (based on current time)
-                eventId: "temp",
+                eventId: Math.random().toString(36).slice(2),
               }),
             },
           );
 
           if (!response.ok) {
             console.log(response.status, await response.text());
+            showScanFailure("Could not award points.");
             return;
           }
 
@@ -174,12 +202,14 @@ export default function QRCodeScreen() {
           await saveInfo("points", String(attendee.points));
           setScannedAttendee(attendee);
           setScanned(true);
+          setIsLoadingScan(false);
         } catch {
           console.log("Scanning failed");
+          showScanFailure("Something went wrong.");
         }
       })();
     },
-    [scanned],
+    [],
   );
 
   const handleStartCamera = useCallback(async () => {
@@ -195,6 +225,7 @@ export default function QRCodeScreen() {
 
   const handleDismissScanResult = useCallback(() => {
     setScanned(false);
+    scanLock.current = false;
   }, []);
 
   if (isAdmin === null) {
@@ -273,7 +304,11 @@ export default function QRCodeScreen() {
           </View>
         </View>
 
-        {scanned && scannedAttendee ? (
+        {isLoadingScan ? (
+          <View style={[styles.scannerSection, { justifyContent: "center" }]}>
+            <ActivityIndicator size="large" color="#A3CE26" />
+          </View>
+        ) : scanned && scannedAttendee ? (
           <View style={styles.profileSection}>
             <View style={styles.profileTopRow}>
               <Pressable
@@ -363,7 +398,9 @@ export default function QRCodeScreen() {
                   style={StyleSheet.absoluteFillObject}
                   facing="back"
                   barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
-                  onBarcodeScanned={handleBarcodeScanned}
+                  onBarcodeScanned={
+                    isLoadingScan || scanned ? undefined : handleBarcodeScanned
+                  }
                 />
               ) : (
                 <View style={styles.scannerPlaceholder} />
