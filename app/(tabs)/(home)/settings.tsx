@@ -10,7 +10,12 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { clearEmail, clearJwt, clearRole, getEmail } from "../../../utils/auth-token";
+import {
+  clearEmail,
+  clearJwt,
+  clearRole,
+  getEmail,
+} from "../../../utils/auth-token";
 import { getInfo } from "../../../utils/user-info";
 
 export default function SettingsScreen() {
@@ -102,7 +107,6 @@ export default function SettingsScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Information</Text>
-          <InfoRow label="ID" value={id} />
           <InfoRow label="Email" value={email} />
         </View>
 
@@ -133,7 +137,12 @@ function InfoRow({ label, pill = false, pillColor, value }: InfoRowProps) {
     <View style={styles.infoRow}>
       <Text style={styles.infoLabel}>{label}</Text>
       {pill ? (
-        <View style={[styles.pill, pillColor ? { backgroundColor: pillColor } : null]}>
+        <View
+          style={[
+            styles.pill,
+            pillColor ? { backgroundColor: pillColor } : null,
+          ]}
+        >
           <Text style={styles.pillText}>{value}</Text>
         </View>
       ) : (
