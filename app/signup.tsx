@@ -153,7 +153,7 @@ export default function Signup() {
       if (/^[0-9]$/.test(letter)) {
         hasNumber = true;
       }
-      if (/^\S$/.test(letter)) {
+      if (/[^a-zA-Z0-9 ]/.test(letter)) {
         hasSpecial = true;
       }
     }
