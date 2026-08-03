@@ -9,8 +9,10 @@ import {
   useCameraPermissions,
   type BarcodeScanningResult,
 } from "expo-camera";
+import { fetch } from "expo/fetch";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Alert,
   Image,
   Pressable,
   StyleSheet,
@@ -20,12 +22,38 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+type ScannedAttendee = {
+  username: string;
+  teamName: string;
+  points: number;
+  maxPoints: number;
+  checkInValid: boolean;
+  email: string;
+};
+
+const PLACEHOLDER_ATTENDEE: ScannedAttendee = {
+  username: "@Name",
+  teamName: "Team Name",
+  points: 72,
+  maxPoints: 100,
+  checkInValid: true,
+  email: "jyweva@ewha.ac.kr",
+};
+
+function formatUsername(name: string) {
+  const trimmed = name.trim();
+  if (!trimmed) return "@Name";
+  return trimmed.startsWith("@") ? trimmed : `@${trimmed}`;
+}
+
 export default function QRCodeScreen() {
   const originalBrightness = useRef<number | null>(null);
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
   const [searchQuery, setSearchQuery] = useState("");
   const [scanned, setScanned] = useState(false);
+  const [scannedAttendee, setScannedAttendee] =
+    useState<ScannedAttendee | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const [fontsLoaded] = useFonts({
@@ -41,12 +69,13 @@ export default function QRCodeScreen() {
     })();
   }, []);
 
-  console.log(`is admin: ${isAdmin}`);
-
   useFocusEffect(
     useCallback(() => {
       if (isAdmin !== false) {
-        if (isAdmin) setScanned(false);
+        if (isAdmin) {
+          setScanned(false);
+          setScannedAttendee(null);
+        }
         return;
       }
 
@@ -99,9 +128,47 @@ export default function QRCodeScreen() {
     }, [isAdmin]),
   );
 
+  const handleSearchUser = async () => {
+    const query = searchQuery.trim();
+    if (!query) {
+      Alert.alert("Enter an email to search");
+      return;
+    }
+
+    const jwt = await getJwt();
+    const response = await fetch(`${API_BASE_URL}/api/users/${query}`, {
+      method: "GET",
+      credentials: "omit",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: `token=${jwt}`,
+      },
+    });
+    if (!response.ok) {
+      if (response.status === 404) {
+        Alert.alert("User not found");
+        return;
+      }
+      console.log(response.status, await response.text());
+      return;
+    }
+
+    const userData = await response.json();
+    setScannedAttendee({
+      username: formatUsername(userData.name ?? query),
+      teamName: userData.teamName ?? "",
+      points: userData.points ?? 0,
+      maxPoints: userData.maxPoints ?? 100,
+      checkInValid: !!userData.checkedIn,
+      email: userData.email ?? "",
+    });
+    setScanned(true);
+  };
+
   const handleBarcodeScanned = useCallback(
     (result: BarcodeScanningResult) => {
       if (scanned) return;
+      setScannedAttendee(PLACEHOLDER_ATTENDEE);
       setScanned(true);
 
       (async () => {
@@ -140,6 +207,7 @@ export default function QRCodeScreen() {
 
   const handleDismissScanResult = useCallback(() => {
     setScanned(false);
+    setScannedAttendee(null);
   }, []);
 
   if (isAdmin === null) {
@@ -149,19 +217,8 @@ export default function QRCodeScreen() {
   if (isAdmin) {
     const cameraReady = cameraActive && permission?.granted && isFocused;
 
-    // Placeholder attendee data until QR lookup is wired up
-    const scannedAttendee = {
-      username: "@Name",
-      teamName: "Team Name",
-      points: 72,
-      maxPoints: 100,
-      checkInValid: true,
-      email: "jyweva@ewha.ac.kr",
-    };
-    const progress = Math.min(
-      scannedAttendee.points / scannedAttendee.maxPoints,
-      1.0,
-    );
+    const attendee = scannedAttendee ?? PLACEHOLDER_ATTENDEE;
+    const progress = Math.min(attendee.points / attendee.maxPoints, 1.0);
 
     return (
       <View style={styles.pageContainer}>
@@ -180,23 +237,6 @@ export default function QRCodeScreen() {
             >
               Scan
             </Text>
-            <Pressable
-              hitSlop={12}
-              accessibilityRole="button"
-              accessibilityLabel="Settings"
-              style={({ pressed, hovered }) => [
-                styles.settingsButton,
-                (pressed || hovered) && styles.settingsButtonActive,
-              ]}
-            >
-              {({ pressed, hovered }) => (
-                <Ionicons
-                  name="settings-outline"
-                  size={26}
-                  color={pressed || hovered ? "#000" : "#333"}
-                />
-              )}
-            </Pressable>
           </View>
 
           <View style={styles.searchRow}>
@@ -217,6 +257,7 @@ export default function QRCodeScreen() {
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Search"
+              onPress={handleSearchUser}
             >
               {({ pressed, hovered }) => (
                 <Ionicons
@@ -241,42 +282,43 @@ export default function QRCodeScreen() {
               >
                 <Ionicons name="arrow-back" size={28} color="#111" />
               </Pressable>
-              <View style={styles.profileAvatar} />
             </View>
 
             <View style={styles.profileIdentity}>
               <View style={styles.usernameRow}>
-                <Text style={styles.username}>{scannedAttendee.username}</Text>
+                <Text style={styles.username}>{attendee.username}</Text>
                 <View style={styles.verifiedBadge}>
                   <Ionicons name="checkmark" size={12} color="#fff" />
                 </View>
               </View>
-              <View style={styles.teamBadge}>
-                <Text style={styles.teamBadgeText}>
-                  {scannedAttendee.teamName}
-                </Text>
-              </View>
+              {attendee.teamName ? (
+                <View style={styles.teamBadge}>
+                  <Text style={styles.teamBadgeText}>{attendee.teamName}</Text>
+                </View>
+              ) : null}
             </View>
 
             <View style={styles.pointsRow}>
               <View style={styles.pointsBadge}>
                 <Text style={styles.pointsBadgeText}>
-                  {scannedAttendee.points} points
+                  {attendee.points} points
                 </Text>
               </View>
               <View style={styles.progressColumn}>
                 <View style={styles.progressLabels}>
-                  <Text style={styles.progressLabelMuted}>0</Text>
-                  <Text
+                  <View />
+                  <View
                     style={[
-                      styles.progressLabelCurrent,
+                      styles.progressLabelCurrentWrap,
                       { left: `${progress * 100}%` },
                     ]}
                   >
-                    {scannedAttendee.points}
-                  </Text>
+                    <Text style={styles.progressLabelCurrent}>
+                      {attendee.points}
+                    </Text>
+                  </View>
                   <Text style={styles.progressLabelMuted}>
-                    {scannedAttendee.maxPoints}
+                    {attendee.maxPoints}
                   </Text>
                 </View>
                 <View style={styles.progressTrack}>
@@ -299,15 +341,20 @@ export default function QRCodeScreen() {
             <View style={styles.detailList}>
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Check in</Text>
-                <View style={styles.validBadge}>
+                <View
+                  style={[
+                    styles.validBadge,
+                    !attendee.checkInValid && styles.invalidBadge,
+                  ]}
+                >
                   <Text style={styles.validBadgeText}>
-                    {scannedAttendee.checkInValid ? "Valid" : "Invalid"}
+                    {attendee.checkInValid ? "Valid" : "Invalid"}
                   </Text>
                 </View>
               </View>
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Email</Text>
-                <Text style={styles.detailValue}>{scannedAttendee.email}</Text>
+                <Text style={styles.detailValue}>{attendee.email}</Text>
               </View>
             </View>
           </View>
@@ -426,13 +473,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
-  settingsButton: {
-    padding: 4,
-    borderRadius: 8,
-  },
-  settingsButtonActive: {
-    backgroundColor: "#e8e8e8",
-  },
   searchButton: {
     width: 44,
     height: 44,
@@ -513,13 +553,30 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   profileAvatar: {
+    alignItems: "center",
     width: 88,
     height: 88,
     borderRadius: 44,
     backgroundColor: "#A3CE26",
+    justifyContent: "flex-end",
+    overflow: "hidden",
+  },
+  avatarHead: {
+    backgroundColor: "#82BF78",
+    borderRadius: 17,
+    height: 34,
+    marginBottom: -2,
+    width: 34,
+  },
+  avatarBody: {
+    backgroundColor: "#82BF78",
+    borderRadius: 40,
+    height: 48,
+    marginBottom: -4,
+    width: 80,
   },
   profileIdentity: {
-    marginTop: -20,
+    marginTop: -0,
     gap: 10,
   },
   usernameRow: {
@@ -584,12 +641,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#c0c0c0",
   },
-  progressLabelCurrent: {
+  progressLabelCurrentWrap: {
     position: "absolute",
+    width: 0,
+    alignItems: "center",
+    overflow: "visible",
+  },
+  progressLabelCurrent: {
     fontSize: 12,
     color: "#A3CE26",
     fontWeight: "600",
-    transform: [{ translateX: -8 }],
   },
   progressTrack: {
     height: 3,
@@ -636,6 +697,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 5,
+  },
+  invalidBadge: {
+    backgroundColor: "#E53935",
   },
   validBadgeText: {
     color: "#fff",
