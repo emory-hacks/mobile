@@ -98,7 +98,22 @@ export default function SettingsScreen() {
       <View style={styles.content}>
         <View style={styles.profileHeader}>
           <View style={styles.identity}>
-            <Text style={styles.name}>{name}</Text>
+            <View style={styles.nameWrap}>
+              {name
+                .trim()
+                .split(/\s+/)
+                .filter(Boolean)
+                .map((word, i, words) => (
+                  <Text
+                    key={`${word}-${i}`}
+                    numberOfLines={1}
+                    style={styles.name}
+                  >
+                    {word}
+                    {i < words.length - 1 ? " " : ""}
+                  </Text>
+                ))}
+            </View>
             <Text style={styles.profileLabel}>Profile</Text>
           </View>
 
@@ -265,8 +280,14 @@ const styles = StyleSheet.create({
   name: {
     color: "#9BD31B",
     fontFamily: "Grandstander_900Black",
-    fontSize: 40,
+    fontSize: 36,
     lineHeight: 44,
+  },
+  nameWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    maxHeight: 132,
+    overflow: "hidden",
   },
   pill: {
     backgroundColor: "#9BD31B",
