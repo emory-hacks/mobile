@@ -172,122 +172,115 @@ export default function QRCodeScreen() {
     setScanned(true);
   };
 
-  const handleBarcodeScanned = useCallback(
-    (result: BarcodeScanningResult) => {
-      if (scanLock.current) return;
-      scanLock.current = true;
-      setIsLoadingScan(true);
+  const handleBarcodeScanned = useCallback((result: BarcodeScanningResult) => {
+    if (scanLock.current) return;
+    scanLock.current = true;
+    setIsLoadingScan(true);
 
-      const resetAfterAlert = () => {
-        scanLock.current = false;
-        setCameraActive(true);
-      };
+    const resetAfterAlert = () => {
+      scanLock.current = false;
+      setCameraActive(true);
+    };
 
-      const showScanFailure = (message: string) => {
-        setIsLoadingScan(false);
-        setCameraActive(false);
-        Alert.alert("Scan failed", message, [
-          {
-            text: "OK",
-            onPress: resetAfterAlert,
-          },
-        ]);
-      };
+    const showScanFailure = (message: string) => {
+      setIsLoadingScan(false);
+      setCameraActive(false);
+      Alert.alert("Scan failed", message, [
+        {
+          text: "OK",
+          onPress: resetAfterAlert,
+        },
+      ]);
+    };
 
-      const showScanPassed = () => {
-        setIsLoadingScan(false);
-        setCameraActive(false);
-        Alert.alert("Scan passed", "Points awarded successfully.", [
-          {
-            text: "OK",
-            onPress: resetAfterAlert,
-          },
-        ]);
-      };
+    const showScanPassed = () => {
+      setIsLoadingScan(false);
+      setCameraActive(false);
+      Alert.alert("Scan passed", "Points awarded successfully.", [
+        {
+          text: "OK",
+          onPress: resetAfterAlert,
+        },
+      ]);
+    };
 
-      (async () => {
-        try {
-          const jwt = await getJwt();
-          if (!jwt) {
-            showScanFailure("Not authenticated.");
-            return;
-          }
-
-          const response = await fetch(
-            `${API_BASE_URL}/api/admin/award-points-fast`,
-            {
-              method: "POST",
-              credentials: "omit",
-              headers: {
-                "Content-Type": "application/json",
-                Cookie: `token=${jwt}`,
-              },
-              body: JSON.stringify({
-                token: result.data,
-                amount: 1, //eventually make api call to see what event delta gets (based on current time)
-                eventId: Math.random().toString(36).slice(2),
-              }),
-            },
-          );
-
-          if (!response.ok) {
-            console.log(response.status, await response.text());
-            showScanFailure("Could not award points.");
-            return;
-          }
-
-          const data = (await response.json()) as Record<string, unknown>;
-          console.log(data);
-
-          const userEmail =
-            typeof data.user === "string"
-              ? data.user
-              : String(
-                  (data.user as Record<string, unknown> | undefined)?.email ??
-                    "",
-                );
-
-          if (!userEmail) {
-            showScanFailure("Could not load user profile.");
-            return;
-          }
-
-          const userResponse = await fetch(
-            `${API_BASE_URL}/api/users/${encodeURIComponent(userEmail)}`,
-            {
-              method: "GET",
-              credentials: "omit",
-              headers: {
-                "Content-Type": "application/json",
-                Cookie: `token=${jwt}`,
-              },
-            },
-          );
-
-          if (!userResponse.ok) {
-            console.log(userResponse.status, await userResponse.text());
-            showScanFailure("Could not load user profile.");
-            return;
-          }
-
-          const userData = (await userResponse.json()) as Record<
-            string,
-            unknown
-          >;
-          console.log("Scanned user information", {
-            ...userData,
-            points: data.newBalance ?? userData.points ?? userData.totalPoints,
-            email: userData.email ?? userEmail,
-          });
-          showScanPassed();
-        } catch (error) {
-          console.log("Scanning failed", error);
-          showScanFailure("Something went wrong.");
+    (async () => {
+      try {
+        const jwt = await getJwt();
+        if (!jwt) {
+          showScanFailure("Not authenticated.");
+          return;
         }
-      })();
-    },
-    [],
-  );
+
+        const response = await fetch(
+          `${API_BASE_URL}/api/admin/award-points-fast`,
+          {
+            method: "POST",
+            credentials: "omit",
+            headers: {
+              "Content-Type": "application/json",
+              Cookie: `token=${jwt}`,
+            },
+            body: JSON.stringify({
+              token: result.data,
+              amount: 5,
+              eventId: Math.random().toString(36).slice(2), //use api to find out next/current event when it exists
+            }),
+          },
+        );
+
+        if (!response.ok) {
+          console.log(response.status, await response.text());
+          showScanFailure("Could not award points.");
+          return;
+        }
+
+        const data = (await response.json()) as Record<string, unknown>;
+        console.log(data);
+
+        const userEmail =
+          typeof data.user === "string"
+            ? data.user
+            : String(
+                (data.user as Record<string, unknown> | undefined)?.email ?? "",
+              );
+
+        if (!userEmail) {
+          showScanFailure("Could not load user profile.");
+          return;
+        }
+
+        const userResponse = await fetch(
+          `${API_BASE_URL}/api/users/${encodeURIComponent(userEmail)}`,
+          {
+            method: "GET",
+            credentials: "omit",
+            headers: {
+              "Content-Type": "application/json",
+              Cookie: `token=${jwt}`,
+            },
+          },
+        );
+
+        if (!userResponse.ok) {
+          console.log(userResponse.status, await userResponse.text());
+          showScanFailure("Could not load user profile.");
+          return;
+        }
+
+        const userData = (await userResponse.json()) as Record<string, unknown>;
+        console.log("Scanned user information", {
+          ...userData,
+          points: data.newBalance ?? userData.points ?? userData.totalPoints,
+          email: userData.email ?? userEmail,
+        });
+        showScanPassed();
+      } catch (error) {
+        console.log("Scanning failed", error);
+        showScanFailure("Something went wrong.");
+      }
+    })();
+  }, []);
 
   const handleStartCamera = useCallback(async () => {
     if (cameraActive && permission?.granted) return;
