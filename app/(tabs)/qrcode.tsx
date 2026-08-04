@@ -193,17 +193,6 @@ export default function QRCodeScreen() {
       ]);
     };
 
-    const showScanPassed = () => {
-      setIsLoadingScan(false);
-      setCameraActive(false);
-      Alert.alert("Scan passed", "Points awarded successfully.", [
-        {
-          text: "OK",
-          onPress: resetAfterAlert,
-        },
-      ]);
-    };
-
     (async () => {
       try {
         const jwt = await getJwt();
@@ -269,12 +258,19 @@ export default function QRCodeScreen() {
         }
 
         const userData = (await userResponse.json()) as Record<string, unknown>;
-        console.log("Scanned user information", {
-          ...userData,
-          points: data.newBalance ?? userData.points ?? userData.totalPoints,
-          email: userData.email ?? userEmail,
+        const displayEmail = String(userData.email ?? userEmail);
+        setScannedAttendee({
+          username: formatUsername(String(userData.name ?? displayEmail)),
+          teamName: String(userData.teamName ?? ""),
+          points: Number(data.newBalance ?? userData.points ?? 0),
+          maxPoints: Number(userData.maxPoints ?? 100),
+          checkInValid: !!userData.checkedIn,
+          email: displayEmail,
         });
-        showScanPassed();
+        setIsLoadingScan(false);
+        setCameraActive(false);
+        setScanned(true);
+        scanLock.current = false;
       } catch (error) {
         console.log("Scanning failed", error);
         showScanFailure("Something went wrong.");
