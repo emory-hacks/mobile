@@ -28,6 +28,7 @@ export default function Signup() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [awaitingCode, setAwaitingCode] = useState(false);
   const [digits, setDigits] = useState<string[]>(["", "", "", "", ""]);
+  const [verifying, setVerifying] = useState(false);
   const digitRefs = useRef<(TextInput | null)[]>([]);
   const [fontsLoaded] = useFonts({
     Fredoka_600SemiBold,
@@ -186,6 +187,62 @@ export default function Signup() {
     return !(hasAlpha && hasNumber && hasSpecial);
   };
 
+  const formatCurtime = () => new Date().toISOString().slice(0, 19);
+
+  const verifyAndRegister = async (code: string) => {
+    if (verifying) {
+      return;
+    }
+    setVerifying(true);
+    setErrorMessage(null);
+
+    try {
+      const verifyResponse = await fetch(
+        `${API_BASE_URL}/api/verify-user-code`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            inputted_code: code,
+            curtime: formatCurtime(),
+          }),
+        },
+      );
+
+      if (!verifyResponse.ok) {
+        setErrorMessage("Invalid or expired code");
+        setDigits(["", "", "", "", ""]);
+        digitRefs.current[0]?.focus();
+        return;
+      }
+
+      const registerResponse = await fetch(
+        `${API_BASE_URL}/api/users/register`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name, email, password }),
+        },
+      );
+
+      if (!registerResponse.ok) {
+        setErrorMessage("Signup failed");
+        return;
+      }
+
+      router.replace("/login");
+    } catch {
+      setErrorMessage("Unable to connect to server");
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   const handleDigitChange = (index: number, value: string) => {
     const digit = value.replace(/[^0-9]/g, "").slice(-1);
     const next = [...digits];
@@ -194,6 +251,10 @@ export default function Signup() {
 
     if (digit && index < 4) {
       digitRefs.current[index + 1]?.focus();
+    }
+
+    if (digit && next.every((d) => d !== "")) {
+      verifyAndRegister(next.join(""));
     }
   };
 
@@ -295,9 +356,11 @@ export default function Signup() {
                   maxLength={1}
                   autoFocus={index === 0}
                   selectTextOnFocus
+                  editable={!verifying}
                 />
               ))}
             </View>
+            {errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
           </>
         ) : (
           <>
