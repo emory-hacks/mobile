@@ -6,7 +6,7 @@ import {
 } from "@expo-google-fonts/fredoka";
 import { Image as ExpoImage } from "expo-image";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Image,
   Pressable,
@@ -26,6 +26,9 @@ export default function Signup() {
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [awaitingCode, setAwaitingCode] = useState(false);
+  const [digits, setDigits] = useState<string[]>(["", "", "", "", ""]);
+  const digitRefs = useRef<(TextInput | null)[]>([]);
   const [fontsLoaded] = useFonts({
     Fredoka_600SemiBold,
     Fredoka_700Bold,
@@ -140,6 +143,29 @@ export default function Signup() {
       width: 28,
       height: 28,
     },
+    codeHint: {
+      fontSize: 14,
+      color: "#555",
+      textAlign: "center",
+      marginBottom: 24,
+      marginHorizontal: 24,
+    },
+    codeRow: {
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: 10,
+      marginBottom: 8,
+    },
+    codeDigit: {
+      width: 48,
+      height: 56,
+      borderRadius: 9,
+      backgroundColor: "#eaeaea",
+      fontSize: 24,
+      color: "#111",
+      textAlign: "center",
+      fontFamily: "Fredoka_700Bold",
+    },
   });
 
   const invalidPassword = (password: string) => {
@@ -158,6 +184,23 @@ export default function Signup() {
       }
     }
     return !(hasAlpha && hasNumber && hasSpecial);
+  };
+
+  const handleDigitChange = (index: number, value: string) => {
+    const digit = value.replace(/[^0-9]/g, "").slice(-1);
+    const next = [...digits];
+    next[index] = digit;
+    setDigits(next);
+
+    if (digit && index < 4) {
+      digitRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleDigitKeyPress = (index: number, key: string) => {
+    if (key === "Backspace" && !digits[index] && index > 0) {
+      digitRefs.current[index - 1]?.focus();
+    }
   };
 
   const handleSignup = async () => {
@@ -186,20 +229,21 @@ export default function Signup() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/users/register`, {
+      const response = await fetch(`${API_BASE_URL}/api/generate-user-code`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ email }),
       });
 
       if (!response.ok) {
-        setErrorMessage("Signup failed");
+        setErrorMessage("Failed to send verification code");
         return;
       }
 
-      router.replace("/login");
+      setDigits(["", "", "", "", ""]);
+      setAwaitingCode(true);
     } catch {
       setErrorMessage("Unable to connect to server");
     }
@@ -228,99 +272,131 @@ export default function Signup() {
         />
         <Text style={styles.subtitle1}>Welcome to</Text>
         <Text style={styles.subtitle2}>Emory Hacks !</Text>
-        <TextInput
-          placeholder="@Name"
-          style={styles.input}
-          value={name}
-          onChangeText={setName}
-          autoCapitalize="none"
-        />
-        <TextInput
-          placeholder="Email@email.com"
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
-        <TextInput
-          placeholder="Password"
-          style={[styles.input, styles.passwordInput]}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-        <TextInput
-          placeholder="Check the password"
-          style={styles.input}
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry
-        />
-        {errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
-        <TouchableOpacity style={styles.button} onPress={handleSignup}>
-          <Text
-            style={{
-              color: "white",
-              textAlign: "center",
-              fontSize: 17,
-            }}
-          >
-            Create an account
-          </Text>
-        </TouchableOpacity>
-        <View style={styles.orRow}>
-          <View style={styles.orLine} />
-          <Text style={styles.orText}>or</Text>
-          <View style={styles.orLine} />
-        </View>
-        <View style={styles.socialRow}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Sign up with Google"
-            style={({ pressed }) => [
-              styles.socialButton,
-              { opacity: pressed ? 0.7 : 1 },
-            ]}
-            onPress={() => {}}
-          >
-            <ExpoImage
-              source={require("../assets/images/google-icon.svg")}
-              style={styles.socialIcon}
-              contentFit="contain"
+
+        {awaitingCode ? (
+          <>
+            <Text style={styles.codeHint}>
+              Enter the 5-digit code sent to {email}
+            </Text>
+            <View style={styles.codeRow}>
+              {digits.map((digit, index) => (
+                <TextInput
+                  key={index}
+                  ref={(ref) => {
+                    digitRefs.current[index] = ref;
+                  }}
+                  style={styles.codeDigit}
+                  value={digit}
+                  onChangeText={(value) => handleDigitChange(index, value)}
+                  onKeyPress={({ nativeEvent }) =>
+                    handleDigitKeyPress(index, nativeEvent.key)
+                  }
+                  keyboardType="number-pad"
+                  maxLength={1}
+                  autoFocus={index === 0}
+                  selectTextOnFocus
+                />
+              ))}
+            </View>
+          </>
+        ) : (
+          <>
+            <TextInput
+              placeholder="@Name"
+              style={styles.input}
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="none"
             />
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Sign up with Apple"
-            style={({ pressed }) => [
-              styles.socialButton,
-              { opacity: pressed ? 0.7 : 1 },
-            ]}
-            onPress={() => {}}
-          >
-            <ExpoImage
-              source={require("../assets/images/apple-icon.svg")}
-              style={styles.socialIcon}
-              contentFit="contain"
+            <TextInput
+              placeholder="Email@email.com"
+              style={styles.input}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
             />
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Sign up with GitHub"
-            style={({ pressed }) => [
-              styles.socialButton,
-              { opacity: pressed ? 0.7 : 1 },
-            ]}
-            onPress={() => {}}
-          >
-            <ExpoImage
-              source={require("../assets/images/github-icon.svg")}
-              style={styles.socialIcon}
-              contentFit="contain"
+            <TextInput
+              placeholder="Password"
+              style={[styles.input, styles.passwordInput]}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
             />
-          </Pressable>
-        </View>
+            <TextInput
+              placeholder="Check the password"
+              style={styles.input}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+            />
+            {errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
+            <TouchableOpacity style={styles.button} onPress={handleSignup}>
+              <Text
+                style={{
+                  color: "white",
+                  textAlign: "center",
+                  fontSize: 17,
+                }}
+              >
+                Create an account
+              </Text>
+            </TouchableOpacity>
+            <View style={styles.orRow}>
+              <View style={styles.orLine} />
+              <Text style={styles.orText}>or</Text>
+              <View style={styles.orLine} />
+            </View>
+            <View style={styles.socialRow}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Sign up with Google"
+                style={({ pressed }) => [
+                  styles.socialButton,
+                  { opacity: pressed ? 0.7 : 1 },
+                ]}
+                onPress={() => {}}
+              >
+                <ExpoImage
+                  source={require("../assets/images/google-icon.svg")}
+                  style={styles.socialIcon}
+                  contentFit="contain"
+                />
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Sign up with Apple"
+                style={({ pressed }) => [
+                  styles.socialButton,
+                  { opacity: pressed ? 0.7 : 1 },
+                ]}
+                onPress={() => {}}
+              >
+                <ExpoImage
+                  source={require("../assets/images/apple-icon.svg")}
+                  style={styles.socialIcon}
+                  contentFit="contain"
+                />
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Sign up with GitHub"
+                style={({ pressed }) => [
+                  styles.socialButton,
+                  { opacity: pressed ? 0.7 : 1 },
+                ]}
+                onPress={() => {}}
+              >
+                <ExpoImage
+                  source={require("../assets/images/github-icon.svg")}
+                  style={styles.socialIcon}
+                  contentFit="contain"
+                />
+              </Pressable>
+            </View>
+          </>
+        )}
+
         <View style={styles.sidebyside}>
           <Text style={styles.normaltext}>Already have an account?</Text>
           <Pressable
