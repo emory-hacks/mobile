@@ -3,6 +3,7 @@ import { getJwt, getRole } from "@/utils/auth-token";
 import { Fredoka_700Bold, useFonts } from "@expo-google-fonts/fredoka";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect, useIsFocused } from "@react-navigation/native";
+import { Buffer } from "buffer";
 import * as Brightness from "expo-brightness";
 import {
   CameraView,
@@ -12,6 +13,7 @@ import {
 import { fetch } from "expo/fetch";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Image,
   Pressable,
@@ -31,15 +33,6 @@ type ScannedAttendee = {
   email: string;
 };
 
-const PLACEHOLDER_ATTENDEE: ScannedAttendee = {
-  username: "@Name",
-  teamName: "Team Name",
-  points: 72,
-  maxPoints: 100,
-  checkInValid: true,
-  email: "jyweva@ewha.ac.kr",
-};
-
 function formatUsername(name: string) {
   const trimmed = name.trim();
   if (!trimmed) return "@Name";
@@ -48,12 +41,14 @@ function formatUsername(name: string) {
 
 export default function QRCodeScreen() {
   const originalBrightness = useRef<number | null>(null);
+  const scanLock = useRef(false);
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
   const [searchQuery, setSearchQuery] = useState("");
   const [scanned, setScanned] = useState(false);
   const [scannedAttendee, setScannedAttendee] =
     useState<ScannedAttendee | null>(null);
+  const [isLoadingScan, setIsLoadingScan] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const [fontsLoaded] = useFonts({
@@ -75,6 +70,8 @@ export default function QRCodeScreen() {
         if (isAdmin) {
           setScanned(false);
           setScannedAttendee(null);
+          setIsLoadingScan(false);
+          scanLock.current = false;
         }
         return;
       }
@@ -93,26 +90,33 @@ export default function QRCodeScreen() {
       })();
 
       (async () => {
-        const jwt = await getJwt();
-        const response = await fetch(`${API_BASE_URL}/api/users/me/qr`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Cookie: `token=${jwt}`,
-          },
-        });
-        if (!response.ok) {
-          console.log(response);
-          return;
-        }
+        try {
+          const jwt = await getJwt();
+          if (!jwt) return;
 
-        const blob = await response.blob();
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const dataUri = reader.result as string;
-          setQrCode(dataUri);
-        };
-        reader.readAsDataURL(blob);
+          // Use expo/fetch + credentials: "omit" so manual Cookie header is sent.
+          const response = await fetch(`${API_BASE_URL}/api/users/me/qr`, {
+            method: "GET",
+            credentials: "omit",
+            headers: {
+              "Content-Type": "application/json",
+              Cookie: `token=${jwt}`,
+            },
+          });
+
+          if (!response.ok) {
+            console.log(response.status, await response.text());
+            return;
+          }
+
+          const contentType =
+            response.headers.get("content-type") ?? "image/png";
+          const arrayBuffer = await response.arrayBuffer();
+          const base64 = Buffer.from(arrayBuffer).toString("base64");
+          setQrCode(`data:${contentType};base64,${base64}`);
+        } catch (error) {
+          console.log("Failed to load QR code", error);
+        }
       })();
 
       return () => {
@@ -136,14 +140,17 @@ export default function QRCodeScreen() {
     }
 
     const jwt = await getJwt();
-    const response = await fetch(`${API_BASE_URL}/api/users/${query}`, {
-      method: "GET",
-      credentials: "omit",
-      headers: {
-        "Content-Type": "application/json",
-        Cookie: `token=${jwt}`,
+    const response = await fetch(
+      `${API_BASE_URL}/api/users/${encodeURIComponent(query)}`,
+      {
+        method: "GET",
+        credentials: "omit",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: `token=${jwt}`,
+        },
       },
-    });
+    );
     if (!response.ok) {
       if (response.status === 404) {
         Alert.alert("User not found");
@@ -165,34 +172,111 @@ export default function QRCodeScreen() {
     setScanned(true);
   };
 
-  const handleBarcodeScanned = useCallback(
-    (result: BarcodeScanningResult) => {
-      if (scanned) return;
-      setScannedAttendee(PLACEHOLDER_ATTENDEE);
-      setScanned(true);
+  const handleBarcodeScanned = useCallback((result: BarcodeScanningResult) => {
+    if (scanLock.current) return;
+    scanLock.current = true;
+    setIsLoadingScan(true);
 
-      (async () => {
-        try {
-          await fetch(`${API_BASE_URL}/api/admin/award-points-fast`, {
+    const resetAfterAlert = () => {
+      scanLock.current = false;
+      setCameraActive(true);
+    };
+
+    const showScanFailure = (message: string) => {
+      setIsLoadingScan(false);
+      setCameraActive(false);
+      Alert.alert("Scan failed", message, [
+        {
+          text: "OK",
+          onPress: resetAfterAlert,
+        },
+      ]);
+    };
+
+    (async () => {
+      try {
+        const jwt = await getJwt();
+        if (!jwt) {
+          showScanFailure("Not authenticated.");
+          return;
+        }
+
+        const response = await fetch(
+          `${API_BASE_URL}/api/admin/award-points-fast`,
+          {
             method: "POST",
+            credentials: "omit",
             headers: {
               "Content-Type": "application/json",
+              Cookie: `token=${jwt}`,
             },
             body: JSON.stringify({
               token: result.data,
-              amount: 1,
-              eventId: "temp",
+              amount: 5,
+              eventId: Math.random().toString(36).slice(2), //use api to find out next/current event when it exists
             }),
-          });
-          await console.log(result.data);
-        } catch {
-          // request failed
-          console.log("Scanning failed");
+          },
+        );
+
+        if (!response.ok) {
+          console.log(response.status, await response.text());
+          showScanFailure("Could not award points.");
+          return;
         }
-      })();
-    },
-    [scanned],
-  );
+
+        const data = (await response.json()) as Record<string, unknown>;
+        console.log(data);
+
+        const userEmail =
+          typeof data.user === "string"
+            ? data.user
+            : String(
+                (data.user as Record<string, unknown> | undefined)?.email ?? "",
+              );
+
+        if (!userEmail) {
+          showScanFailure("Could not load user profile.");
+          return;
+        }
+
+        const userResponse = await fetch(
+          `${API_BASE_URL}/api/users/${encodeURIComponent(userEmail)}`,
+          {
+            method: "GET",
+            credentials: "omit",
+            headers: {
+              "Content-Type": "application/json",
+              Cookie: `token=${jwt}`,
+            },
+          },
+        );
+
+        if (!userResponse.ok) {
+          console.log(userResponse.status, await userResponse.text());
+          showScanFailure("Could not load user profile.");
+          return;
+        }
+
+        const userData = (await userResponse.json()) as Record<string, unknown>;
+        const displayEmail = String(userData.email ?? userEmail);
+        setScannedAttendee({
+          username: formatUsername(String(userData.name ?? displayEmail)),
+          teamName: String(userData.teamName ?? ""),
+          points: Number(data.newBalance ?? userData.points ?? 0),
+          maxPoints: Number(userData.maxPoints ?? 100),
+          checkInValid: !!userData.checkedIn,
+          email: displayEmail,
+        });
+        setIsLoadingScan(false);
+        setCameraActive(false);
+        setScanned(true);
+        scanLock.current = false;
+      } catch (error) {
+        console.log("Scanning failed", error);
+        showScanFailure("Something went wrong.");
+      }
+    })();
+  }, []);
 
   const handleStartCamera = useCallback(async () => {
     if (cameraActive && permission?.granted) return;
@@ -216,9 +300,11 @@ export default function QRCodeScreen() {
 
   if (isAdmin) {
     const cameraReady = cameraActive && permission?.granted && isFocused;
-
-    const attendee = scannedAttendee ?? PLACEHOLDER_ATTENDEE;
-    const progress = Math.min(attendee.points / attendee.maxPoints, 1.0);
+    const attendee = scannedAttendee;
+    const progress =
+      attendee && attendee.maxPoints > 0
+        ? Math.min(attendee.points / attendee.maxPoints, 1.0)
+        : 0;
 
     return (
       <View style={styles.pageContainer}>
@@ -270,7 +356,7 @@ export default function QRCodeScreen() {
           </View>
         </View>
 
-        {scanned ? (
+        {scanned && attendee ? (
           <View style={styles.profileSection}>
             <View style={styles.profileTopRow}>
               <Pressable
@@ -358,6 +444,10 @@ export default function QRCodeScreen() {
               </View>
             </View>
           </View>
+        ) : isLoadingScan ? (
+          <View style={[styles.scannerSection, { justifyContent: "center" }]}>
+            <ActivityIndicator size="large" color="#A3CE26" />
+          </View>
         ) : (
           <View style={styles.scannerSection}>
             <View style={styles.scannerViewport}>
@@ -366,7 +456,9 @@ export default function QRCodeScreen() {
                   style={StyleSheet.absoluteFillObject}
                   facing="back"
                   barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
-                  onBarcodeScanned={handleBarcodeScanned}
+                  onBarcodeScanned={
+                    isLoadingScan ? undefined : handleBarcodeScanned
+                  }
                 />
               ) : (
                 <View style={styles.scannerPlaceholder} />
@@ -551,29 +643,6 @@ const styles = StyleSheet.create({
   },
   backButton: {
     paddingTop: 4,
-  },
-  profileAvatar: {
-    alignItems: "center",
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: "#A3CE26",
-    justifyContent: "flex-end",
-    overflow: "hidden",
-  },
-  avatarHead: {
-    backgroundColor: "#82BF78",
-    borderRadius: 17,
-    height: 34,
-    marginBottom: -2,
-    width: 34,
-  },
-  avatarBody: {
-    backgroundColor: "#82BF78",
-    borderRadius: 40,
-    height: 48,
-    marginBottom: -4,
-    width: 80,
   },
   profileIdentity: {
     marginTop: -0,

@@ -75,6 +75,10 @@ export default function HomePage() {
         await saveInfo("name", userData.name ?? "");
         await saveInfo("id", String(userData.id ?? ""));
         await saveInfo("teamName", userData.teamName ?? "");
+        await saveInfo(
+          "points",
+          String(userData.points ?? userData.totalPoints ?? 0),
+        );
         await saveInfo("checkedIn", String(!!userData.checkedIn));
         console.log(String(!!userData.checkedIn));
         setName(userData.name);
