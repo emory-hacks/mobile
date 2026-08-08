@@ -1,12 +1,25 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
-import type { Notice } from "@/constants/test-notices";
+import type { Announcement } from "@/types/announcement";
 
 type NoticeDetailComponentProps = {
-  followingNotices: Notice[];
-  notice: Notice;
+  followingNotices: Announcement[];
+  notice: Announcement;
 };
+
+function formatCreatedAt(createdAt: string) {
+  const date = new Date(createdAt);
+
+  if (Number.isNaN(date.getTime())) {
+    return createdAt;
+  }
+
+  return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  })}`;
+}
 
 export function NoticeDetailComponent({
   followingNotices,
@@ -24,7 +37,7 @@ export function NoticeDetailComponent({
         <View style={styles.headingRow}>
           <Text style={styles.title}>{notice.title}</Text>
           <Text style={styles.date}>
-            {notice.date} {notice.time}
+            {formatCreatedAt(notice.createdAt)}
           </Text>
         </View>
 
@@ -34,15 +47,15 @@ export function NoticeDetailComponent({
             <View style={styles.avatarBody} />
           </View>
           <View style={styles.authorDetails}>
-            <Text style={styles.author}>{notice.author}</Text>
+            <Text style={styles.author}>{notice.publisher}</Text>
             <View style={styles.teamPill}>
-              <Text style={styles.teamText}>{notice.teamName}</Text>
+              <Text style={styles.teamText}>Announcements</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.body}>
-          {notice.detailParagraphs.map((paragraph) => (
+          {notice.content.split(/\n+/).filter(Boolean).map((paragraph) => (
             <Text key={paragraph} style={styles.paragraph}>
               {paragraph}
             </Text>
@@ -56,15 +69,15 @@ export function NoticeDetailComponent({
             <Text style={styles.nextTitle}>{followingNotice.title}</Text>
             <View style={styles.nextMetadata}>
               <Text style={styles.nextMetadataText}>
-                {followingNotice.author}
+                {followingNotice.publisher}
               </Text>
               <View style={styles.metadataDivider} />
               <Text style={styles.nextMetadataText}>
-                {followingNotice.time}
+                {formatCreatedAt(followingNotice.createdAt)}
               </Text>
             </View>
             <Text numberOfLines={3} style={styles.nextBody}>
-              {followingNotice.preview}
+              {followingNotice.content}
             </Text>
           </View>
         ))}
