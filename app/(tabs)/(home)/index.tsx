@@ -109,8 +109,8 @@ export default function HomePage() {
           // The newest announcement is featured at the top of the home page.
           const newestFirst = [...data].sort(
             (left, right) =>
-              new Date(right.created_at).getTime() -
-              new Date(left.created_at).getTime(),
+              new Date(right.createdAt).getTime() -
+              new Date(left.createdAt).getTime(),
           );
           setAnnouncements(newestFirst);
         } catch (error) {
@@ -188,10 +188,12 @@ export default function HomePage() {
                     <View key={notice.id} style={styles.noticeItem}>
                       <Text style={styles.noticeTitle}>{notice.title}</Text>
                       <View style={styles.metadata}>
-                        <Text style={styles.metadataText}>@EmoryHacks</Text>
+                        <Text style={styles.metadataText}>
+                          {notice.publisher}
+                        </Text>
                         <View style={styles.metadataDivider} />
                         <Text style={styles.metadataText}>
-                          {new Date(notice.created_at).toLocaleTimeString([], {
+                          {new Date(notice.createdAt).toLocaleTimeString([], {
                             hour: "2-digit",
                             minute: "2-digit",
                           })}

@@ -1,6 +1,7 @@
 export type Announcement = {
   content: string;
-  created_at: string;
+  createdAt: string;
   id: number | string;
+  publisher: string;
   title: string;
 };

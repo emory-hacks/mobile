@@ -37,7 +37,7 @@ export function NoticeDetailComponent({
         <View style={styles.headingRow}>
           <Text style={styles.title}>{notice.title}</Text>
           <Text style={styles.date}>
-            {formatCreatedAt(notice.created_at)}
+            {formatCreatedAt(notice.createdAt)}
           </Text>
         </View>
 
@@ -47,7 +47,7 @@ export function NoticeDetailComponent({
             <View style={styles.avatarBody} />
           </View>
           <View style={styles.authorDetails}>
-            <Text style={styles.author}>@EmoryHacks</Text>
+            <Text style={styles.author}>{notice.publisher}</Text>
             <View style={styles.teamPill}>
               <Text style={styles.teamText}>Announcements</Text>
             </View>
@@ -69,11 +69,11 @@ export function NoticeDetailComponent({
             <Text style={styles.nextTitle}>{followingNotice.title}</Text>
             <View style={styles.nextMetadata}>
               <Text style={styles.nextMetadataText}>
-                @EmoryHacks
+                {followingNotice.publisher}
               </Text>
               <View style={styles.metadataDivider} />
               <Text style={styles.nextMetadataText}>
-                {formatCreatedAt(followingNotice.created_at)}
+                {formatCreatedAt(followingNotice.createdAt)}
               </Text>
             </View>
             <Text numberOfLines={3} style={styles.nextBody}>
