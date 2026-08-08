@@ -394,7 +394,8 @@ const styles = StyleSheet.create({
     color: "#111111",
     fontFamily: "AlanSans_500Medium",
     fontSize: 15,
-
+    
+  },
   errorText: {
     color: "#C93D2A",
     fontFamily: "AlanSans_400Regular",
@@ -540,6 +541,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
+  },
 
   statusText: {
     color: "#777777",
