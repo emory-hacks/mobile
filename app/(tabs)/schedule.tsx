@@ -1,4 +1,6 @@
 import ScheduleItem from "@/components/schedule-related/schedule-item";
+import { getSchedule } from "@/services/schedule";
+import type { ScheduleEvent } from "@/types/schedule-event";
 import {
   AlanSans_400Regular,
   AlanSans_500Medium,
@@ -7,9 +9,10 @@ import {
 import { Grandstander_900Black } from "@expo-google-fonts/grandstander";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaskedView from "@react-native-masked-view/masked-view";
+import { useFocusEffect } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Easing,
@@ -23,83 +26,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const ESTIMATED_SCHEDULE_ITEM_HEIGHT = 112;
 const FOCUSED_EVENT_TOP_OFFSET = ESTIMATED_SCHEDULE_ITEM_HEIGHT;
-
-// Backend contract: every event should include a stable, unique database ID.
-// Do not generate IDs during render; React and the expand state both rely on them.
-const scheduleItems = [
-  {
-    id: "tokyo-0948",
-    time: "09:48",
-    title: "For Tokyo",
-    startTime: "00:00",
-    endTime: "00:00",
-    location: "Platform 27",
-    body: "This train has left the station. Please take the next one! JK! This box represents a past event, controlled by a flag called isActive",
-    isActive: false,
-    isPassed: true,
-  },
-  {
-    id: "nagoya-0955",
-    time: "09:55",
-    title: "For Nagoya",
-    startTime: "00:00",
-    endTime: "00:00",
-    location: "Platform 27",
-    body: "This train has left the station. Please take the next one! JK! This box represents a past event, controlled by a flag called isActive",
-    isActive: false,
-    isPassed: true,
-  },
-  {
-    id: "tokyo-1013",
-    time: "10:13",
-    title: "For Tokyo",
-    startTime: "00:00",
-    endTime: "00:00",
-    location: "Platform 25",
-    body: "We will be stopping at Kyoto, Nagoya, Shin-Yokohama, and Shinagawa. Non-reserved seats are in cars 1 to 3. Please keep your ticket with you until you leave the station. Passengers transferring at Tokyo should follow the signs on the platform.",
-    isActive: true,
-  },
-  {
-    id: "out-of-service-1050",
-    time: "10:50",
-    title: "Out of Service",
-    startTime: "00:00",
-    endTime: "00:00",
-    location: "Platform 26",
-  },
-  {
-    id: "tokyo-1110",
-    time: "11:10",
-    title: "For Tokyo",
-    startTime: "00:00",
-    endTime: "00:00",
-    location: "Platform 25",
-  },
-  {
-    id: "out-of-service-1125",
-    time: "11:25",
-    title: "Out of Service",
-    startTime: "00:00",
-    endTime: "00:00",
-    location: "Platform 26",
-  },
-  {
-    id: "tokyo-1135",
-    time: "11:35",
-    title: "For Tokyo",
-    startTime: "00:00",
-    endTime: "00:00",
-    location: "Platform 25",
-  },
-  {
-    id: "nagoya-1150",
-    time: "11:50",
-    title: "For Nagoya",
-    startTime: "00:00",
-    endTime: "00:00",
-    location: "Platform 27",
-  },
-];
 
 // Date Utility: Get an offset date
 function addDays(date: Date, days: number) {
@@ -147,24 +73,18 @@ function toMinutes(time: string) {
   return Number(hours) * 60 + Number(minutes);
 }
 
-function getScheduleFocusIndex(items: typeof scheduleItems, selectedDate: Date) {
+function getScheduleFocusIndex(items: ScheduleEvent[], selectedDate: Date) {
   if (items.length === 0) {
     return -1;
   }
 
   const today = new Date();
-  const activeIndex = items.findIndex((item) => item.isActive);
-
   if (isBeforeToday(selectedDate)) {
     return -1;
   }
 
   if (!isSameDay(selectedDate, today)) {
-    return activeIndex === 0 ? activeIndex : -1;
-  }
-
-  if (activeIndex !== -1) {
-    return activeIndex;
+    return -1;
   }
 
   const currentMinutes = today.getHours() * 60 + today.getMinutes();
@@ -215,6 +135,9 @@ export default function ScheduleScreen() {
   const [expandedScheduleId, setExpandedScheduleId] = useState<string | null>(
     null
   );
+  const [scheduleItems, setScheduleItems] = useState<ScheduleEvent[]>([]);
+  const [isLoadingSchedule, setIsLoadingSchedule] = useState(true);
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
   const [fontsLoaded] = useFonts({
     AlanSans_400Regular,
     AlanSans_500Medium,
@@ -231,7 +154,48 @@ export default function ScheduleScreen() {
   const isSelectedDatePast = isBeforeToday(selectedDate);
   const focusIndex = useMemo(
     () => getScheduleFocusIndex(scheduleItems, selectedDate),
-    [selectedDate]
+    [scheduleItems, selectedDate]
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+
+      const loadSchedule = async () => {
+        setIsLoadingSchedule(true);
+        setScheduleError(null);
+
+        try {
+          const data = await getSchedule();
+
+          if (!active) return;
+
+          // Sorting here makes both the timeline and focus calculation predictable.
+          setScheduleItems(
+            [...data].sort(
+              (left, right) =>
+                toMinutes(left.startTime) - toMinutes(right.startTime),
+            ),
+          );
+        } catch (error) {
+          if (!active) return;
+
+          setScheduleError(
+            error instanceof Error
+              ? error.message
+              : "Unable to load the schedule.",
+          );
+        } finally {
+          if (active) setIsLoadingSchedule(false);
+        }
+      };
+
+      loadSchedule();
+
+      return () => {
+        active = false;
+      };
+    }, []),
   );
 
   useEffect(() => {
@@ -365,7 +329,13 @@ export default function ScheduleScreen() {
             showsVerticalScrollIndicator={false}
           >
             <Animated.View style={transitionStyle}>
-              {scheduleItems.map((item, index) => {
+              {isLoadingSchedule ? (
+                <Text style={styles.statusText}>Loading schedule...</Text>
+              ) : scheduleError ? (
+                <Text style={styles.errorText}>{scheduleError}</Text>
+              ) : scheduleItems.length === 0 ? (
+                <Text style={styles.statusText}>No events scheduled.</Text>
+              ) : scheduleItems.map((item, index) => {
                 const isFocusedItem = index === focusIndex;
                 const isActive = !isSelectedDatePast && isFocusedItem;
                 const isPassed =
@@ -375,17 +345,17 @@ export default function ScheduleScreen() {
                 return (
                   <ScheduleItem
                     key={item.id}
-                    time={item.time}
-                    title={item.title}
+                    time={item.startTime}
+                    title={item.name}
                     startTime={item.startTime}
                     endTime={item.endTime}
                     location={item.location}
                     body={item.body}
                     isActive={isActive}
-                    isExpanded={expandedScheduleId === item.id}
+                    isExpanded={expandedScheduleId === String(item.id)}
                     isPassed={isPassed}
                     activeDate={formatFullDate(selectedDate)}
-                    onPress={() => toggleSchedule(item.id)}
+                    onPress={() => toggleSchedule(String(item.id))}
                   />
                 );
               })}
@@ -409,6 +379,14 @@ export default function ScheduleScreen() {
 }
 
 const styles = StyleSheet.create({
+  errorText: {
+    color: "#C93D2A",
+    fontFamily: "AlanSans_400Regular",
+    fontSize: 14,
+    paddingHorizontal: 32,
+    paddingTop: 40,
+    textAlign: "center",
+  },
   screen: {
     backgroundColor: "#fff",
     flex: 1,
@@ -464,6 +442,14 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 28,
     width: 32,
+  },
+  statusText: {
+    color: "#777777",
+    fontFamily: "AlanSans_400Regular",
+    fontSize: 14,
+    paddingHorizontal: 32,
+    paddingTop: 40,
+    textAlign: "center",
   },
   scrollView: {
     flex: 1,

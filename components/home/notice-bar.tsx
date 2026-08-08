@@ -1,10 +1,10 @@
 import { useRef } from "react";
 import { Animated, Pressable, StyleSheet, Text } from "react-native";
 
-import type { Notice } from "@/constants/test-notices";
+import type { Announcement } from "@/types/announcement";
 
 type NoticeBarProps = {
-  notice: Notice;
+  notice: Announcement;
   onPress: () => void;
 };
 
@@ -39,7 +39,7 @@ export function NoticeBar({ notice, onPress }: NoticeBarProps) {
       <Animated.View style={[styles.content, { backgroundColor }]}>
         <Text style={styles.title}>{notice.title}</Text>
         <Text numberOfLines={1} style={styles.preview}>
-          {notice.preview}
+          {notice.content}
         </Text>
       </Animated.View>
     </Pressable>
