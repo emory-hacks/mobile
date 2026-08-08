@@ -17,12 +17,10 @@ import { NoticeBar } from "@/components/home/notice-bar";
 import { NoticeDetailComponent } from "@/components/home/notice-detail-component";
 import { ProfileComponent } from "@/components/home/profile-component";
 import { API_BASE_URL } from "@/constants/computer-ip";
-import { TEST_NOTICES } from "@/constants/test-notices";
+import { getAnnouncements } from "@/services/announcements";
+import type { Announcement } from "@/types/announcement";
 import { getEmail, getJwt, saveRole } from "@/utils/auth-token";
 import { saveInfo } from "@/utils/user-info";
-
-const FEATURED_NOTICE = TEST_NOTICES[0];
-const FOLLOWING_NOTICES = TEST_NOTICES.slice(1);
 
 export default function HomePage() {
   const insets = useSafeAreaInsets();
@@ -36,6 +34,14 @@ export default function HomePage() {
   });
   const [name, setName] = useState("");
   const [teamName, setTeamName] = useState("");
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(true);
+  const [announcementError, setAnnouncementError] = useState<string | null>(
+    null,
+  );
+
+  const featuredAnnouncement = announcements[0];
+  const followingAnnouncements = announcements.slice(1);
 
   useFocusEffect(
     //this will mount every time the tab is focused on. change back to useEffect
@@ -91,6 +97,48 @@ export default function HomePage() {
     }, []),
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+
+      const loadAnnouncements = async () => {
+        setIsLoadingAnnouncements(true);
+        setAnnouncementError(null);
+
+        try {
+          const data = await getAnnouncements();
+
+          if (!active) return;
+
+          // The newest announcement is featured at the top of the home page.
+          const newestFirst = [...data].sort(
+            (left, right) =>
+              new Date(right.createdAt).getTime() -
+              new Date(left.createdAt).getTime(),
+          );
+          setAnnouncements(newestFirst);
+        } catch (error) {
+          if (!active) return;
+
+          setAnnouncementError(
+            error instanceof Error
+              ? error.message
+              : "Unable to load announcements.",
+          );
+        } finally {
+          if (active) setIsLoadingAnnouncements(false);
+        }
+      };
+
+      loadAnnouncements();
+
+      // Ignore a late network response after the user leaves this tab.
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
+
   if (!fontsLoaded) {
     return <View style={styles.screen} />;
   }
@@ -106,61 +154,75 @@ export default function HomePage() {
       </View>
 
       <View style={styles.noticeSection}>
-        <View
-          style={[
-            styles.featuredNotice,
-            isNoticeExpanded && styles.expandedFeaturedNotice,
-          ]}
-        >
-          <NoticeBar
-            notice={FEATURED_NOTICE}
-            onPress={() => setIsNoticeExpanded((isExpanded) => !isExpanded)}
-          />
-        </View>
-
-        {isNoticeExpanded ? (
-          <NoticeDetailComponent
-            followingNotices={FOLLOWING_NOTICES}
-            notice={FEATURED_NOTICE}
-          />
+        {isLoadingAnnouncements ? (
+          <Text style={styles.statusText}>Loading announcements...</Text>
+        ) : announcementError ? (
+          <Text style={styles.errorText}>{announcementError}</Text>
+        ) : !featuredAnnouncement ? (
+          <Text style={styles.statusText}>No announcements yet.</Text>
         ) : (
-          <View style={styles.noticeListViewport}>
-            <ScrollView
-              contentContainerStyle={styles.noticeList}
-              showsVerticalScrollIndicator={false}
-              style={styles.noticeScroll}
-            >
-              {TEST_NOTICES.map((notice) => (
-                <View key={notice.id} style={styles.noticeItem}>
-                  <Text style={styles.noticeTitle}>{notice.title}</Text>
-                  <View style={styles.metadata}>
-                    <Text style={styles.metadataText}>{notice.author}</Text>
-                    <View style={styles.metadataDivider} />
-                    <Text style={styles.metadataText}>{notice.time}</Text>
-                  </View>
-                  <Text numberOfLines={3} style={styles.noticeBody}>
-                    {notice.preview}
-                  </Text>
-                </View>
-              ))}
-            </ScrollView>
-
-            {/*
-              Keep the fade fixed to the viewport while notices scroll behind it.
-              This makes every notice fade based on its visible position rather
-              than hard-coding opacity for a specific list item.
-            */}
-            <LinearGradient
-              colors={[
-                "rgba(255, 255, 255, 0)",
-                "rgba(255, 255, 255, 0.72)",
-                "rgba(255, 255, 255, 0.98)",
+          <>
+            <View
+              style={[
+                styles.featuredNotice,
+                isNoticeExpanded && styles.expandedFeaturedNotice,
               ]}
-              locations={[0, 0.55, 1]}
-              pointerEvents="none"
-              style={styles.noticeFade}
-            />
-          </View>
+            >
+              <NoticeBar
+                notice={featuredAnnouncement}
+                onPress={() =>
+                  setIsNoticeExpanded((isExpanded) => !isExpanded)
+                }
+              />
+            </View>
+
+            {isNoticeExpanded ? (
+              <NoticeDetailComponent
+                followingNotices={followingAnnouncements}
+                notice={featuredAnnouncement}
+              />
+            ) : (
+              <View style={styles.noticeListViewport}>
+                <ScrollView
+                  contentContainerStyle={styles.noticeList}
+                  showsVerticalScrollIndicator={false}
+                  style={styles.noticeScroll}
+                >
+                  {announcements.map((notice) => (
+                    <View key={notice.id} style={styles.noticeItem}>
+                      <Text style={styles.noticeTitle}>{notice.title}</Text>
+                      <View style={styles.metadata}>
+                        <Text style={styles.metadataText}>
+                          {notice.publisher}
+                        </Text>
+                        <View style={styles.metadataDivider} />
+                        <Text style={styles.metadataText}>
+                          {new Date(notice.createdAt).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </Text>
+                      </View>
+                      <Text numberOfLines={3} style={styles.noticeBody}>
+                        {notice.content}
+                      </Text>
+                    </View>
+                  ))}
+                </ScrollView>
+
+                <LinearGradient
+                  colors={[
+                    "rgba(255, 255, 255, 0)",
+                    "rgba(255, 255, 255, 0.72)",
+                    "rgba(255, 255, 255, 0.98)",
+                  ]}
+                  locations={[0, 0.55, 1]}
+                  pointerEvents="none"
+                  style={styles.noticeFade}
+                />
+              </View>
+            )}
+          </>
         )}
       </View>
     </View>
@@ -168,6 +230,13 @@ export default function HomePage() {
 }
 
 const styles = StyleSheet.create({
+  errorText: {
+    color: "#C93D2A",
+    fontFamily: "AlanSans_400Regular",
+    fontSize: 14,
+    marginHorizontal: 32,
+    textAlign: "center",
+  },
   expandedFeaturedNotice: {
     marginBottom: 0,
   },
@@ -239,5 +308,12 @@ const styles = StyleSheet.create({
   screen: {
     backgroundColor: "#FFFFFF",
     flex: 1,
+  },
+  statusText: {
+    color: "#777777",
+    fontFamily: "AlanSans_400Regular",
+    fontSize: 14,
+    marginHorizontal: 32,
+    textAlign: "center",
   },
 });
