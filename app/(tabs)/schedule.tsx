@@ -1,6 +1,11 @@
 import ScheduleItem from "@/components/schedule-related/schedule-item";
-import { getSchedule } from "@/services/schedule";
+import {
+  getSchedule,
+  type ScheduleEventUpdate,
+  updateScheduleEvent,
+} from "@/services/schedule";
 import type { ScheduleEvent } from "@/types/schedule-event";
+import { getRole } from "@/utils/auth-token";
 import {
   AlanSans_400Regular,
   AlanSans_500Medium,
@@ -14,12 +19,18 @@ import { useFonts } from "expo-font";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Animated,
+  Alert,
   Easing,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -138,6 +149,13 @@ export default function ScheduleScreen() {
   const [scheduleItems, setScheduleItems] = useState<ScheduleEvent[]>([]);
   const [isLoadingSchedule, setIsLoadingSchedule] = useState(true);
   const [scheduleError, setScheduleError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<ScheduleEvent | null>(null);
+  const [eventName, setEventName] = useState("");
+  const [eventLocation, setEventLocation] = useState("");
+  const [eventStartTime, setEventStartTime] = useState("");
+  const [eventEndTime, setEventEndTime] = useState("");
+  const [isSavingEvent, setIsSavingEvent] = useState(false);
   const [fontsLoaded] = useFonts({
     AlanSans_400Regular,
     AlanSans_500Medium,
@@ -157,45 +175,40 @@ export default function ScheduleScreen() {
     [scheduleItems, selectedDate]
   );
 
+  const loadSchedule = useCallback(async () => {
+    setIsLoadingSchedule(true);
+    setScheduleError(null);
+
+    try {
+      const data = await getSchedule();
+
+      // Keep the timeline ordered after an event is edited.
+      setScheduleItems(
+        [...data].sort(
+          (left, right) =>
+            toMinutes(left.startTime) - toMinutes(right.startTime),
+        ),
+      );
+    } catch (error) {
+      setScheduleError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load the schedule.",
+      );
+    } finally {
+      setIsLoadingSchedule(false);
+    }
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
-      let active = true;
-
-      const loadSchedule = async () => {
-        setIsLoadingSchedule(true);
-        setScheduleError(null);
-
-        try {
-          const data = await getSchedule();
-
-          if (!active) return;
-
-          // Sorting here makes both the timeline and focus calculation predictable.
-          setScheduleItems(
-            [...data].sort(
-              (left, right) =>
-                toMinutes(left.startTime) - toMinutes(right.startTime),
-            ),
-          );
-        } catch (error) {
-          if (!active) return;
-
-          setScheduleError(
-            error instanceof Error
-              ? error.message
-              : "Unable to load the schedule.",
-          );
-        } finally {
-          if (active) setIsLoadingSchedule(false);
-        }
-      };
-
       loadSchedule();
 
-      return () => {
-        active = false;
-      };
-    }, []),
+      // This controls the UI; the backend must also enforce Admin access.
+      getRole().then((role) =>
+        setIsAdmin(role?.toLowerCase().includes("admin") ?? false),
+      );
+    }, [loadSchedule]),
   );
 
   useEffect(() => {
@@ -260,6 +273,62 @@ export default function ScheduleScreen() {
     setExpandedScheduleId((currentId) =>
       currentId === scheduleId ? null : scheduleId
     );
+  };
+
+  const openEdit = (event: ScheduleEvent) => {
+    setEditingEvent(event);
+    setEventName(event.name);
+    setEventLocation(event.location);
+    setEventStartTime(event.startTime);
+    setEventEndTime(event.endTime);
+  };
+
+  const closeEdit = () => {
+    setEditingEvent(null);
+    setEventName("");
+    setEventLocation("");
+    setEventStartTime("");
+    setEventEndTime("");
+  };
+
+  const handleSaveEvent = async () => {
+    if (!editingEvent) return;
+
+    const name = eventName.trim();
+    const location = eventLocation.trim();
+    const startTime = eventStartTime.trim();
+    const endTime = eventEndTime.trim();
+
+    if (!name || !location || !startTime || !endTime) {
+      Alert.alert("Missing fields", "Every event field is required.");
+      return;
+    }
+
+    const updates: ScheduleEventUpdate = {};
+    if (name !== editingEvent.name) updates.name = name;
+    if (location !== editingEvent.location) updates.location = location;
+    if (startTime !== editingEvent.startTime) updates.startTime = startTime;
+    if (endTime !== editingEvent.endTime) updates.endTime = endTime;
+
+    if (Object.keys(updates).length === 0) {
+      Alert.alert("No changes", "Nothing was changed.");
+      return;
+    }
+
+    setIsSavingEvent(true);
+    try {
+      await updateScheduleEvent(editingEvent.id, updates);
+      await loadSchedule();
+      closeEdit();
+      Alert.alert("Updated", "Event updated.");
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "Could not update event.",
+      );
+    } finally {
+      setIsSavingEvent(false);
+    }
   };
 
   if (!fontsLoaded) {
@@ -355,7 +424,9 @@ export default function ScheduleScreen() {
                     isExpanded={expandedScheduleId === String(item.id)}
                     isPassed={isPassed}
                     activeDate={formatFullDate(selectedDate)}
+                    onEdit={() => openEdit(item)}
                     onPress={() => toggleSchedule(String(item.id))}
+                    showEdit={isAdmin}
                   />
                 );
               })}
@@ -374,11 +445,150 @@ export default function ScheduleScreen() {
           />
         </View>
       </View>
+
+      <Modal
+        animationType="slide"
+        onRequestClose={closeEdit}
+        transparent
+        visible={editingEvent !== null}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.modalBackdrop}
+        >
+          <View style={styles.modalCard}>
+            <Text style={styles.modalHeading}>Edit event</Text>
+            <TextInput
+              onChangeText={setEventName}
+              placeholder="Event name"
+              placeholderTextColor="#AFAFAF"
+              style={styles.input}
+              value={eventName}
+            />
+            <TextInput
+              onChangeText={setEventLocation}
+              placeholder="Location"
+              placeholderTextColor="#AFAFAF"
+              style={styles.input}
+              value={eventLocation}
+            />
+            <View style={styles.timeInputs}>
+              <TextInput
+                onChangeText={setEventStartTime}
+                placeholder="Start time"
+                placeholderTextColor="#AFAFAF"
+                style={[styles.input, styles.timeInput]}
+                value={eventStartTime}
+              />
+              <TextInput
+                onChangeText={setEventEndTime}
+                placeholder="End time"
+                placeholderTextColor="#AFAFAF"
+                style={[styles.input, styles.timeInput]}
+                value={eventEndTime}
+              />
+            </View>
+            <View style={styles.modalActions}>
+              <Pressable
+                disabled={isSavingEvent}
+                onPress={closeEdit}
+                style={({ pressed }) => [
+                  styles.cancelButton,
+                  { opacity: pressed ? 0.7 : 1 },
+                ]}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                disabled={isSavingEvent}
+                onPress={handleSaveEvent}
+                style={({ pressed }) => [
+                  styles.saveButton,
+                  { opacity: pressed || isSavingEvent ? 0.7 : 1 },
+                ]}
+              >
+                {isSavingEvent ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.saveButtonText}>Save</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  cancelButton: {
+    alignItems: "center",
+    borderColor: "#DADADA",
+    borderRadius: 10,
+    borderWidth: 1,
+    flex: 1,
+    paddingVertical: 14,
+  },
+  cancelButtonText: {
+    color: "#111111",
+    fontFamily: "AlanSans_500Medium",
+    fontSize: 15,
+  },
+  input: {
+    borderColor: "#DADADA",
+    borderRadius: 10,
+    borderWidth: 1,
+    color: "#111111",
+    fontFamily: "AlanSans_400Regular",
+    fontSize: 15,
+    marginBottom: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  modalActions: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 4,
+  },
+  modalBackdrop: {
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  modalCard: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 28,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+  },
+  modalHeading: {
+    color: "#111111",
+    fontFamily: "AlanSans_700Bold",
+    fontSize: 20,
+    marginBottom: 16,
+  },
+  saveButton: {
+    alignItems: "center",
+    backgroundColor: "#A3CE26",
+    borderRadius: 10,
+    flex: 1,
+    paddingVertical: 14,
+  },
+  saveButtonText: {
+    color: "#FFFFFF",
+    fontFamily: "AlanSans_700Bold",
+    fontSize: 15,
+  },
+  timeInput: {
+    flex: 1,
+  },
+  timeInputs: {
+    flexDirection: "row",
+    gap: 12,
+  },
   errorText: {
     color: "#C93D2A",
     fontFamily: "AlanSans_400Regular",

@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   author: {
     color: "#A9A9A9",
     fontFamily: "AlanSans_400Regular",
-    fontSize: 12,
+    fontSize: 10,
   },
   authorDetails: {
     alignItems: "flex-start",
@@ -111,35 +111,35 @@ const styles = StyleSheet.create({
   authorRow: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 12,
-    marginTop: 14,
+    gap: 10,
+    marginTop: 10,
   },
   avatar: {
     alignItems: "center",
     backgroundColor: "#A3CE26",
-    borderRadius: 23,
-    height: 46,
+    borderRadius: 20,
+    height: 40,
     justifyContent: "flex-end",
     overflow: "hidden",
-    width: 46,
+    width: 40,
   },
   avatarBody: {
     backgroundColor: "#82BF78",
     borderRadius: 20,
-    height: 24,
+    height: 21,
     marginBottom: -2,
-    width: 40,
+    width: 35,
   },
   avatarHead: {
     backgroundColor: "#82BF78",
-    borderRadius: 9,
-    height: 18,
+    borderRadius: 8,
+    height: 16,
     marginBottom: -1,
-    width: 18,
+    width: 16,
   },
   body: {
-    gap: 24,
-    marginTop: 42,
+    gap: 16,
+    marginTop: 24,
   },
   container: {
     flex: 1,
@@ -152,12 +152,13 @@ const styles = StyleSheet.create({
   date: {
     color: "#A9A9A9",
     fontFamily: "AlanSans_400Regular",
-    fontSize: 12,
+    flexShrink: 0,
+    fontSize: 10,
   },
   divider: {
     backgroundColor: "#D8D8D8",
     height: StyleSheet.hairlineWidth,
-    marginVertical: 24,
+    marginVertical: 18,
     width: "100%",
   },
   fade: {
@@ -170,13 +171,13 @@ const styles = StyleSheet.create({
   followingNotice: {
     borderBottomColor: "#DADADA",
     borderBottomWidth: StyleSheet.hairlineWidth,
-    minHeight: 132,
     paddingHorizontal: 4,
-    paddingVertical: 18,
+    paddingVertical: 14,
   },
   headingRow: {
     alignItems: "baseline",
     flexDirection: "row",
+    gap: 10,
     justifyContent: "space-between",
   },
   metadataDivider: {
@@ -187,8 +188,8 @@ const styles = StyleSheet.create({
   nextBody: {
     color: "#111111",
     fontFamily: "AlanSans_400Regular",
-    fontSize: 13,
-    lineHeight: 17,
+    fontSize: 11,
+    lineHeight: 15,
   },
   nextMetadata: {
     alignItems: "center",
@@ -200,19 +201,19 @@ const styles = StyleSheet.create({
   nextMetadataText: {
     color: "#AFAFAF",
     fontFamily: "AlanSans_400Regular",
-    fontSize: 10,
+    fontSize: 9,
   },
   nextTitle: {
     color: "#111111",
     fontFamily: "AlanSans_700Bold",
-    fontSize: 19,
-    lineHeight: 23,
+    fontSize: 16,
+    lineHeight: 20,
   },
   paragraph: {
     color: "#111111",
     fontFamily: "AlanSans_400Regular",
-    fontSize: 15,
-    lineHeight: 21,
+    fontSize: 13,
+    lineHeight: 18,
   },
   scroll: {
     flex: 1,
@@ -220,21 +221,22 @@ const styles = StyleSheet.create({
   teamPill: {
     backgroundColor: "#A3CE26",
     borderRadius: 12,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
   teamText: {
     color: "#FFFFFF",
     fontFamily: "AlanSans_500Medium",
-    fontSize: 11,
+    fontSize: 10,
   },
   title: {
     color: "#111111",
+    flex: 1,
     fontFamily: "AlanSans_700Bold",
-    fontSize: 26,
-    lineHeight: 31,
+    fontSize: 20,
+    lineHeight: 25,
   },
   topDivider: {
-    marginTop: 16,
+    marginTop: 12,
   },
 });
