@@ -4,9 +4,14 @@ import { API_BASE_URL } from "@/constants/computer-ip";
 import type { ScheduleEvent } from "@/types/schedule-event";
 import { getJwt } from "@/utils/auth-token";
 
-export type ScheduleEventUpdate = Partial<
-  Pick<ScheduleEvent, "endTime" | "location" | "name" | "startTime">
->;
+export type ScheduleEventUpdate = {
+  correctedBody?: string;
+  correctedEndTime?: string;
+  correctedLocation?: string;
+  correctedStartTime?: string;
+  correctedTitle?: string;
+  title: string;
+};
 
 export async function getSchedule(): Promise<ScheduleEvent[]> {
   const jwt = await getJwt();
@@ -37,7 +42,6 @@ export async function getSchedule(): Promise<ScheduleEvent[]> {
 }
 
 export async function updateScheduleEvent(
-  id: ScheduleEvent["id"],
   updates: ScheduleEventUpdate,
 ): Promise<void> {
   const jwt = await getJwt();
@@ -46,7 +50,7 @@ export async function updateScheduleEvent(
     throw new Error("Please sign in to edit events.");
   }
 
-  const response = await fetch(`${API_BASE_URL}/schedule/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/schedule`, {
     method: "PATCH",
     credentials: "omit",
     headers: {

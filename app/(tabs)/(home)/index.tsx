@@ -179,17 +179,19 @@ export default function HomePage() {
     setIsSubmitting(true);
     try {
       if (editingAnnouncement) {
-        const updates: { content?: string; title?: string } = {};
-
-        if (title !== editingAnnouncement.title) updates.title = title;
-        if (content !== editingAnnouncement.content) updates.content = content;
-
-        if (Object.keys(updates).length === 0) {
+        if (
+          title === editingAnnouncement.title &&
+          content === editingAnnouncement.content
+        ) {
           Alert.alert("No changes", "Nothing was changed.");
           return;
         }
 
-        await updateAnnouncement(editingAnnouncement.id, updates);
+        await updateAnnouncement({
+          title: editingAnnouncement.title,
+          correctedTitle: title,
+          correctedContent: content,
+        });
       } else {
         const jwt = await getJwt();
         const email = await getEmail();
@@ -208,7 +210,7 @@ export default function HomePage() {
           body: JSON.stringify({
             title,
             content,
-            publisher: email,
+            publisherName: name,
             created_at: new Date().toISOString(),
           }),
         });
@@ -314,7 +316,7 @@ export default function HomePage() {
                       </View>
                       <View style={styles.metadata}>
                         <Text style={styles.metadataText}>
-                          {notice.publisher}
+                          {notice.publisherName}
                         </Text>
                         <View style={styles.metadataDivider} />
                         <Text style={styles.metadataText}>

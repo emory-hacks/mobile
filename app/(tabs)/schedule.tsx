@@ -79,9 +79,18 @@ function isSameDay(firstDate: Date, secondDate: Date) {
 }
 
 function toMinutes(time: string) {
-  const [hours = "0", minutes = "0"] = time.split(":");
+  const date = new Date(time);
 
-  return Number(hours) * 60 + Number(minutes);
+  return date.getHours() * 60 + date.getMinutes();
+}
+
+function formatEventTime(time: string) {
+  const date = new Date(time);
+
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function getScheduleFocusIndex(items: ScheduleEvent[], selectedDate: Date) {
@@ -155,6 +164,7 @@ export default function ScheduleScreen() {
   const [eventLocation, setEventLocation] = useState("");
   const [eventStartTime, setEventStartTime] = useState("");
   const [eventEndTime, setEventEndTime] = useState("");
+  const [eventBody, setEventBody] = useState("");
   const [isSavingEvent, setIsSavingEvent] = useState(false);
   const [fontsLoaded] = useFonts({
     AlanSans_400Regular,
@@ -281,6 +291,7 @@ export default function ScheduleScreen() {
     setEventLocation(event.location);
     setEventStartTime(event.startTime);
     setEventEndTime(event.endTime);
+    setEventBody(event.body ?? "");
   };
 
   const closeEdit = () => {
@@ -289,6 +300,7 @@ export default function ScheduleScreen() {
     setEventLocation("");
     setEventStartTime("");
     setEventEndTime("");
+    setEventBody("");
   };
 
   const handleSaveEvent = async () => {
@@ -298,26 +310,34 @@ export default function ScheduleScreen() {
     const location = eventLocation.trim();
     const startTime = eventStartTime.trim();
     const endTime = eventEndTime.trim();
+    const body = eventBody.trim();
 
     if (!name || !location || !startTime || !endTime) {
       Alert.alert("Missing fields", "Every event field is required.");
       return;
     }
 
-    const updates: ScheduleEventUpdate = {};
-    if (name !== editingEvent.name) updates.name = name;
-    if (location !== editingEvent.location) updates.location = location;
-    if (startTime !== editingEvent.startTime) updates.startTime = startTime;
-    if (endTime !== editingEvent.endTime) updates.endTime = endTime;
+    const updates: ScheduleEventUpdate = { title: editingEvent.name };
+    if (name !== editingEvent.name) updates.correctedTitle = name;
+    if (body !== (editingEvent.body ?? "")) updates.correctedBody = body;
+    if (location !== editingEvent.location) {
+      updates.correctedLocation = location;
+    }
+    if (startTime !== editingEvent.startTime) {
+      updates.correctedStartTime = startTime;
+    }
+    if (endTime !== editingEvent.endTime) {
+      updates.correctedEndTime = endTime;
+    }
 
-    if (Object.keys(updates).length === 0) {
+    if (Object.keys(updates).length === 1) {
       Alert.alert("No changes", "Nothing was changed.");
       return;
     }
 
     setIsSavingEvent(true);
     try {
-      await updateScheduleEvent(editingEvent.id, updates);
+      await updateScheduleEvent(updates);
       await loadSchedule();
       closeEdit();
       Alert.alert("Updated", "Event updated.");
@@ -414,10 +434,10 @@ export default function ScheduleScreen() {
                 return (
                   <ScheduleItem
                     key={item.id}
-                    time={item.startTime}
+                    time={formatEventTime(item.startTime)}
                     title={item.name}
-                    startTime={item.startTime}
-                    endTime={item.endTime}
+                    startTime={formatEventTime(item.startTime)}
+                    endTime={formatEventTime(item.endTime)}
                     location={item.location}
                     body={item.body}
                     isActive={isActive}
@@ -472,17 +492,26 @@ export default function ScheduleScreen() {
               style={styles.input}
               value={eventLocation}
             />
+            <TextInput
+              multiline
+              onChangeText={setEventBody}
+              placeholder="Event body"
+              placeholderTextColor="#AFAFAF"
+              style={[styles.input, styles.bodyInput]}
+              textAlignVertical="top"
+              value={eventBody}
+            />
             <View style={styles.timeInputs}>
               <TextInput
                 onChangeText={setEventStartTime}
-                placeholder="Start time"
+                placeholder="2026-08-10T14:00:00"
                 placeholderTextColor="#AFAFAF"
                 style={[styles.input, styles.timeInput]}
                 value={eventStartTime}
               />
               <TextInput
                 onChangeText={setEventEndTime}
-                placeholder="End time"
+                placeholder="2026-08-10T15:00:00"
                 placeholderTextColor="#AFAFAF"
                 style={[styles.input, styles.timeInput]}
                 value={eventEndTime}
@@ -522,6 +551,9 @@ export default function ScheduleScreen() {
 }
 
 const styles = StyleSheet.create({
+  bodyInput: {
+    minHeight: 90,
+  },
   cancelButton: {
     alignItems: "center",
     borderColor: "#DADADA",

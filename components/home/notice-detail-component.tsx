@@ -47,10 +47,7 @@ export function NoticeDetailComponent({
             <View style={styles.avatarBody} />
           </View>
           <View style={styles.authorDetails}>
-            <Text style={styles.author}>{notice.publisher}</Text>
-            <View style={styles.teamPill}>
-              <Text style={styles.teamText}>Announcements</Text>
-            </View>
+            <Text style={styles.author}>{notice.publisherName}</Text>
           </View>
         </View>
 
@@ -69,7 +66,7 @@ export function NoticeDetailComponent({
             <Text style={styles.nextTitle}>{followingNotice.title}</Text>
             <View style={styles.nextMetadata}>
               <Text style={styles.nextMetadataText}>
-                {followingNotice.publisher}
+                {followingNotice.publisherName}
               </Text>
               <View style={styles.metadataDivider} />
               <Text style={styles.nextMetadataText}>
@@ -217,17 +214,6 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flex: 1,
-  },
-  teamPill: {
-    backgroundColor: "#A3CE26",
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  teamText: {
-    color: "#FFFFFF",
-    fontFamily: "AlanSans_500Medium",
-    fontSize: 10,
   },
   title: {
     color: "#111111",

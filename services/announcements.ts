@@ -5,8 +5,9 @@ import type { Announcement } from "@/types/announcement";
 import { getJwt } from "@/utils/auth-token";
 
 type AnnouncementUpdate = {
-  content?: string;
-  title?: string;
+  correctedContent: string;
+  correctedTitle: string;
+  title: string;
 };
 
 export async function getAnnouncements(): Promise<Announcement[]> {
@@ -40,7 +41,6 @@ export async function getAnnouncements(): Promise<Announcement[]> {
 }
 
 export async function updateAnnouncement(
-  id: Announcement["id"],
   updates: AnnouncementUpdate,
 ): Promise<void> {
   const jwt = await getJwt();
@@ -49,8 +49,8 @@ export async function updateAnnouncement(
     throw new Error("Please sign in to edit announcements.");
   }
 
-  // Only title and content are editable. Publisher and createdAt stay unchanged.
-  const response = await fetch(`${API_BASE_URL}/api/announcements/${id}`, {
+  // The original title identifies the announcement being corrected.
+  const response = await fetch(`${API_BASE_URL}/api/announcements`, {
     method: "PATCH",
     credentials: "omit",
     headers: {
