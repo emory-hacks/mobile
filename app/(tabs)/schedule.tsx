@@ -1,25 +1,35 @@
 import ScheduleItem from "@/components/schedule-related/schedule-item";
-import { getSchedule } from "@/services/schedule";
+import {
+  getSchedule,
+  type ScheduleEventUpdate,
+  updateScheduleEvent,
+} from "@/services/schedule";
 import type { ScheduleEvent } from "@/types/schedule-event";
+import { getRole } from "@/utils/auth-token";
 import {
   AlanSans_400Regular,
   AlanSans_500Medium,
   AlanSans_700Bold,
 } from "@expo-google-fonts/alan-sans";
 import { Grandstander_900Black } from "@expo-google-fonts/grandstander";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { useFocusEffect } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   Animated,
   Easing,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -68,9 +78,25 @@ function isSameDay(firstDate: Date, secondDate: Date) {
 }
 
 function toMinutes(time: string) {
-  const [hours = "0", minutes = "0"] = time.split(":");
+  const date = new Date(time);
 
-  return Number(hours) * 60 + Number(minutes);
+  return date.getHours() * 60 + date.getMinutes();
+}
+
+function formatEventTime(time: string) {
+  const date = new Date(time);
+
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function getActiveEventIndex(items: ScheduleEvent[], now: Date) {
+  return items.findIndex(
+    (item) =>
+      new Date(item.startTime) <= now && now < new Date(item.endTime), // Active if now is between start & end time
+  );
 }
 
 function getScheduleFocusIndex(items: ScheduleEvent[], selectedDate: Date) {
@@ -87,12 +113,18 @@ function getScheduleFocusIndex(items: ScheduleEvent[], selectedDate: Date) {
     return -1;
   }
 
-  const currentMinutes = today.getHours() * 60 + today.getMinutes();
+  // Prefer the event currently in progress.
+  const activeIndex = getActiveEventIndex(items, today);
+  if (activeIndex !== -1) {
+    return activeIndex;
+  }
+
+  // Otherwise focus the next upcoming event.
   const upcomingIndex = items.findIndex(
-    (item) => toMinutes(item.startTime) >= currentMinutes
+    (item) => new Date(item.startTime) > today,
   );
 
-  return upcomingIndex === -1 ? items.length - 1 : upcomingIndex;
+  return upcomingIndex;
 }
 
 function GradientDateText({
@@ -138,6 +170,14 @@ export default function ScheduleScreen() {
   const [scheduleItems, setScheduleItems] = useState<ScheduleEvent[]>([]);
   const [isLoadingSchedule, setIsLoadingSchedule] = useState(true);
   const [scheduleError, setScheduleError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<ScheduleEvent | null>(null);
+  const [eventName, setEventName] = useState("");
+  const [eventLocation, setEventLocation] = useState("");
+  const [eventStartTime, setEventStartTime] = useState("");
+  const [eventEndTime, setEventEndTime] = useState("");
+  const [eventBody, setEventBody] = useState("");
+  const [isSavingEvent, setIsSavingEvent] = useState(false);
   const [fontsLoaded] = useFonts({
     AlanSans_400Regular,
     AlanSans_500Medium,
@@ -152,50 +192,53 @@ export default function ScheduleScreen() {
     addDays(selectedDate, 1),
   ];
   const isSelectedDatePast = isBeforeToday(selectedDate);
-  const focusIndex = useMemo(
-    () => getScheduleFocusIndex(scheduleItems, selectedDate),
-    [scheduleItems, selectedDate]
+  // Show only events starting on the selected date.
+  const selectedScheduleItems = useMemo(
+    () =>
+      scheduleItems.filter((item) =>
+        isSameDay(new Date(item.startTime), selectedDate),
+      ),
+    [scheduleItems, selectedDate],
   );
+  const focusIndex = useMemo(
+    () => getScheduleFocusIndex(selectedScheduleItems, selectedDate),
+    [selectedScheduleItems, selectedDate]
+  );
+
+  const loadSchedule = useCallback(async () => {
+    setIsLoadingSchedule(true);
+    setScheduleError(null);
+
+    try {
+      const data = await getSchedule();
+
+      // Keep the timeline ordered after an event is edited.
+      setScheduleItems(
+        [...data].sort(
+          (left, right) =>
+            toMinutes(left.startTime) - toMinutes(right.startTime),
+        ),
+      );
+    } catch (error) {
+      setScheduleError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load the schedule.",
+      );
+    } finally {
+      setIsLoadingSchedule(false);
+    }
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
-      let active = true;
-
-      const loadSchedule = async () => {
-        setIsLoadingSchedule(true);
-        setScheduleError(null);
-
-        try {
-          const data = await getSchedule();
-
-          if (!active) return;
-
-          // Sorting here makes both the timeline and focus calculation predictable.
-          setScheduleItems(
-            [...data].sort(
-              (left, right) =>
-                toMinutes(left.startTime) - toMinutes(right.startTime),
-            ),
-          );
-        } catch (error) {
-          if (!active) return;
-
-          setScheduleError(
-            error instanceof Error
-              ? error.message
-              : "Unable to load the schedule.",
-          );
-        } finally {
-          if (active) setIsLoadingSchedule(false);
-        }
-      };
-
       loadSchedule();
 
-      return () => {
-        active = false;
-      };
-    }, []),
+      // This controls the UI; the backend must also enforce Admin access.
+      getRole().then((role) =>
+        setIsAdmin(role?.toLowerCase().includes("admin") ?? false),
+      );
+    }, [loadSchedule]),
   );
 
   useEffect(() => {
@@ -262,21 +305,81 @@ export default function ScheduleScreen() {
     );
   };
 
+  const openEdit = (event: ScheduleEvent) => {
+    setEditingEvent(event);
+    setEventName(event.title);
+    setEventLocation(event.location);
+    setEventStartTime(event.startTime);
+    setEventEndTime(event.endTime);
+    setEventBody(event.body ?? "");
+  };
+
+  const closeEdit = () => {
+    setEditingEvent(null);
+    setEventName("");
+    setEventLocation("");
+    setEventStartTime("");
+    setEventEndTime("");
+    setEventBody("");
+  };
+
+  const handleSaveEvent = async () => {
+    if (!editingEvent) return;
+
+    const name = eventName.trim();
+    const location = eventLocation.trim();
+    const startTime = eventStartTime.trim();
+    const endTime = eventEndTime.trim();
+    const body = eventBody.trim();
+
+    if (!name || !location || !startTime || !endTime) {
+      Alert.alert("Missing fields", "Every event field is required.");
+      return;
+    }
+
+    const updates: ScheduleEventUpdate = { title: editingEvent.title };
+    if (name !== editingEvent.title) updates.correctedTitle = name;
+    if (body !== (editingEvent.body ?? "")) updates.correctedBody = body;
+    if (location !== editingEvent.location) {
+      updates.correctedLocation = location;
+    }
+    if (startTime !== editingEvent.startTime) {
+      updates.correctedStartTime = startTime;
+    }
+    if (endTime !== editingEvent.endTime) {
+      updates.correctedEndTime = endTime;
+    }
+
+    if (Object.keys(updates).length === 1) {
+      Alert.alert("No changes", "Nothing was changed.");
+      return;
+    }
+
+    setIsSavingEvent(true);
+    try {
+      await updateScheduleEvent(updates);
+      await loadSchedule();
+      closeEdit();
+      Alert.alert("Updated", "Event updated.");
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "Could not update event.",
+      );
+    } finally {
+      setIsSavingEvent(false);
+    }
+  };
+
   if (!fontsLoaded) {
     return <View style={styles.screen} />;
   }
 
   return (
     <View style={styles.screen}>
-      <View style={[styles.header, { paddingTop: insets.top + 62 }]}>
-        <View
-          accessibilityLabel="Settings"
-          accessibilityRole="image"
-          style={[styles.settingsIcon, { top: insets.top + 20 }]}
-        >
-          <Ionicons color="#000000" name="settings-outline" size={26} />
-        </View>
-
+      <View
+        style={[styles.header, { paddingTop: insets.top + 62 }]}
+      >
         <View style={styles.dateRow}>
           {visibleDates.map((date, index) => {
             const formattedDate = formatDate(date);
@@ -333,29 +436,36 @@ export default function ScheduleScreen() {
                 <Text style={styles.statusText}>Loading schedule...</Text>
               ) : scheduleError ? (
                 <Text style={styles.errorText}>{scheduleError}</Text>
-              ) : scheduleItems.length === 0 ? (
+              ) : selectedScheduleItems.length === 0 ? (
                 <Text style={styles.statusText}>No events scheduled.</Text>
-              ) : scheduleItems.map((item, index) => {
-                const isFocusedItem = index === focusIndex;
-                const isActive = !isSelectedDatePast && isFocusedItem;
+              ) : selectedScheduleItems.map((item) => {
+                const itemKey = `${item.startTime}-${item.title}`;
+                const now = new Date();
+                // Green means this event is happening now.
+                const isActive =
+                  isSameDay(selectedDate, now) &&
+                  new Date(item.startTime) <= now &&
+                  now < new Date(item.endTime);
                 const isPassed =
                   isSelectedDatePast ||
-                  (focusIndex !== -1 && !isActive && index < focusIndex);
+                  (!isActive && new Date(item.endTime) <= now);
 
                 return (
                   <ScheduleItem
-                    key={item.id}
-                    time={item.startTime}
-                    title={item.name}
-                    startTime={item.startTime}
-                    endTime={item.endTime}
+                    key={itemKey}
+                    time={formatEventTime(item.startTime)}
+                    title={item.title}
+                    startTime={formatEventTime(item.startTime)}
+                    endTime={formatEventTime(item.endTime)}
                     location={item.location}
                     body={item.body}
                     isActive={isActive}
-                    isExpanded={expandedScheduleId === String(item.id)}
+                    isExpanded={expandedScheduleId === itemKey}
                     isPassed={isPassed}
                     activeDate={formatFullDate(selectedDate)}
-                    onPress={() => toggleSchedule(String(item.id))}
+                    onEdit={() => openEdit(item)}
+                    onPress={() => toggleSchedule(itemKey)}
+                    showEdit={isAdmin}
                   />
                 );
               })}
@@ -374,11 +484,162 @@ export default function ScheduleScreen() {
           />
         </View>
       </View>
+
+      <Modal
+        animationType="slide"
+        onRequestClose={closeEdit}
+        transparent
+        visible={editingEvent !== null}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.modalBackdrop}
+        >
+          <View style={styles.modalCard}>
+            <Text style={styles.modalHeading}>Edit event</Text>
+            <TextInput
+              onChangeText={setEventName}
+              placeholder="Event name"
+              placeholderTextColor="#AFAFAF"
+              style={styles.input}
+              value={eventName}
+            />
+            <TextInput
+              onChangeText={setEventLocation}
+              placeholder="Location"
+              placeholderTextColor="#AFAFAF"
+              style={styles.input}
+              value={eventLocation}
+            />
+            <TextInput
+              multiline
+              onChangeText={setEventBody}
+              placeholder="Event body"
+              placeholderTextColor="#AFAFAF"
+              style={[styles.input, styles.bodyInput]}
+              textAlignVertical="top"
+              value={eventBody}
+            />
+            <View style={styles.timeInputs}>
+              <TextInput
+                onChangeText={setEventStartTime}
+                placeholder="2026-08-10T14:00:00"
+                placeholderTextColor="#AFAFAF"
+                style={[styles.input, styles.timeInput]}
+                value={eventStartTime}
+              />
+              <TextInput
+                onChangeText={setEventEndTime}
+                placeholder="2026-08-10T15:00:00"
+                placeholderTextColor="#AFAFAF"
+                style={[styles.input, styles.timeInput]}
+                value={eventEndTime}
+              />
+            </View>
+            <View style={styles.modalActions}>
+              <Pressable
+                disabled={isSavingEvent}
+                onPress={closeEdit}
+                style={({ pressed }) => [
+                  styles.cancelButton,
+                  { opacity: pressed ? 0.7 : 1 },
+                ]}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                disabled={isSavingEvent}
+                onPress={handleSaveEvent}
+                style={({ pressed }) => [
+                  styles.saveButton,
+                  { opacity: pressed || isSavingEvent ? 0.7 : 1 },
+                ]}
+              >
+                {isSavingEvent ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.saveButtonText}>Save</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  bodyInput: {
+    minHeight: 90,
+  },
+  cancelButton: {
+    alignItems: "center",
+    borderColor: "#DADADA",
+    borderRadius: 10,
+    borderWidth: 1,
+    flex: 1,
+    paddingVertical: 14,
+  },
+  cancelButtonText: {
+    color: "#111111",
+    fontFamily: "AlanSans_500Medium",
+    fontSize: 15,
+  },
+  input: {
+    borderColor: "#DADADA",
+    borderRadius: 10,
+    borderWidth: 1,
+    color: "#111111",
+    fontFamily: "AlanSans_400Regular",
+    fontSize: 15,
+    marginBottom: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  modalActions: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 4,
+  },
+  modalBackdrop: {
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  modalCard: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 28,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+  },
+  modalHeading: {
+    color: "#111111",
+    fontFamily: "AlanSans_700Bold",
+    fontSize: 20,
+    marginBottom: 16,
+  },
+  saveButton: {
+    alignItems: "center",
+    backgroundColor: "#A3CE26",
+    borderRadius: 10,
+    flex: 1,
+    paddingVertical: 14,
+  },
+  saveButtonText: {
+    color: "#FFFFFF",
+    fontFamily: "AlanSans_700Bold",
+    fontSize: 15,
+  },
+  timeInput: {
+    flex: 1,
+  },
+  timeInputs: {
+    flexDirection: "row",
+    gap: 12,
+  },
   errorText: {
     color: "#C93D2A",
     fontFamily: "AlanSans_400Regular",
@@ -434,14 +695,6 @@ const styles = StyleSheet.create({
     color: "#A3CE26",
     fontSize: 56,
     lineHeight: 72,
-  },
-  settingsIcon: {
-    alignItems: "center",
-    height: 32,
-    justifyContent: "center",
-    position: "absolute",
-    right: 28,
-    width: 32,
   },
   statusText: {
     color: "#777777",

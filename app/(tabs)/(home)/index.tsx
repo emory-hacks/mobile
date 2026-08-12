@@ -30,7 +30,10 @@ import { NoticeBar } from "@/components/home/notice-bar";
 import { NoticeDetailComponent } from "@/components/home/notice-detail-component";
 import { ProfileComponent } from "@/components/home/profile-component";
 import { API_BASE_URL } from "@/constants/computer-ip";
-import { getAnnouncements } from "@/services/announcements";
+import {
+  getAnnouncements,
+  updateAnnouncement,
+} from "@/services/announcements";
 import type { Announcement } from "@/types/announcement";
 import { getEmail, getJwt, saveRole } from "@/utils/auth-token";
 import { saveInfo } from "@/utils/user-info";
@@ -52,7 +55,9 @@ export default function HomePage() {
   const [composeOpen, setComposeOpen] = useState(false);
   const [announcementTitle, setAnnouncementTitle] = useState("");
   const [announcementBody, setAnnouncementBody] = useState("");
-  const [isPosting, setIsPosting] = useState(false);
+  const [editingAnnouncement, setEditingAnnouncement] =
+    useState<Announcement | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(true);
@@ -116,94 +121,129 @@ export default function HomePage() {
   );
 
 
+  const loadAnnouncements = useCallback(async () => {
+    setIsLoadingAnnouncements(true);
+    setAnnouncementError(null);
+
+    try {
+      const data = await getAnnouncements();
+
+      // Keep typo fixes in their original position by sorting on createdAt.
+      const newestFirst = [...data].sort(
+        (left, right) =>
+          new Date(right.createdAt).getTime() -
+          new Date(left.createdAt).getTime(),
+      );
+      setAnnouncements(newestFirst);
+    } catch (error) {
+      setAnnouncementError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load announcements.",
+      );
+    } finally {
+      setIsLoadingAnnouncements(false);
+    }
+  }, []);
+
+  const openCreate = () => {
+    setEditingAnnouncement(null);
+    setAnnouncementTitle("");
+    setAnnouncementBody("");
+    setComposeOpen(true);
+  };
+
+  const openEdit = (announcement: Announcement) => {
+    setEditingAnnouncement(announcement);
+    setAnnouncementTitle(announcement.title);
+    setAnnouncementBody(announcement.content);
+    setComposeOpen(true);
+  };
+
   const closeCompose = () => {
     setComposeOpen(false);
+    setEditingAnnouncement(null);
     setAnnouncementTitle("");
     setAnnouncementBody("");
   };
 
-  const handlePostAnnouncement = async () => {
+  const handleSubmitAnnouncement = async () => {
     const title = announcementTitle.trim();
     const content = announcementBody.trim();
+    const wasEditing = editingAnnouncement !== null;
     if (!title || !content) {
       Alert.alert("Missing fields", "Title and body are required.");
       return;
     }
 
-    const jwt = await getJwt();
-    const email = await getEmail();
-
-    setIsPosting(true);
+    setIsSubmitting(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/announcements`, {
-        method: "POST",
-        credentials: "omit",
-        headers: {
-          "Content-Type": "application/json",
-          Cookie: `token=${jwt}`,
-        },
-        body: JSON.stringify({
-          title,
-          content,
-          publisher: email,
-          created_at: new Date().toISOString(),
-        }),
-      });
+      if (editingAnnouncement) {
+        if (
+          title === editingAnnouncement.title &&
+          content === editingAnnouncement.content
+        ) {
+          Alert.alert("No changes", "Nothing was changed.");
+          return;
+        }
 
-      if (!response.ok) {
-        Alert.alert("Error", await response.text());
-        return;
+        await updateAnnouncement({
+          title: editingAnnouncement.title,
+          correctedTitle: title,
+          correctedContent: content,
+        });
+      } else {
+        const jwt = await getJwt();
+        const email = await getEmail();
+
+        if (!jwt || !email) {
+          throw new Error("Please sign in to post announcements.");
+        }
+
+        const response = await fetch(`${API_BASE_URL}/api/announcements`, {
+          method: "POST",
+          credentials: "omit",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `token=${jwt}`,
+          },
+          body: JSON.stringify({
+            title,
+            content,
+            publisherName: name,
+            publisher: email,
+            created_at: new Date().toISOString(),
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error((await response.text()) || "Could not post announcement.");
+        }
       }
 
+      // GET again so the page immediately matches the backend.
+      await loadAnnouncements();
       closeCompose();
-      Alert.alert("Posted", "Announcement published.");
-    } catch {
-      Alert.alert("Error", "Could not post announcement.");
+      Alert.alert(
+        wasEditing ? "Updated" : "Posted",
+        wasEditing
+          ? "Announcement updated."
+          : "Announcement published.",
+      );
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "Could not save announcement.",
+      );
     } finally {
-      setIsPosting(false);
+      setIsSubmitting(false);
     }
   };
 
   useFocusEffect(
     useCallback(() => {
-      let active = true;
-
-      const loadAnnouncements = async () => {
-        setIsLoadingAnnouncements(true);
-        setAnnouncementError(null);
-
-        try {
-          const data = await getAnnouncements();
-
-          if (!active) return;
-
-          // The newest announcement is featured at the top of the home page.
-          const newestFirst = [...data].sort(
-            (left, right) =>
-              new Date(right.createdAt).getTime() -
-              new Date(left.createdAt).getTime(),
-          );
-          setAnnouncements(newestFirst);
-        } catch (error) {
-          if (!active) return;
-
-          setAnnouncementError(
-            error instanceof Error
-              ? error.message
-              : "Unable to load announcements.",
-          );
-        } finally {
-          if (active) setIsLoadingAnnouncements(false);
-        }
-      };
-
       loadAnnouncements();
-
-      // Ignore a late network response after the user leaves this tab.
-      return () => {
-        active = false;
-      };
-    }, []),
+    }, [loadAnnouncements]),
   );
 
 
@@ -257,9 +297,32 @@ export default function HomePage() {
                   style={styles.noticeScroll}
                 >
                   {announcements.map((notice) => (
-                    <View key={notice.id} style={styles.noticeItem}>
-                      <Text style={styles.noticeTitle}>{notice.title}</Text>
+                    <View
+                      key={`${notice.createdAt}-${notice.publisher}-${notice.title}`} // uses time + publisher + title to avoid collisions in id.
+                      style={styles.noticeItem}
+                    >
+                      <View style={styles.noticeHeadingRow}>
+                        <Text style={styles.noticeTitle}>{notice.title}</Text>
+                        {isAdmin && (
+                          <Pressable
+                            accessibilityLabel={`Edit ${notice.title}`}
+                            accessibilityRole="button"
+                            hitSlop={10}
+                            onPress={() => openEdit(notice)}
+                            style={({ pressed }) => [
+                              styles.editButton,
+                              { opacity: pressed ? 0.6 : 1 },
+                            ]}
+                          >
+                            <Text style={styles.editButtonText}>Edit</Text>
+                          </Pressable>
+                        )}
+                      </View>
                       <View style={styles.metadata}>
+                        <Text style={styles.metadataText}>
+                          {notice.publisherName}
+                        </Text>
+                        <View style={styles.metadataDivider} />
                         <Text style={styles.metadataText}>
                           {notice.publisher}
                         </Text>
@@ -298,7 +361,7 @@ export default function HomePage() {
         <Pressable
           accessibilityLabel="Create announcement"
           accessibilityRole="button"
-          onPress={() => setComposeOpen(true)}
+          onPress={openCreate}
           style={({ pressed }) => [styles.fab, { opacity: pressed ? 0.85 : 1 }]}
         >
           <Ionicons color="#FFFFFF" name="add" size={32} />
@@ -316,7 +379,9 @@ export default function HomePage() {
           style={styles.modalBackdrop}
         >
           <View style={styles.modalCard}>
-            <Text style={styles.modalHeading}>New announcement</Text>
+            <Text style={styles.modalHeading}>
+              {editingAnnouncement ? "Edit announcement" : "New announcement"}
+            </Text>
             <TextInput
               onChangeText={setAnnouncementTitle}
               placeholder="Title"
@@ -335,7 +400,7 @@ export default function HomePage() {
             />
             <View style={styles.modalActions}>
               <Pressable
-                disabled={isPosting}
+                disabled={isSubmitting}
                 onPress={closeCompose}
                 style={({ pressed }) => [
                   styles.cancelButton,
@@ -345,17 +410,19 @@ export default function HomePage() {
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </Pressable>
               <Pressable
-                disabled={isPosting}
-                onPress={handlePostAnnouncement}
+                disabled={isSubmitting}
+                onPress={handleSubmitAnnouncement}
                 style={({ pressed }) => [
                   styles.postButton,
-                  { opacity: pressed || isPosting ? 0.7 : 1 },
+                  { opacity: pressed || isSubmitting ? 0.7 : 1 },
                 ]}
               >
-                {isPosting ? (
+                {isSubmitting ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.postButtonText}>Post</Text>
+                  <Text style={styles.postButtonText}>
+                    {editingAnnouncement ? "Save" : "Post"}
+                  </Text>
                 )}
               </Pressable>
             </View>
@@ -367,7 +434,6 @@ export default function HomePage() {
 }
 
 const styles = StyleSheet.create({
-
   bodyInput: {
     borderColor: "#DADADA",
     borderRadius: 10,
@@ -404,6 +470,17 @@ const styles = StyleSheet.create({
     textAlign: "center",
     
   },
+  editButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+    paddingVertical: 3,
+  },
+  editButtonText: {
+    color: "#7DA515",
+    fontFamily: "AlanSans_500Medium",
+    fontSize: 9,
+  },
   expandedFeaturedNotice: {
     marginBottom: 0,
   },
@@ -424,16 +501,16 @@ const styles = StyleSheet.create({
     width: 56,
   },
   featuredNotice: {
-    height: 46,
+    height: 40,
     marginBottom: 28,
     marginHorizontal: 32,
   },
   metadata: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 10,
-    marginBottom: 6,
-    marginTop: 5,
+    gap: 8,
+    marginBottom: 5,
+    marginTop: 4,
   },
   metadataDivider: {
     backgroundColor: "#C3C3C3",
@@ -443,7 +520,7 @@ const styles = StyleSheet.create({
   metadataText: {
     color: "#AFAFAF",
     fontFamily: "AlanSans_400Regular",
-    fontSize: 10,
+    fontSize: 9,
   },
   modalActions: {
     flexDirection: "row",
@@ -473,8 +550,8 @@ const styles = StyleSheet.create({
   noticeBody: {
     color: "#111111",
     fontFamily: "AlanSans_400Regular",
-    fontSize: 13,
-    lineHeight: 17,
+    fontSize: 11,
+    lineHeight: 15,
   },
   noticeFade: {
     bottom: 0,
@@ -483,12 +560,17 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 0,
   },
+  noticeHeadingRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 8,
+    justifyContent: "space-between",
+  },
   noticeItem: {
     borderBottomColor: "#DADADA",
     borderBottomWidth: 1,
-    minHeight: 126,
     paddingHorizontal: 4,
-    paddingVertical: 18,
+    paddingVertical: 14,
   },
   noticeList: {
     // Lets the final notice scroll completely above the fixed fade overlay.
@@ -509,9 +591,10 @@ const styles = StyleSheet.create({
   },
   noticeTitle: {
     color: "#111111",
+    flex: 1,
     fontFamily: "AlanSans_700Bold",
-    fontSize: 19,
-    lineHeight: 23,
+    fontSize: 16,
+    lineHeight: 20,
   },
   postButton: {
     alignItems: "center",

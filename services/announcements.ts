@@ -4,6 +4,12 @@ import { API_BASE_URL } from "@/constants/computer-ip";
 import type { Announcement } from "@/types/announcement";
 import { getJwt } from "@/utils/auth-token";
 
+type AnnouncementUpdate = {
+  correctedContent: string;
+  correctedTitle: string;
+  title: string;
+};
+
 export async function getAnnouncements(): Promise<Announcement[]> {
   const jwt = await getJwt();
 
@@ -32,4 +38,26 @@ export async function getAnnouncements(): Promise<Announcement[]> {
   }
 
   return data as Announcement[];
+}
+
+export async function updateAnnouncement(
+  updates: AnnouncementUpdate,
+): Promise<void> {
+  const jwt = await getJwt();
+
+  // The original title identifies the announcement being corrected.
+  const response = await fetch(`${API_BASE_URL}/api/announcements`, {
+    method: "PATCH",
+    credentials: "omit",
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: `token=${jwt}`,
+    },
+    body: JSON.stringify(updates),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || `Failed to edit announcement (${response.status}).`);
+  }
 }
