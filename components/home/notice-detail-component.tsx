@@ -47,7 +47,9 @@ export function NoticeDetailComponent({
             <View style={styles.avatarBody} />
           </View>
           <View style={styles.authorDetails}>
-            <Text style={styles.author}>{notice.publisherName}</Text>
+            <Text style={styles.author}>
+              {notice.publisherName} | {notice.publisher}
+            </Text>
           </View>
         </View>
 
@@ -62,11 +64,18 @@ export function NoticeDetailComponent({
         <View style={styles.divider} />
 
         {followingNotices.map((followingNotice) => (
-          <View key={followingNotice.id} style={styles.followingNotice}>
+          <View
+            key={`${followingNotice.createdAt}-${followingNotice.publisher}-${followingNotice.title}`}
+            style={styles.followingNotice}
+          >
             <Text style={styles.nextTitle}>{followingNotice.title}</Text>
             <View style={styles.nextMetadata}>
               <Text style={styles.nextMetadataText}>
                 {followingNotice.publisherName}
+              </Text>
+              <View style={styles.metadataDivider} />
+              <Text style={styles.nextMetadataText}>
+                {followingNotice.publisher}
               </Text>
               <View style={styles.metadataDivider} />
               <Text style={styles.nextMetadataText}>

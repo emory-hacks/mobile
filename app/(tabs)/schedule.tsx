@@ -287,7 +287,7 @@ export default function ScheduleScreen() {
 
   const openEdit = (event: ScheduleEvent) => {
     setEditingEvent(event);
-    setEventName(event.name);
+    setEventName(event.title);
     setEventLocation(event.location);
     setEventStartTime(event.startTime);
     setEventEndTime(event.endTime);
@@ -317,8 +317,8 @@ export default function ScheduleScreen() {
       return;
     }
 
-    const updates: ScheduleEventUpdate = { title: editingEvent.name };
-    if (name !== editingEvent.name) updates.correctedTitle = name;
+    const updates: ScheduleEventUpdate = { title: editingEvent.title };
+    if (name !== editingEvent.title) updates.correctedTitle = name;
     if (body !== (editingEvent.body ?? "")) updates.correctedBody = body;
     if (location !== editingEvent.location) {
       updates.correctedLocation = location;
@@ -425,6 +425,7 @@ export default function ScheduleScreen() {
               ) : scheduleItems.length === 0 ? (
                 <Text style={styles.statusText}>No events scheduled.</Text>
               ) : scheduleItems.map((item, index) => {
+                const itemKey = `${item.startTime}-${item.title}`;
                 const isFocusedItem = index === focusIndex;
                 const isActive = !isSelectedDatePast && isFocusedItem;
                 const isPassed =
@@ -433,19 +434,19 @@ export default function ScheduleScreen() {
 
                 return (
                   <ScheduleItem
-                    key={item.id}
+                    key={itemKey}
                     time={formatEventTime(item.startTime)}
-                    title={item.name}
+                    title={item.title}
                     startTime={formatEventTime(item.startTime)}
                     endTime={formatEventTime(item.endTime)}
                     location={item.location}
                     body={item.body}
                     isActive={isActive}
-                    isExpanded={expandedScheduleId === String(item.id)}
+                    isExpanded={expandedScheduleId === itemKey}
                     isPassed={isPassed}
                     activeDate={formatFullDate(selectedDate)}
                     onEdit={() => openEdit(item)}
-                    onPress={() => toggleSchedule(String(item.id))}
+                    onPress={() => toggleSchedule(itemKey)}
                     showEdit={isAdmin}
                   />
                 );

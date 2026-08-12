@@ -211,6 +211,7 @@ export default function HomePage() {
             title,
             content,
             publisherName: name,
+            publisher: email,
             created_at: new Date().toISOString(),
           }),
         });
@@ -296,7 +297,10 @@ export default function HomePage() {
                   style={styles.noticeScroll}
                 >
                   {announcements.map((notice) => (
-                    <View key={notice.id} style={styles.noticeItem}>
+                    <View
+                      key={`${notice.createdAt}-${notice.publisher}-${notice.title}`} // uses time + publisher + title to avoid collisions in id.
+                      style={styles.noticeItem}
+                    >
                       <View style={styles.noticeHeadingRow}>
                         <Text style={styles.noticeTitle}>{notice.title}</Text>
                         {isAdmin && (
@@ -317,6 +321,10 @@ export default function HomePage() {
                       <View style={styles.metadata}>
                         <Text style={styles.metadataText}>
                           {notice.publisherName}
+                        </Text>
+                        <View style={styles.metadataDivider} />
+                        <Text style={styles.metadataText}>
+                          {notice.publisher}
                         </Text>
                         <View style={styles.metadataDivider} />
                         <Text style={styles.metadataText}>

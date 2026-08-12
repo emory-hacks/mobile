@@ -46,10 +46,6 @@ export async function updateScheduleEvent(
 ): Promise<void> {
   const jwt = await getJwt();
 
-  if (!jwt) {
-    throw new Error("Please sign in to edit events.");
-  }
-
   const response = await fetch(`${API_BASE_URL}/schedule`, {
     method: "PATCH",
     credentials: "omit",

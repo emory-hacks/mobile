@@ -45,10 +45,6 @@ export async function updateAnnouncement(
 ): Promise<void> {
   const jwt = await getJwt();
 
-  if (!jwt) {
-    throw new Error("Please sign in to edit announcements.");
-  }
-
   // The original title identifies the announcement being corrected.
   const response = await fetch(`${API_BASE_URL}/api/announcements`, {
     method: "PATCH",
