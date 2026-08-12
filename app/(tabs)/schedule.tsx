@@ -12,7 +12,6 @@ import {
   AlanSans_700Bold,
 } from "@expo-google-fonts/alan-sans";
 import { Grandstander_900Black } from "@expo-google-fonts/grandstander";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { useFocusEffect } from "@react-navigation/native";
 import { useFonts } from "expo-font";
@@ -20,8 +19,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Animated,
   Alert,
+  Animated,
   Easing,
   KeyboardAvoidingView,
   Modal,
@@ -93,6 +92,13 @@ function formatEventTime(time: string) {
   });
 }
 
+function getActiveEventIndex(items: ScheduleEvent[], now: Date) {
+  return items.findIndex(
+    (item) =>
+      new Date(item.startTime) <= now && now < new Date(item.endTime), // Active if now is between start & end time
+  );
+}
+
 function getScheduleFocusIndex(items: ScheduleEvent[], selectedDate: Date) {
   if (items.length === 0) {
     return -1;
@@ -107,12 +113,18 @@ function getScheduleFocusIndex(items: ScheduleEvent[], selectedDate: Date) {
     return -1;
   }
 
-  const currentMinutes = today.getHours() * 60 + today.getMinutes();
+  // Prefer the event currently in progress.
+  const activeIndex = getActiveEventIndex(items, today);
+  if (activeIndex !== -1) {
+    return activeIndex;
+  }
+
+  // Otherwise focus the next upcoming event.
   const upcomingIndex = items.findIndex(
-    (item) => toMinutes(item.startTime) >= currentMinutes
+    (item) => new Date(item.startTime) > today,
   );
 
-  return upcomingIndex === -1 ? items.length - 1 : upcomingIndex;
+  return upcomingIndex;
 }
 
 function GradientDateText({
@@ -180,9 +192,17 @@ export default function ScheduleScreen() {
     addDays(selectedDate, 1),
   ];
   const isSelectedDatePast = isBeforeToday(selectedDate);
+  // Show only events starting on the selected date.
+  const selectedScheduleItems = useMemo(
+    () =>
+      scheduleItems.filter((item) =>
+        isSameDay(new Date(item.startTime), selectedDate),
+      ),
+    [scheduleItems, selectedDate],
+  );
   const focusIndex = useMemo(
-    () => getScheduleFocusIndex(scheduleItems, selectedDate),
-    [scheduleItems, selectedDate]
+    () => getScheduleFocusIndex(selectedScheduleItems, selectedDate),
+    [selectedScheduleItems, selectedDate]
   );
 
   const loadSchedule = useCallback(async () => {
@@ -357,15 +377,9 @@ export default function ScheduleScreen() {
 
   return (
     <View style={styles.screen}>
-      <View style={[styles.header, { paddingTop: insets.top + 62 }]}>
-        <View
-          accessibilityLabel="Settings"
-          accessibilityRole="image"
-          style={[styles.settingsIcon, { top: insets.top + 20 }]}
-        >
-          <Ionicons color="#000000" name="settings-outline" size={26} />
-        </View>
-
+      <View
+        style={[styles.header, { paddingTop: insets.top + 62 }]}
+      >
         <View style={styles.dateRow}>
           {visibleDates.map((date, index) => {
             const formattedDate = formatDate(date);
@@ -422,15 +436,19 @@ export default function ScheduleScreen() {
                 <Text style={styles.statusText}>Loading schedule...</Text>
               ) : scheduleError ? (
                 <Text style={styles.errorText}>{scheduleError}</Text>
-              ) : scheduleItems.length === 0 ? (
+              ) : selectedScheduleItems.length === 0 ? (
                 <Text style={styles.statusText}>No events scheduled.</Text>
-              ) : scheduleItems.map((item, index) => {
+              ) : selectedScheduleItems.map((item) => {
                 const itemKey = `${item.startTime}-${item.title}`;
-                const isFocusedItem = index === focusIndex;
-                const isActive = !isSelectedDatePast && isFocusedItem;
+                const now = new Date();
+                // Green means this event is happening now.
+                const isActive =
+                  isSameDay(selectedDate, now) &&
+                  new Date(item.startTime) <= now &&
+                  now < new Date(item.endTime);
                 const isPassed =
                   isSelectedDatePast ||
-                  (focusIndex !== -1 && !isActive && index < focusIndex);
+                  (!isActive && new Date(item.endTime) <= now);
 
                 return (
                   <ScheduleItem
@@ -677,14 +695,6 @@ const styles = StyleSheet.create({
     color: "#A3CE26",
     fontSize: 56,
     lineHeight: 72,
-  },
-  settingsIcon: {
-    alignItems: "center",
-    height: 32,
-    justifyContent: "center",
-    position: "absolute",
-    right: 28,
-    width: 32,
   },
   statusText: {
     color: "#777777",
