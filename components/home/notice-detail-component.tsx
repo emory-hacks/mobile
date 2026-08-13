@@ -37,9 +37,7 @@ export function NoticeDetailComponent({
 
         <View style={styles.headingRow}>
           <Text style={styles.title}>{notice.title}</Text>
-          <Text style={styles.date}>
-            {formatCreatedAt(notice.createdAt)}
-          </Text>
+          <Text style={styles.date}>{formatCreatedAt(notice.createdAt)}</Text>
         </View>
 
         <View style={styles.authorRow}>
@@ -52,14 +50,17 @@ export function NoticeDetailComponent({
         </View>
 
         <View style={styles.body}>
-          {notice.content.split(/\n+/).filter(Boolean).map((paragraph) => (
-            <Text key={paragraph} style={styles.paragraph}>
-              {paragraph}
-            </Text>
-          ))}
+          {notice.content
+            .split(/\n+/)
+            .filter(Boolean)
+            .map((paragraph) => (
+              <Text key={paragraph} style={styles.paragraph}>
+                {paragraph}
+              </Text>
+            ))}
         </View>
 
-        <View style={styles.divider} />
+        <View style={[styles.divider, styles.featuredDivider]} />
 
         {followingNotices.map((followingNotice) => (
           <View
@@ -141,6 +142,10 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
     marginVertical: 18,
     width: "100%",
+  },
+  featuredDivider: {
+    backgroundColor: "#000000",
+    height: 2,
   },
   fade: {
     bottom: 0,
