@@ -169,6 +169,9 @@ export default function Signup() {
     },
   });
 
+  const isEduEmail = (value: string) =>
+    value.trim().slice(-4).toLowerCase() === ".edu";
+
   const invalidPassword = (password: string) => {
     let hasAlpha = false; // anything that's alphabetic
     let hasNumber = false; // anything that's a number
@@ -272,6 +275,11 @@ export default function Signup() {
       return;
     }
 
+    if (!isEduEmail(email)) {
+      setErrorMessage("Your email should be .edu");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setErrorMessage("Passwords do not match");
       return;
@@ -372,7 +380,7 @@ export default function Signup() {
               autoCapitalize="none"
             />
             <TextInput
-              placeholder="Email@email.com"
+              placeholder="Email@email.edu"
               style={styles.input}
               value={email}
               onChangeText={setEmail}

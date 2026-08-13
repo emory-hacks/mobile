@@ -243,9 +243,7 @@ export default function ForgotPassword() {
 
       if (!response.ok) {
         const message = await response.text();
-        setErrorMessage(
-          message?.trim() || "Invalid or expired code",
-        );
+        setErrorMessage(message?.trim() || "Invalid or expired code");
         setDigits(["", "", "", "", ""]);
         digitRefs.current[0]?.focus();
         return;
@@ -303,8 +301,7 @@ export default function ForgotPassword() {
         {awaitingCode ? (
           <>
             <Text style={styles.codeHint}>
-              Enter the 5-digit code sent to {email}, then choose a new
-              password
+              Enter the 5-digit code sent to {email}, then choose a new password
             </Text>
             <View style={styles.codeRow}>
               {digits.map((digit, index) => (
@@ -363,7 +360,7 @@ export default function ForgotPassword() {
         ) : (
           <>
             <TextInput
-              placeholder="Email@email.com"
+              placeholder="Email@email.edu"
               style={styles.input}
               value={email}
               onChangeText={setEmail}
