@@ -630,7 +630,7 @@ export default function QRCodeScreen() {
 const styles = StyleSheet.create({
   pageContainer: {
     flex: 1,
-    backgroundColor: "#ececec",
+    backgroundColor: "#9be287",
   },
   pageHeader: {
     backgroundColor: "#fff",

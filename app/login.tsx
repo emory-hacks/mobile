@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "@/constants/computer-ip";
 import {
   Fredoka_600SemiBold,
   Fredoka_700Bold,
@@ -15,7 +16,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { API_BASE_URL } from "@/constants/computer-ip";
 import { saveEmail, saveJwt } from "../utils/auth-token";
 
 export default function Login() {
@@ -32,7 +32,7 @@ export default function Login() {
       flex: 1,
       justifyContent: "center",
       alignItems: "stretch",
-      backgroundColor: "#fff",
+      backgroundColor: "#a9ea97",
     },
     subcontainer: {
       flex: 1,

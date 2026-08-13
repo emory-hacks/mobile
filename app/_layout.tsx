@@ -5,7 +5,13 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import 'react-native-reanimated';
-
+const CustomTheme = { 
+  ...DefaultTheme, 
+  colors: { 
+    ...DefaultTheme.colors, 
+    background: '#a9ea97', 
+  }, 
+}; 
 SplashScreen.preventAutoHideAsync();
 
 // Temporary workaround to keep text sizing consistent across devices.
@@ -32,7 +38,7 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={DefaultTheme}>
+    <ThemeProvider value={CustomTheme}>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="login" />
@@ -63,13 +69,13 @@ function LandingSplash() {
 const styles = StyleSheet.create({
   splashContainer: {
     alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#9be287',
     flex: 1,
     justifyContent: 'center',
   },
   logoPlaceholder: {
     alignItems: 'center',
-    backgroundColor: '#f2f5f8',
+    backgroundColor: '#9be287',
     borderRadius: 24,
     height: 128,
     justifyContent: 'center',
