@@ -1,6 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
+import { DefaultPfp } from "@/components/home/default-pfp";
 import type { Announcement } from "@/types/announcement";
 
 type NoticeDetailComponentProps = {
@@ -42,10 +43,7 @@ export function NoticeDetailComponent({
         </View>
 
         <View style={styles.authorRow}>
-          <View style={styles.avatar}>
-            <View style={styles.avatarHead} />
-            <View style={styles.avatarBody} />
-          </View>
+          <DefaultPfp size={40} />
           <View style={styles.authorDetails}>
             <Text style={styles.author}>
               {notice.publisherName} | {notice.publisher}
@@ -119,29 +117,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
     marginTop: 10,
-  },
-  avatar: {
-    alignItems: "center",
-    backgroundColor: "#A3CE26",
-    borderRadius: 20,
-    height: 40,
-    justifyContent: "flex-end",
-    overflow: "hidden",
-    width: 40,
-  },
-  avatarBody: {
-    backgroundColor: "#82BF78",
-    borderRadius: 20,
-    height: 21,
-    marginBottom: -2,
-    width: 35,
-  },
-  avatarHead: {
-    backgroundColor: "#82BF78",
-    borderRadius: 8,
-    height: 16,
-    marginBottom: -1,
-    width: 16,
   },
   body: {
     gap: 16,

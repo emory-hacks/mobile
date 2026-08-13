@@ -373,9 +373,6 @@ export default function QRCodeScreen() {
             <View style={styles.profileIdentity}>
               <View style={styles.usernameRow}>
                 <Text style={styles.username}>{attendee.username}</Text>
-                <View style={styles.verifiedBadge}>
-                  <Ionicons name="checkmark" size={12} color="#fff" />
-                </View>
               </View>
               {attendee.teamName ? (
                 <View style={styles.teamBadge}>
@@ -657,14 +654,6 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: "700",
     color: "#111",
-  },
-  verifiedBadge: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: "#A3CE26",
-    alignItems: "center",
-    justifyContent: "center",
   },
   teamBadge: {
     alignSelf: "flex-start",
