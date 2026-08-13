@@ -2,6 +2,8 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { DefaultPfp } from "@/components/home/default-pfp";
+
 type ProfileComponentProps = {
   name: string;
   onSettingsPress?: () => void;
@@ -37,13 +39,11 @@ export function ProfileComponent({
             </View>
           </View>
 
-          <View
+          <DefaultPfp
             accessibilityLabel={`${name}'s profile picture`}
+            size={66}
             style={styles.avatar}
-          >
-            <View style={styles.avatarHead} />
-            <View style={styles.avatarBody} />
-          </View>
+          />
         </View>
       </View>
 
@@ -62,28 +62,7 @@ export function ProfileComponent({
 
 const styles = StyleSheet.create({
   avatar: {
-    alignItems: "center",
-    backgroundColor: "#A3CE26",
-    borderRadius: 33,
-    height: 66,
-    justifyContent: "flex-end",
-    overflow: "hidden",
     transform: [{ translateY: 8 }],
-    width: 66,
-  },
-  avatarBody: {
-    backgroundColor: "#82BF78",
-    borderRadius: 30,
-    height: 36,
-    marginBottom: -3,
-    width: 60,
-  },
-  avatarHead: {
-    backgroundColor: "#82BF78",
-    borderRadius: 13,
-    height: 26,
-    marginBottom: -2,
-    width: 26,
   },
   bottomShadow: {
     bottom: -14,

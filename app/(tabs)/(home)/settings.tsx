@@ -10,6 +10,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { DefaultPfp } from "@/components/home/default-pfp";
 import {
   clearEmail,
   clearJwt,
@@ -133,10 +134,7 @@ export default function SettingsScreen() {
               </Pressable>
             ) : null}
 
-            <View accessibilityLabel="Profile picture" style={styles.avatar}>
-              <View style={styles.avatarHead} />
-              <View style={styles.avatarBody} />
-            </View>
+            <DefaultPfp accessibilityLabel="Profile picture" size={112} />
           </View>
         </View>
 
@@ -206,29 +204,6 @@ function InfoRow({ label, pill = false, pillColor, value }: InfoRowProps) {
 const styles = StyleSheet.create({
   activitySection: {
     marginTop: 34,
-  },
-  avatar: {
-    alignItems: "center",
-    backgroundColor: "#A3CE26",
-    borderRadius: 56,
-    height: 112,
-    justifyContent: "flex-end",
-    overflow: "hidden",
-    width: 112,
-  },
-  avatarBody: {
-    backgroundColor: "#82BF78",
-    borderRadius: 52,
-    height: 62,
-    marginBottom: -5,
-    width: 104,
-  },
-  avatarHead: {
-    backgroundColor: "#82BF78",
-    borderRadius: 22,
-    height: 44,
-    marginBottom: -3,
-    width: 44,
   },
   backButton: {
     alignItems: "center",

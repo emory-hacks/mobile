@@ -45,7 +45,6 @@ export default function ScannedProfileScreen() {
         >
           <Ionicons name="arrow-back" size={28} color="#111" />
         </Pressable>
-        <View style={styles.avatar} />
       </View>
 
       <View style={styles.identity}>
@@ -72,14 +71,19 @@ export default function ScannedProfileScreen() {
           <View style={styles.progressLabels}>
             <Text style={styles.progressLabelMuted}>0</Text>
             <Text
-              style={[styles.progressLabelCurrent, { left: `${progress * 100}%` }]}
+              style={[
+                styles.progressLabelCurrent,
+                { left: `${progress * 100}%` },
+              ]}
             >
               {points}
             </Text>
             <Text style={styles.progressLabelMuted}>{maxPoints}</Text>
           </View>
           <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+            <View
+              style={[styles.progressFill, { width: `${progress * 100}%` }]}
+            />
             <View
               style={[styles.progressThumb, { left: `${progress * 100}%` }]}
             />
@@ -90,12 +94,7 @@ export default function ScannedProfileScreen() {
       <View style={styles.detailList}>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Check in</Text>
-          <View
-            style={[
-              styles.validBadge,
-              !checkedIn && styles.invalidBadge,
-            ]}
-          >
+          <View style={[styles.validBadge, !checkedIn && styles.invalidBadge]}>
             <Text style={styles.validBadgeText}>
               {checkedIn ? "Valid" : "Invalid"}
             </Text>
@@ -123,12 +122,6 @@ const styles = StyleSheet.create({
   },
   backButton: {
     paddingTop: 4,
-  },
-  avatar: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: "#A3CE26",
   },
   identity: {
     marginTop: -20,
