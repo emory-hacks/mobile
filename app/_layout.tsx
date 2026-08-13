@@ -3,10 +3,16 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import 'react-native-reanimated';
 
 SplashScreen.preventAutoHideAsync();
+
+// Temporary workaround to keep text sizing consistent across devices.
+// @ts-expect-error React Native does not expose defaultProps in the Text type.
+Text.defaultProps = Text.defaultProps ?? {};
+// @ts-expect-error React Native does not expose defaultProps in the Text type.
+Text.defaultProps.allowFontScaling = false;
 
 export default function RootLayout() {
   const [isSplashReady, setIsSplashReady] = useState(false);
