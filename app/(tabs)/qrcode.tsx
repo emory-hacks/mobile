@@ -39,6 +39,40 @@ function formatUsername(name: string) {
   return trimmed.startsWith("@") ? trimmed : `@${trimmed}`;
 }
 
+async function fetchCurrentEventId(
+  jwt: string,
+): Promise<{ eventId: string } | { error: string }> {
+  const currentTime = new Date().toISOString().slice(0, 19);
+  const scheduleResponse = await fetch(`${API_BASE_URL}/schedule/current`, {
+    method: "POST",
+    credentials: "omit",
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: `token=${jwt}`,
+    },
+    body: JSON.stringify({
+      currentTime,
+    }),
+  });
+
+  if (!scheduleResponse.ok) {
+    console.log(scheduleResponse.status, await scheduleResponse.text());
+    return { error: "Could not load the current event." };
+  }
+
+  const scheduleData = (await scheduleResponse.json()) as {
+    title?: unknown;
+  };
+  const eventId =
+    typeof scheduleData.title === "string" ? scheduleData.title.trim() : "";
+
+  if (!eventId) {
+    return { error: "No current event to award points for." };
+  }
+
+  return { eventId };
+}
+
 export default function QRCodeScreen() {
   const originalBrightness = useRef<number | null>(null);
   const scanLock = useRef(false);
@@ -139,7 +173,16 @@ export default function QRCodeScreen() {
       return;
     }
 
+    setScanned(false);
+    setScannedAttendee(null);
+    setIsLoadingScan(true);
+
     const jwt = await getJwt();
+    if (!jwt) {
+      Alert.alert("Search failed", "Not authenticated.");
+      return;
+    }
+
     const response = await fetch(
       `${API_BASE_URL}/api/users/${encodeURIComponent(query)}`,
       {
@@ -154,22 +197,68 @@ export default function QRCodeScreen() {
     if (!response.ok) {
       if (response.status === 404) {
         Alert.alert("User not found");
+        setIsLoadingScan(false);
         return;
       }
       console.log(response.status, await response.text());
+      Alert.alert("Search failed", "Could not load user profile.");
+      setIsLoadingScan(false);
       return;
     }
 
     const userData = await response.json();
+    const userEmail = String(userData.email ?? query);
+    let points = Number(userData.points ?? 0);
+
+    const currentEvent = await fetchCurrentEventId(jwt);
+    if ("error" in currentEvent) {
+      Alert.alert("Could not award points", currentEvent.error);
+    } else {
+      const awardResponse = await fetch(
+        `${API_BASE_URL}/api/admin/award-points-search`,
+        {
+          method: "POST",
+          credentials: "omit",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `token=${jwt}`,
+          },
+          body: JSON.stringify({
+            email: userEmail,
+            amount: 5,
+            eventId: currentEvent.eventId,
+          }),
+        },
+      );
+
+      if (!awardResponse.ok) {
+        console.log(awardResponse.status, await awardResponse.text());
+        if (awardResponse.status === 409) {
+          Alert.alert(
+            "Already awarded",
+            "This attendee already received points for this event.",
+          );
+        } else {
+          Alert.alert("Search failed", "Could not award points.");
+        }
+      } else {
+        const awardData = (await awardResponse.json()) as {
+          newBalance?: unknown;
+        };
+        points = Number(awardData.newBalance ?? points + 5);
+      }
+    }
+
     setScannedAttendee({
       username: formatUsername(userData.name ?? query),
       teamName: userData.teamName ?? "",
-      points: userData.points ?? 0,
+      points,
       maxPoints: userData.maxPoints ?? 100,
       checkInValid: !!userData.checkedIn,
-      email: userData.email ?? "",
+      email: userEmail,
     });
     setScanned(true);
+    setIsLoadingScan(false);
   };
 
   const handleBarcodeScanned = useCallback((result: BarcodeScanningResult) => {
@@ -201,6 +290,13 @@ export default function QRCodeScreen() {
           return;
         }
 
+        const currentEvent = await fetchCurrentEventId(jwt);
+        if ("error" in currentEvent) {
+          showScanFailure(currentEvent.error);
+          return;
+        }
+        const { eventId } = currentEvent;
+
         const response = await fetch(
           `${API_BASE_URL}/api/admin/award-points-fast`,
           {
@@ -213,13 +309,19 @@ export default function QRCodeScreen() {
             body: JSON.stringify({
               token: result.data,
               amount: 5,
-              eventId: Math.random().toString(36).slice(2), //use api to find out next/current event when it exists
+              eventId,
             }),
           },
         );
 
         if (!response.ok) {
           console.log(response.status, await response.text());
+          if (response.status === 409) {
+            showScanFailure(
+              "This attendee already received points for this event.",
+            );
+            return;
+          }
           showScanFailure("Could not award points.");
           return;
         }
