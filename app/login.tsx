@@ -97,6 +97,15 @@ export default function Login() {
       backgroundColor: "#A3CE26",
       padding: 10,
     },
+    forgotPasswordPressable: {
+      alignSelf: "flex-end",
+      marginRight: "10%",
+      marginTop: 4,
+    },
+    forgotPasswordText: {
+      fontSize: 10,
+      color: "#99c024",
+    },
     orRow: {
       width: "80%",
       flexDirection: "row",
@@ -199,6 +208,21 @@ export default function Login() {
           onChangeText={setPassword}
           secureTextEntry
         />
+        <Pressable
+          onPress={() => router.push("/forgot-password")}
+          style={({ pressed }) => [
+            styles.forgotPasswordPressable,
+            { opacity: pressed ? 0.8 : 1 },
+          ]}
+        >
+          {({ pressed }) => (
+            <Text
+              style={[styles.forgotPasswordText, pressed && { color: "purple" }]}
+            >
+              Forgot password?
+            </Text>
+          )}
+        </Pressable>
         {errorMessage && <Text style={{ color: "red" }}>{errorMessage}</Text>}
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text

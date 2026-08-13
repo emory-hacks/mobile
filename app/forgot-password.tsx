@@ -4,7 +4,6 @@ import {
   Fredoka_700Bold,
   useFonts,
 } from "@expo-google-fonts/fredoka";
-import { Image as ExpoImage } from "expo-image";
 import { router } from "expo-router";
 import { useRef, useState } from "react";
 import {
@@ -19,16 +18,15 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-export default function Signup() {
+export default function ForgotPassword() {
   const insets = useSafeAreaInsets();
-  const [name, setName] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [awaitingCode, setAwaitingCode] = useState(false);
   const [digits, setDigits] = useState<string[]>(["", "", "", "", ""]);
-  const [verifying, setVerifying] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const digitRefs = useRef<(TextInput | null)[]>([]);
   const [fontsLoaded] = useFonts({
     Fredoka_600SemiBold,
@@ -114,36 +112,6 @@ export default function Signup() {
       backgroundColor: "#A3CE26",
       padding: 10,
     },
-    orRow: {
-      width: "80%",
-      flexDirection: "row",
-      alignItems: "center",
-      marginTop: 28,
-      marginBottom: 20,
-    },
-    orLine: {
-      flex: 1,
-      height: StyleSheet.hairlineWidth,
-      backgroundColor: "#c8c8c8",
-    },
-    orText: {
-      marginHorizontal: 14,
-      fontSize: 15,
-      color: "#111",
-    },
-    socialRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 36,
-    },
-    socialButton: {
-      padding: 4,
-    },
-    socialIcon: {
-      width: 28,
-      height: 28,
-    },
     codeHint: {
       fontSize: 14,
       color: "#555",
@@ -169,14 +137,11 @@ export default function Signup() {
     },
   });
 
-  const isEduEmail = (value: string) =>
-    value.trim().slice(-4).toLowerCase() === ".edu";
-
-  const invalidPassword = (password: string) => {
-    let hasAlpha = false; // anything that's alphabetic
-    let hasNumber = false; // anything that's a number
-    let hasSpecial = false; // anything that's not alphanumeric nor number
-    for (let letter of password) {
+  const invalidPassword = (value: string) => {
+    let hasAlpha = false;
+    let hasNumber = false;
+    let hasSpecial = false;
+    for (const letter of value) {
       if (/^[a-zA-Z]$/.test(letter)) {
         hasAlpha = true;
       }
@@ -192,91 +157,55 @@ export default function Signup() {
 
   const formatCurtime = () => new Date().toISOString().slice(0, 19);
 
-  const verifyAndRegister = async (code: string) => {
-    if (verifying) {
-      return;
-    }
-    setVerifying(true);
+  const handleSendCode = async () => {
     setErrorMessage(null);
 
+    if (!email) {
+      setErrorMessage("Please enter your email");
+      return;
+    }
+
+    setSubmitting(true);
     try {
-      const verifyResponse = await fetch(
-        `${API_BASE_URL}/api/verify-user-code`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            inputted_code: code,
-            curtime: formatCurtime(),
-          }),
+      const response = await fetch(`${API_BASE_URL}/api/generate-user-code`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({ email }),
+      });
 
-      if (!verifyResponse.ok) {
-        setErrorMessage("Invalid or expired code");
-        setDigits(["", "", "", "", ""]);
-        digitRefs.current[0]?.focus();
+      if (!response.ok) {
+        setErrorMessage("Failed to send verification code");
         return;
       }
 
-      const registerResponse = await fetch(
-        `${API_BASE_URL}/api/users/register`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ name, email, password }),
-        },
-      );
-
-      if (!registerResponse.ok) {
-        setErrorMessage("Signup failed");
-        return;
-      }
-
-      router.replace("/login");
+      setDigits(["", "", "", "", ""]);
+      setPassword("");
+      setConfirmPassword("");
+      setAwaitingCode(true);
     } catch {
       setErrorMessage("Unable to connect to server");
     } finally {
-      setVerifying(false);
+      setSubmitting(false);
     }
   };
 
-  const handleDigitChange = (index: number, value: string) => {
-    const digit = value.replace(/[^0-9]/g, "").slice(-1);
-    const next = [...digits];
-    next[index] = digit;
-    setDigits(next);
-
-    if (digit && index < 4) {
-      digitRefs.current[index + 1]?.focus();
-    }
-
-    if (digit && next.every((d) => d !== "")) {
-      verifyAndRegister(next.join(""));
-    }
-  };
-
-  const handleDigitKeyPress = (index: number, key: string) => {
-    if (key === "Backspace" && !digits[index] && index > 0) {
-      digitRefs.current[index - 1]?.focus();
-    }
-  };
-
-  const handleSignup = async () => {
-    setErrorMessage(null);
-
-    if (!name || !email || !password || !confirmPassword) {
-      setErrorMessage("Please fill in all fields");
+  const handleResetPassword = async () => {
+    if (submitting) {
       return;
     }
 
-    if (!isEduEmail(email)) {
-      setErrorMessage("Your email should be .edu");
+    setErrorMessage(null);
+
+    const code = digits.join("");
+    if (code.length !== 5) {
+      setErrorMessage("Please enter the 5-digit code");
+      return;
+    }
+
+    if (!password || !confirmPassword) {
+      setErrorMessage("Please fill in all fields");
       return;
     }
 
@@ -297,24 +226,51 @@ export default function Signup() {
       return;
     }
 
+    setSubmitting(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/generate-user-code`, {
+      const response = await fetch(`${API_BASE_URL}/api/verify-user-code`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({
+          email,
+          inputted_code: code,
+          curtime: formatCurtime(),
+          newPassword: password,
+        }),
       });
 
       if (!response.ok) {
-        setErrorMessage("Failed to send verification code");
+        const message = await response.text();
+        setErrorMessage(message?.trim() || "Invalid or expired code");
+        setDigits(["", "", "", "", ""]);
+        digitRefs.current[0]?.focus();
         return;
       }
 
-      setDigits(["", "", "", "", ""]);
-      setAwaitingCode(true);
+      router.replace("/login");
     } catch {
       setErrorMessage("Unable to connect to server");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDigitChange = (index: number, value: string) => {
+    const digit = value.replace(/[^0-9]/g, "").slice(-1);
+    const next = [...digits];
+    next[index] = digit;
+    setDigits(next);
+
+    if (digit && index < 4) {
+      digitRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleDigitKeyPress = (index: number, key: string) => {
+    if (key === "Backspace" && !digits[index] && index > 0) {
+      digitRefs.current[index - 1]?.focus();
     }
   };
 
@@ -339,13 +295,13 @@ export default function Signup() {
           source={require("../assets/images/icon.png")}
           style={styles.logo}
         />
-        <Text style={styles.subtitle1}>Welcome to</Text>
-        <Text style={styles.subtitle2}>Emory Hacks !</Text>
+        <Text style={styles.subtitle1}>Forgot your</Text>
+        <Text style={styles.subtitle2}>password?</Text>
 
         {awaitingCode ? (
           <>
             <Text style={styles.codeHint}>
-              Enter the 5-digit code sent to {email}
+              Enter the 5-digit code sent to {email}, then choose a new password
             </Text>
             <View style={styles.codeRow}>
               {digits.map((digit, index) => (
@@ -364,45 +320,32 @@ export default function Signup() {
                   maxLength={1}
                   autoFocus={index === 0}
                   selectTextOnFocus
-                  editable={!verifying}
+                  editable={!submitting}
                 />
               ))}
             </View>
-            {errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
-          </>
-        ) : (
-          <>
             <TextInput
-              placeholder="@Name"
-              style={styles.input}
-              value={name}
-              onChangeText={setName}
-              autoCapitalize="none"
-            />
-            <TextInput
-              placeholder="Email@email.edu"
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-            <TextInput
-              placeholder="Password"
+              placeholder="New password"
               style={[styles.input, styles.passwordInput]}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
+              editable={!submitting}
             />
             <TextInput
-              placeholder="Check the password"
+              placeholder="Confirm new password"
               style={styles.input}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry
+              editable={!submitting}
             />
             {errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
-            <TouchableOpacity style={styles.button} onPress={handleSignup}>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleResetPassword}
+              disabled={submitting}
+            >
               <Text
                 style={{
                   color: "white",
@@ -410,66 +353,42 @@ export default function Signup() {
                   fontSize: 17,
                 }}
               >
-                Create an account
+                Reset password
               </Text>
             </TouchableOpacity>
-            <View style={styles.orRow}>
-              <View style={styles.orLine} />
-              <Text style={styles.orText}>or</Text>
-              <View style={styles.orLine} />
-            </View>
-            <View style={styles.socialRow}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Sign up with Google"
-                style={({ pressed }) => [
-                  styles.socialButton,
-                  { opacity: pressed ? 0.7 : 1 },
-                ]}
-                onPress={() => {}}
+          </>
+        ) : (
+          <>
+            <TextInput
+              placeholder="Email@email.edu"
+              style={styles.input}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              editable={!submitting}
+            />
+            {errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleSendCode}
+              disabled={submitting}
+            >
+              <Text
+                style={{
+                  color: "white",
+                  textAlign: "center",
+                  fontSize: 17,
+                }}
               >
-                <ExpoImage
-                  source={require("../assets/images/google-icon.svg")}
-                  style={styles.socialIcon}
-                  contentFit="contain"
-                />
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Sign up with Apple"
-                style={({ pressed }) => [
-                  styles.socialButton,
-                  { opacity: pressed ? 0.7 : 1 },
-                ]}
-                onPress={() => {}}
-              >
-                <ExpoImage
-                  source={require("../assets/images/apple-icon.svg")}
-                  style={styles.socialIcon}
-                  contentFit="contain"
-                />
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Sign up with GitHub"
-                style={({ pressed }) => [
-                  styles.socialButton,
-                  { opacity: pressed ? 0.7 : 1 },
-                ]}
-                onPress={() => {}}
-              >
-                <ExpoImage
-                  source={require("../assets/images/github-icon.svg")}
-                  style={styles.socialIcon}
-                  contentFit="contain"
-                />
-              </Pressable>
-            </View>
+                Send code
+              </Text>
+            </TouchableOpacity>
           </>
         )}
 
         <View style={styles.sidebyside}>
-          <Text style={styles.normaltext}>Already have an account?</Text>
+          <Text style={styles.normaltext}>Remember your password?</Text>
           <Pressable
             onPress={() => router.push("/login")}
             style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
