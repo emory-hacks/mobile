@@ -201,6 +201,40 @@ export default function QRCodeScreen() {
           return;
         }
 
+        const currentTime = new Date().toISOString().slice(0, 19);
+
+        const scheduleResponse = await fetch(
+          `${API_BASE_URL}/schedule/current`,
+          {
+            method: "GET",
+            credentials: "omit",
+            headers: {
+              "Content-Type": "application/json",
+              Cookie: `token=${jwt}`,
+            },
+            body: JSON.stringify({
+              currentTime,
+            }),
+          },
+        );
+
+        if (!scheduleResponse.ok) {
+          console.log(scheduleResponse.status, await scheduleResponse.text());
+          showScanFailure("Could not load the current event.");
+          return;
+        }
+
+        const scheduleData = (await scheduleResponse.json()) as {
+          title?: unknown;
+        };
+        const eventId =
+          typeof scheduleData.title === "string" ? scheduleData.title.trim() : "";
+
+        if (!eventId) {
+          showScanFailure("No current event to award points for.");
+          return;
+        }
+
         const response = await fetch(
           `${API_BASE_URL}/api/admin/award-points-fast`,
           {
@@ -213,13 +247,19 @@ export default function QRCodeScreen() {
             body: JSON.stringify({
               token: result.data,
               amount: 5,
-              eventId: Math.random().toString(36).slice(2), //use api to find out next/current event when it exists
+              eventId,
             }),
           },
         );
 
         if (!response.ok) {
           console.log(response.status, await response.text());
+          if (response.status === 409) {
+            showScanFailure(
+              "This attendee already received points for this event.",
+            );
+            return;
+          }
           showScanFailure("Could not award points.");
           return;
         }
