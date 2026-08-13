@@ -610,12 +610,12 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   screen: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#a9ea97",
     flex: 1,
   },
 
   titleInput: {
-    borderColor: "#DADADA",
+    borderColor: "#bc3939",
     borderRadius: 10,
     borderWidth: 1,
     color: "#111111",

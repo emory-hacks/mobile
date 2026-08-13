@@ -1,3 +1,4 @@
+import { DefaultPfp } from "@/components/home/default-pfp";
 import {
   AlanSans_400Regular,
   AlanSans_500Medium,
@@ -10,7 +11,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { DefaultPfp } from "@/components/home/default-pfp";
 import {
   clearEmail,
   clearJwt,
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   name: {
-    color: "#9BD31B",
+    color: "#8ab91d",
     fontFamily: "Grandstander_900Black",
     fontSize: 36,
     lineHeight: 44,
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     lineHeight: 27,
   },
   screen: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#91dd7c",
     flex: 1,
   },
   section: {
