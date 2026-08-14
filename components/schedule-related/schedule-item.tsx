@@ -229,12 +229,16 @@ const styles = StyleSheet.create({
   },
   expandedMetadataPill: {
     borderRadius: 12,
+    maxWidth: "100%",
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
   expandedMetadataRow: {
+    alignItems: "flex-start",
+    flexDirection: "column",
     gap: 6,
     marginTop: 7,
+    width: "100%",
   },
   expandedMetadataText: {
     fontSize: 12,
