@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "@/constants/computer-ip";
 import {
   Fredoka_600SemiBold,
   Fredoka_700Bold,
@@ -15,7 +16,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { API_BASE_URL } from "@/constants/computer-ip";
 import { saveEmail, saveJwt } from "../utils/auth-token";
 
 export default function Login() {
@@ -147,16 +147,13 @@ export default function Login() {
     }
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/auth/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, password }),
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({ email, password }),
+      });
 
       if (!response.ok) {
         setErrorMessage("Login failed");
@@ -194,7 +191,7 @@ export default function Login() {
         <Text style={styles.subtitle1}>Welcome to</Text>
         <Text style={styles.subtitle2}>Emory Hacks !</Text>
         <TextInput
-          placeholder="Email@email.com"
+          placeholder="Email@email.edu"
           style={styles.input}
           value={email}
           onChangeText={setEmail}
@@ -217,7 +214,10 @@ export default function Login() {
         >
           {({ pressed }) => (
             <Text
-              style={[styles.forgotPasswordText, pressed && { color: "purple" }]}
+              style={[
+                styles.forgotPasswordText,
+                pressed && { color: "purple" },
+              ]}
             >
               Forgot password?
             </Text>
