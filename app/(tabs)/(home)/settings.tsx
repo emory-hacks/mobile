@@ -1,3 +1,4 @@
+import { DefaultPfp } from "@/components/home/default-pfp";
 import {
   AlanSans_400Regular,
   AlanSans_500Medium,
@@ -5,17 +6,18 @@ import {
 } from "@expo-google-fonts/alan-sans";
 import { Grandstander_900Black } from "@expo-google-fonts/grandstander";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useFocusEffect } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { DefaultPfp } from "@/components/home/default-pfp";
 import {
   clearEmail,
   clearJwt,
   clearRole,
   getEmail,
+  getRole,
 } from "../../../utils/auth-token";
 import { getInfo } from "../../../utils/user-info";
 
@@ -33,6 +35,7 @@ export default function SettingsScreen() {
     points?: string;
     checkedIn?: string;
     fromScan?: string;
+    role?: string;
   }>();
   const fromScan = paramValue(params.fromScan) === "1";
 
@@ -47,6 +50,28 @@ export default function SettingsScreen() {
   const [teamName, setTeamName] = useState("");
   const [points, setPoints] = useState("0");
   const [checkedIn, setCheckedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (fromScan) {
+        setIsAdmin(paramValue(params.role).toLowerCase().includes("admin"));
+        return;
+      }
+
+      let active = true;
+      (async () => {
+        const role = await getRole();
+        if (active) {
+          setIsAdmin(role?.toLowerCase().includes("admin") ?? false);
+        }
+      })();
+
+      return () => {
+        active = false;
+      };
+    }, [fromScan, params.role]),
+  );
 
   useEffect(() => {
     if (fromScan) {
@@ -134,7 +159,11 @@ export default function SettingsScreen() {
               </Pressable>
             ) : null}
 
-            <DefaultPfp accessibilityLabel="Profile picture" size={112} />
+            <DefaultPfp
+              accessibilityLabel="Profile picture"
+              size={112}
+              isAdmin={isAdmin}
+            />
           </View>
         </View>
 

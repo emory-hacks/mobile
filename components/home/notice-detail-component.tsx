@@ -41,7 +41,7 @@ export function NoticeDetailComponent({
         </View>
 
         <View style={styles.authorRow}>
-          <DefaultPfp size={40} />
+          <DefaultPfp size={40} isAdmin={true} />
           <View style={styles.authorDetails}>
             <Text style={styles.author}>
               {notice.publisherName} | {notice.publisher}

@@ -10,12 +10,14 @@ type DefaultPfpProps = {
   accessibilityLabel?: string;
   size: number;
   style?: StyleProp<ViewStyle>;
+  isAdmin?: boolean;
 };
 
 export function DefaultPfp({
   accessibilityLabel = "Profile picture",
   size,
   style,
+  isAdmin = false,
 }: DefaultPfpProps) {
   return (
     <View
@@ -27,7 +29,11 @@ export function DefaultPfp({
       ]}
     >
       <Image
-        source={require("@/assets/images/default_pfp.png")}
+        source={
+          isAdmin
+            ? require("@/assets/images/admin_pfp.png")
+            : require("@/assets/images/default_pfp.png")
+        }
         style={{ width: size, height: size }}
         resizeMode="cover"
       />

@@ -5,12 +5,14 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { DefaultPfp } from "@/components/home/default-pfp";
 
 type ProfileComponentProps = {
+  isAdmin?: boolean;
   name: string;
   onSettingsPress?: () => void;
   teamName: string;
 };
 
 export function ProfileComponent({
+  isAdmin = false,
   name,
   onSettingsPress,
   teamName,
@@ -43,6 +45,7 @@ export function ProfileComponent({
             accessibilityLabel={`${name}'s profile picture`}
             size={66}
             style={styles.avatar}
+            isAdmin={isAdmin}
           />
         </View>
       </View>

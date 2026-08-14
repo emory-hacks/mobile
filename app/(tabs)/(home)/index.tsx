@@ -255,6 +255,7 @@ export default function HomePage() {
     <View style={styles.screen}>
       <View style={{ paddingTop: insets.top }}>
         <ProfileComponent
+          isAdmin={isAdmin}
           name={name}
           onSettingsPress={() => router.push("/settings")}
           teamName={teamName}
