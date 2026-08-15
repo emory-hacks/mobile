@@ -4,7 +4,6 @@ import {
   Fredoka_700Bold,
   useFonts,
 } from "@expo-google-fonts/fredoka";
-import { Image as ExpoImage } from "expo-image";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -106,36 +105,6 @@ export default function Login() {
       fontSize: 10,
       color: "#99c024",
     },
-    orRow: {
-      width: "80%",
-      flexDirection: "row",
-      alignItems: "center",
-      marginTop: 28,
-      marginBottom: 20,
-    },
-    orLine: {
-      flex: 1,
-      height: StyleSheet.hairlineWidth,
-      backgroundColor: "#c8c8c8",
-    },
-    orText: {
-      marginHorizontal: 14,
-      fontSize: 15,
-      color: "#111",
-    },
-    socialRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 36,
-    },
-    socialButton: {
-      padding: 4,
-    },
-    socialIcon: {
-      width: 28,
-      height: 28,
-    },
   });
 
   const handleLogin = async () => {
@@ -235,58 +204,6 @@ export default function Login() {
             Sign in
           </Text>
         </TouchableOpacity>
-        <View style={styles.orRow}>
-          <View style={styles.orLine} />
-          <Text style={styles.orText}>or</Text>
-          <View style={styles.orLine} />
-        </View>
-        <View style={styles.socialRow}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Sign in with Google"
-            style={({ pressed }) => [
-              styles.socialButton,
-              { opacity: pressed ? 0.7 : 1 },
-            ]}
-            onPress={() => {}}
-          >
-            <ExpoImage
-              source={require("../assets/images/google-icon.svg")}
-              style={styles.socialIcon}
-              contentFit="contain"
-            />
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Sign in with Apple"
-            style={({ pressed }) => [
-              styles.socialButton,
-              { opacity: pressed ? 0.7 : 1 },
-            ]}
-            onPress={() => {}}
-          >
-            <ExpoImage
-              source={require("../assets/images/apple-icon.svg")}
-              style={styles.socialIcon}
-              contentFit="contain"
-            />
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Sign in with GitHub"
-            style={({ pressed }) => [
-              styles.socialButton,
-              { opacity: pressed ? 0.7 : 1 },
-            ]}
-            onPress={() => {}}
-          >
-            <ExpoImage
-              source={require("../assets/images/github-icon.svg")}
-              style={styles.socialIcon}
-              contentFit="contain"
-            />
-          </Pressable>
-        </View>
         <View style={styles.sidebyside}>
           <Text style={styles.normaltext}>Don&apos;t have an account?</Text>
           <Pressable
