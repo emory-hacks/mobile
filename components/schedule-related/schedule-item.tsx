@@ -257,13 +257,13 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   editButton: {
-    paddingHorizontal: 4,
-    paddingVertical: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
   },
   editText: {
     color: "#7DA515",
     fontFamily: "AlanSans_500Medium",
-    fontSize: 9,
+    fontSize: 16,
   },
   headingRow: {
     alignItems: "center",
