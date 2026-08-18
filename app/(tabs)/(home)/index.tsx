@@ -474,13 +474,13 @@ const styles = StyleSheet.create({
   editButton: {
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 4,
-    paddingVertical: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
   },
   editButtonText: {
     color: "#7DA515",
     fontFamily: "AlanSans_500Medium",
-    fontSize: 9,
+    fontSize: 16,
   },
   expandedFeaturedNotice: {
     marginBottom: 0,
