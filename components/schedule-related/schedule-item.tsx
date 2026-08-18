@@ -75,23 +75,24 @@ export default function ScheduleItem({
         ]}
       >
         <View style={styles.headingRow}>
-          <View
-            style={[
-              styles.titlePill,
-              isActive && styles.activeTitlePill,
-              isExpanded && styles.expandedTitlePill,
-            ]}
-          >
-            <Text
-              numberOfLines={1}
+          <View style={styles.titleWrap}>
+            <View
               style={[
-                styles.titleText,
-                isActive && styles.activeTitleText,
-                isExpanded && styles.expandedTitleText,
+                styles.titlePill,
+                isActive && styles.activeTitlePill,
+                isExpanded && styles.expandedTitlePill,
               ]}
             >
-              {title}
-            </Text>
+              <Text
+                style={[
+                  styles.titleText,
+                  isActive && styles.activeTitleText,
+                  isExpanded && styles.expandedTitleText,
+                ]}
+              >
+                {title}
+              </Text>
+            </View>
           </View>
           {showEdit && (
             <Pressable
@@ -266,7 +267,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   headingRow: {
-    alignItems: "center",
+    alignItems: "flex-start",
     flexDirection: "row",
     gap: 8,
     justifyContent: "space-between",
@@ -277,7 +278,7 @@ const styles = StyleSheet.create({
   },
   leftColumn: {
     alignItems: "flex-end",
-    height: 112,
+    minHeight: 112,
     paddingRight: 8,
     paddingTop: 16,
     width: 96,
@@ -303,7 +304,7 @@ const styles = StyleSheet.create({
     opacity: 0.82,
   },
   timeline: {
-    height: 112,
+    bottom: 0,
     left: 96,
     position: "absolute",
     top: 0,
@@ -321,6 +322,10 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     paddingHorizontal: 10,
     paddingVertical: 4,
+  },
+  titleWrap: {
+    flex: 1,
+    flexDirection: "row",
   },
   titleText: {
     color: "#FFFFFF",

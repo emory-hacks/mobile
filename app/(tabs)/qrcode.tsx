@@ -43,6 +43,8 @@ async function fetchCurrentEventId(
   jwt: string,
 ): Promise<{ eventId: string } | { error: string }> {
   const currentTime = new Date().toISOString().slice(0, 19);
+  const body = { currentTime };
+  console.log(body);
   const scheduleResponse = await fetch(`${API_BASE_URL}/schedule/current`, {
     method: "POST",
     credentials: "omit",
@@ -50,9 +52,7 @@ async function fetchCurrentEventId(
       "Content-Type": "application/json",
       Cookie: `token=${jwt}`,
     },
-    body: JSON.stringify({
-      currentTime,
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!scheduleResponse.ok) {
