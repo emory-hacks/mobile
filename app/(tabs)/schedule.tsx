@@ -92,6 +92,56 @@ function formatEventTime(time: string) {
   });
 }
 
+// Split backend timestamps for friendly form inputs.
+function splitEventDateTime(value: string) {
+  const match = value.match(
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/,
+  );
+
+  if (!match) return { date: "", time: "" };
+
+  const [, year, month, day, hoursText, minutes] = match;
+  const hours = Number(hoursText);
+  const period = hours >= 12 ? "PM" : "AM";
+  const displayHours = hours % 12 || 12;
+
+  return {
+    date: `${month}/${day}/${year}`,
+    time: `${displayHours}:${minutes} ${period}`,
+  };
+}
+
+// Combine form fields into backend timestamps.
+function combineEventDateTime(dateValue: string, timeValue: string) {
+  const dateMatch = dateValue.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  const timeMatch = timeValue.match(
+    /^(1[0-2]|0?[1-9]):([0-5]\d)\s*(AM|PM)$/i,
+  );
+
+  if (!dateMatch || !timeMatch) return null;
+
+  const [, monthText, dayText, yearText] = dateMatch;
+  const [, hoursText, minutes, periodText] = timeMatch;
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const year = Number(yearText);
+  const testDate = new Date(year, month - 1, day);
+
+  if (
+    testDate.getFullYear() !== year ||
+    testDate.getMonth() !== month - 1 ||
+    testDate.getDate() !== day
+  ) {
+    return null;
+  }
+
+  let hours = Number(hoursText) % 12;
+  if (periodText.toUpperCase() === "PM") hours += 12;
+
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${year}-${pad(month)}-${pad(day)}T${pad(hours)}:${minutes}:00`;
+}
+
 function getActiveEventIndex(items: ScheduleEvent[], now: Date) {
   return items.findIndex(
     (item) =>
@@ -174,7 +224,9 @@ export default function ScheduleScreen() {
   const [editingEvent, setEditingEvent] = useState<ScheduleEvent | null>(null);
   const [eventName, setEventName] = useState("");
   const [eventLocation, setEventLocation] = useState("");
+  const [eventStartDate, setEventStartDate] = useState("");
   const [eventStartTime, setEventStartTime] = useState("");
+  const [eventEndDate, setEventEndDate] = useState("");
   const [eventEndTime, setEventEndTime] = useState("");
   const [eventBody, setEventBody] = useState("");
   const [isSavingEvent, setIsSavingEvent] = useState(false);
@@ -306,11 +358,16 @@ export default function ScheduleScreen() {
   };
 
   const openEdit = (event: ScheduleEvent) => {
+    const start = splitEventDateTime(event.startTime);
+    const end = splitEventDateTime(event.endTime);
+
     setEditingEvent(event);
     setEventName(event.title);
     setEventLocation(event.location);
-    setEventStartTime(event.startTime);
-    setEventEndTime(event.endTime);
+    setEventStartDate(start.date);
+    setEventStartTime(start.time);
+    setEventEndDate(end.date);
+    setEventEndTime(end.time);
     setEventBody(event.body ?? "");
   };
 
@@ -318,7 +375,9 @@ export default function ScheduleScreen() {
     setEditingEvent(null);
     setEventName("");
     setEventLocation("");
+    setEventStartDate("");
     setEventStartTime("");
+    setEventEndDate("");
     setEventEndTime("");
     setEventBody("");
   };
@@ -328,12 +387,37 @@ export default function ScheduleScreen() {
 
     const name = eventName.trim();
     const location = eventLocation.trim();
-    const startTime = eventStartTime.trim();
-    const endTime = eventEndTime.trim();
+    const startDate = eventStartDate.trim();
+    const startTimeValue = eventStartTime.trim();
+    const endDate = eventEndDate.trim();
+    const endTimeValue = eventEndTime.trim();
     const body = eventBody.trim();
 
-    if (!name || !location || !startTime || !endTime) {
+    if (
+      !name ||
+      !location ||
+      !startDate ||
+      !startTimeValue ||
+      !endDate ||
+      !endTimeValue
+    ) {
       Alert.alert("Missing fields", "Every event field is required.");
+      return;
+    }
+
+    const startTime = combineEventDateTime(startDate, startTimeValue);
+    const endTime = combineEventDateTime(endDate, endTimeValue);
+
+    if (!startTime || !endTime) {
+      Alert.alert(
+        "Invalid date or time",
+        "Use MM/DD/YYYY and h:mm AM/PM.",
+      );
+      return;
+    }
+
+    if (new Date(endTime) <= new Date(startTime)) {
+      Alert.alert("Invalid time range", "End must be after start.");
       return;
     }
 
@@ -343,10 +427,15 @@ export default function ScheduleScreen() {
     if (location !== editingEvent.location) {
       updates.correctedLocation = location;
     }
-    if (startTime !== editingEvent.startTime) {
+    if (
+      new Date(startTime).getTime() !==
+      new Date(editingEvent.startTime).getTime()
+    ) {
       updates.correctedStartTime = startTime;
     }
-    if (endTime !== editingEvent.endTime) {
+    if (
+      new Date(endTime).getTime() !== new Date(editingEvent.endTime).getTime()
+    ) {
       updates.correctedEndTime = endTime;
     }
 
@@ -520,21 +609,47 @@ export default function ScheduleScreen() {
               textAlignVertical="top"
               value={eventBody}
             />
-            <View style={styles.timeInputs}>
-              <TextInput
-                onChangeText={setEventStartTime}
-                placeholder="2026-08-10T14:00:00"
-                placeholderTextColor="#AFAFAF"
-                style={[styles.input, styles.timeInput]}
-                value={eventStartTime}
-              />
-              <TextInput
-                onChangeText={setEventEndTime}
-                placeholder="2026-08-10T15:00:00"
-                placeholderTextColor="#AFAFAF"
-                style={[styles.input, styles.timeInput]}
-                value={eventEndTime}
-              />
+            <View style={styles.dateTimeSection}>
+              <Text style={styles.fieldLabel}>Start</Text>
+              <View style={styles.dateTimeRow}>
+                <TextInput
+                  keyboardType="numbers-and-punctuation"
+                  onChangeText={setEventStartDate}
+                  placeholder="MM/DD/YYYY"
+                  placeholderTextColor="#AFAFAF"
+                  style={[styles.input, styles.dateInput]}
+                  value={eventStartDate}
+                />
+                <TextInput
+                  autoCapitalize="characters"
+                  onChangeText={setEventStartTime}
+                  placeholder="h:mm AM/PM"
+                  placeholderTextColor="#AFAFAF"
+                  style={[styles.input, styles.clockInput]}
+                  value={eventStartTime}
+                />
+              </View>
+            </View>
+            <View style={styles.dateTimeSection}>
+              <Text style={styles.fieldLabel}>End</Text>
+              <View style={styles.dateTimeRow}>
+                <TextInput
+                  keyboardType="numbers-and-punctuation"
+                  onChangeText={setEventEndDate}
+                  placeholder="MM/DD/YYYY"
+                  placeholderTextColor="#AFAFAF"
+                  style={[styles.input, styles.dateInput]}
+                  value={eventEndDate}
+                />
+                <TextInput
+                  autoCapitalize="characters"
+                  onChangeText={setEventEndTime}
+                  placeholder="h:mm AM/PM"
+                  placeholderTextColor="#AFAFAF"
+                  style={[styles.input, styles.clockInput]}
+                  value={eventEndTime}
+                />
+              </View>
             </View>
             <View style={styles.modalActions}>
               <Pressable
@@ -586,6 +701,25 @@ const styles = StyleSheet.create({
     fontFamily: "AlanSans_500Medium",
     fontSize: 15,
   },
+  clockInput: {
+    flex: 1,
+  },
+  dateInput: {
+    flex: 1,
+  },
+  dateTimeRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  dateTimeSection: {
+    marginBottom: 2,
+  },
+  fieldLabel: {
+    color: "#777777",
+    fontFamily: "AlanSans_500Medium",
+    fontSize: 12,
+    marginBottom: 6,
+  },
   input: {
     borderColor: "#DADADA",
     borderRadius: 10,
@@ -632,13 +766,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontFamily: "AlanSans_700Bold",
     fontSize: 15,
-  },
-  timeInput: {
-    flex: 1,
-  },
-  timeInputs: {
-    flexDirection: "row",
-    gap: 12,
   },
   errorText: {
     color: "#C93D2A",
