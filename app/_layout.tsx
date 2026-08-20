@@ -4,6 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, KeyboardProvider } from 'react-native-keyboard-controller';
 import 'react-native-reanimated';
 
 SplashScreen.preventAutoHideAsync();
@@ -32,17 +33,21 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="login" />
-        <Stack.Screen name="signup" />
-        <Stack.Screen name="forgot-password" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="dark" />
-    </ThemeProvider>
+    <KeyboardProvider>
+      <ThemeProvider value={DefaultTheme}>
+        <KeyboardAvoidingView behavior="padding" style={styles.flex}>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="login" />
+            <Stack.Screen name="signup" />
+            <Stack.Screen name="forgot-password" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+          </Stack>
+        </KeyboardAvoidingView>
+        <StatusBar style="dark" />
+      </ThemeProvider>
+    </KeyboardProvider>
   );
 }
 
@@ -61,6 +66,9 @@ function LandingSplash() {
 }
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
   splashContainer: {
     alignItems: 'center',
     backgroundColor: '#ffffff',

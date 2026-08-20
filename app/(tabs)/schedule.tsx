@@ -22,9 +22,7 @@ import {
   Alert,
   Animated,
   Easing,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -32,6 +30,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const ESTIMATED_SCHEDULE_ITEM_HEIGHT = 112;
@@ -581,7 +580,7 @@ export default function ScheduleScreen() {
         visible={editingEvent !== null}
       >
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior="padding"
           style={styles.modalBackdrop}
         >
           <View style={styles.modalCard}>
