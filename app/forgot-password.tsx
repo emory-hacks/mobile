@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "@/constants/computer-ip";
+import { formatEasternDateTime } from "@/utils/eastern-time";
 import {
   Fredoka_600SemiBold,
   Fredoka_700Bold,
@@ -155,7 +156,7 @@ export default function ForgotPassword() {
     return !(hasAlpha && hasNumber && hasSpecial);
   };
 
-  const formatCurtime = () => new Date().toISOString().slice(0, 19);
+  const formatCurtime = () => formatEasternDateTime();
 
   const handleSendCode = async () => {
     setErrorMessage(null);

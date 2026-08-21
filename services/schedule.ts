@@ -48,17 +48,13 @@ export async function getUpcomingEvents(): Promise<ScheduleEvent[]> {
     throw new Error("Please sign in to view upcoming events.");
   }
 
-  const currentTime = new Date().toISOString().slice(0, 19);
-  const response = await fetch(
-    `${API_BASE_URL}/schedule/upcoming?currentTime=${encodeURIComponent(currentTime)}`,
-    {
-      method: "GET",
-      credentials: "omit",
-      headers: {
-        Cookie: `token=${jwt}`,
-      },
+  const response = await fetch(`${API_BASE_URL}/schedule/upcoming`, {
+    method: "GET",
+    credentials: "omit",
+    headers: {
+      Cookie: `token=${jwt}`,
     },
-  );
+  });
 
   if (!response.ok) {
     throw new Error(`Failed to load upcoming events (${response.status}).`);
