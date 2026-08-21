@@ -1,5 +1,5 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { DefaultPfp } from "@/components/home/default-pfp";
 import type { Announcement } from "@/types/announcement";
@@ -7,6 +7,7 @@ import type { Announcement } from "@/types/announcement";
 type NoticeDetailComponentProps = {
   followingNotices: Announcement[];
   notice: Announcement;
+  onClose: () => void;
 };
 
 function formatCreatedAt(createdAt: string) {
@@ -25,6 +26,7 @@ function formatCreatedAt(createdAt: string) {
 export function NoticeDetailComponent({
   followingNotices,
   notice,
+  onClose,
 }: NoticeDetailComponentProps) {
   return (
     <View style={styles.container}>
@@ -33,6 +35,9 @@ export function NoticeDetailComponent({
         showsVerticalScrollIndicator={false}
         style={styles.scroll}
       >
+        <Pressable onPress={onClose} style={styles.backButton}>
+          <Text style={styles.backButtonText}>Back to announcements</Text>
+        </Pressable>
         <View style={[styles.divider, styles.topDivider]} />
 
         <View style={styles.headingRow}>
@@ -104,6 +109,15 @@ export function NoticeDetailComponent({
 }
 
 const styles = StyleSheet.create({
+  backButton: {
+    alignSelf: "flex-start",
+    paddingVertical: 8,
+  },
+  backButtonText: {
+    color: "#7DA515",
+    fontFamily: "AlanSans_500Medium",
+    fontSize: 12,
+  },
   author: {
     color: "#A9A9A9",
     fontFamily: "AlanSans_400Regular",

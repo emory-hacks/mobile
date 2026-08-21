@@ -36,12 +36,15 @@ import {
 } from "@/services/announcements";
 import type { Announcement } from "@/types/announcement";
 import { getEmail, getJwt, saveRole } from "@/utils/auth-token";
-import { saveInfo } from "@/utils/user-info";
+import { getInfo, saveInfo } from "@/utils/user-info";
 
 export default function HomePage() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [isNoticeExpanded, setIsNoticeExpanded] = useState(false);
+  const [lastReadCreatedAt, setLastReadCreatedAt] = useState<string | null>(
+    null,
+  );
   const [fontsLoaded] = useFonts({
     AlanSans_400Regular,
     AlanSans_500Medium,
@@ -67,6 +70,9 @@ export default function HomePage() {
 
   const featuredAnnouncement = announcements[0];
   const followingAnnouncements = announcements.slice(1);
+  const showUnreadNotice =
+    !!featuredAnnouncement &&
+    featuredAnnouncement.createdAt !== lastReadCreatedAt;
 
   useFocusEffect(
     //this will mount every time the tab is focused on. change back to useEffect
@@ -134,6 +140,12 @@ export default function HomePage() {
           new Date(right.createdAt).getTime() -
           new Date(left.createdAt).getTime(),
       );
+      const savedCreatedAt = await getInfo("lastReadAnnouncement");
+
+      setLastReadCreatedAt(savedCreatedAt);
+      if (newestFirst[0]?.createdAt !== savedCreatedAt) {
+        setIsNoticeExpanded(false);
+      }
       setAnnouncements(newestFirst);
     } catch (error) {
       setAnnouncementError(
@@ -145,6 +157,14 @@ export default function HomePage() {
       setIsLoadingAnnouncements(false);
     }
   }, []);
+
+  const handleNoticePress = async () => {
+    if (!featuredAnnouncement) return;
+
+    setIsNoticeExpanded(true);
+    setLastReadCreatedAt(featuredAnnouncement.createdAt);
+    await saveInfo("lastReadAnnouncement", featuredAnnouncement.createdAt);
+  };
 
   const openCreate = () => {
     setEditingAnnouncement(null);
@@ -271,24 +291,20 @@ export default function HomePage() {
           <Text style={styles.statusText}>No announcements yet.</Text>
         ) : (
           <>
-            <View
-              style={[
-                styles.featuredNotice,
-                isNoticeExpanded && styles.expandedFeaturedNotice,
-              ]}
-            >
-              <NoticeBar
-                notice={featuredAnnouncement}
-                onPress={() =>
-                  setIsNoticeExpanded((isExpanded) => !isExpanded)
-                }
-              />
-            </View>
+            {showUnreadNotice && (
+              <View style={styles.featuredNotice}>
+                <NoticeBar
+                  notice={featuredAnnouncement}
+                  onPress={handleNoticePress}
+                />
+              </View>
+            )}
 
             {isNoticeExpanded ? (
               <NoticeDetailComponent
                 followingNotices={followingAnnouncements}
                 notice={featuredAnnouncement}
+                onClose={() => setIsNoticeExpanded(false)}
               />
             ) : (
               <View style={styles.noticeListViewport}>
@@ -481,9 +497,6 @@ const styles = StyleSheet.create({
     color: "#7DA515",
     fontFamily: "AlanSans_500Medium",
     fontSize: 16,
-  },
-  expandedFeaturedNotice: {
-    marginBottom: 0,
   },
   fab: {
     alignItems: "center",
