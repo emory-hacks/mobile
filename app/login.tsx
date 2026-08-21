@@ -63,14 +63,14 @@ export default function Login() {
     },
     normaltext: {
       marginTop: 25,
-      fontSize: 10,
+      fontSize: 14,
       color: "black",
     },
     urltext: {
       marginLeft: 5,
       marginTop: 25,
       marginBottom: 100,
-      fontSize: 10,
+      fontSize: 14,
       color: "#99c024",
     },
     copyright: {
@@ -102,7 +102,7 @@ export default function Login() {
       marginTop: 4,
     },
     forgotPasswordText: {
-      fontSize: 10,
+      fontSize: 14,
       color: "#99c024",
     },
   });

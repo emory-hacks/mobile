@@ -73,13 +73,13 @@ export default function Signup() {
     },
     normaltext: {
       marginTop: 25,
-      fontSize: 10,
+      fontSize: 14,
       color: "black",
     },
     urltext: {
       marginLeft: 5,
       marginTop: 25,
-      fontSize: 10,
+      fontSize: 14,
       color: "#99c024",
     },
     error: {
