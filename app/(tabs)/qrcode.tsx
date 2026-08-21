@@ -1,4 +1,6 @@
 import { API_BASE_URL } from "@/constants/computer-ip";
+import { getUpcomingEvents } from "@/services/schedule";
+import type { ScheduleEvent } from "@/types/schedule-event";
 import { getJwt, getRole } from "@/utils/auth-token";
 import { Fredoka_700Bold, useFonts } from "@expo-google-fonts/fredoka";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -39,38 +41,11 @@ function formatUsername(name: string) {
   return trimmed.startsWith("@") ? trimmed : `@${trimmed}`;
 }
 
-async function fetchCurrentEventId(
-  jwt: string,
-): Promise<{ eventId: string } | { error: string }> {
-  const currentTime = new Date().toISOString().slice(0, 19);
-  const body = { currentTime };
-  console.log(body);
-  const scheduleResponse = await fetch(`${API_BASE_URL}/schedule/current`, {
-    method: "POST",
-    credentials: "omit",
-    headers: {
-      "Content-Type": "application/json",
-      Cookie: `token=${jwt}`,
-    },
-    body: JSON.stringify(body),
-  });
+const AWARD_AMOUNTS = [0, 5] as const;
+type AwardAmount = (typeof AWARD_AMOUNTS)[number];
 
-  if (!scheduleResponse.ok) {
-    console.log(scheduleResponse.status, await scheduleResponse.text());
-    return { error: "Could not load the current event." };
-  }
-
-  const scheduleData = (await scheduleResponse.json()) as {
-    title?: unknown;
-  };
-  const eventId =
-    typeof scheduleData.title === "string" ? scheduleData.title.trim() : "";
-
-  if (!eventId) {
-    return { error: "No current event to award points for." };
-  }
-
-  return { eventId };
+function eventKey(event: ScheduleEvent) {
+  return event.title.trim();
 }
 
 export default function QRCodeScreen() {
@@ -90,6 +65,19 @@ export default function QRCodeScreen() {
   });
   const [qrCode, setQrCode] = useState("");
   const [isAdmin, setIsAdmin] = useState<boolean | null>(false);
+  const [upcomingEvents, setUpcomingEvents] = useState<ScheduleEvent[]>([]);
+  const [eventId, setEventId] = useState("");
+  const [awardAmount, setAwardAmount] = useState<AwardAmount>(5);
+  const eventIdRef = useRef(eventId);
+  const awardAmountRef = useRef(awardAmount);
+
+  useEffect(() => {
+    eventIdRef.current = eventId;
+  }, [eventId]);
+
+  useEffect(() => {
+    awardAmountRef.current = awardAmount;
+  }, [awardAmount]);
 
   useEffect(() => {
     (async () => {
@@ -106,6 +94,22 @@ export default function QRCodeScreen() {
           setScannedAttendee(null);
           setIsLoadingScan(false);
           scanLock.current = false;
+
+          (async () => {
+            try {
+              const events = await getUpcomingEvents();
+              setUpcomingEvents(events);
+              setEventId((prev) => {
+                if (prev && events.some((event) => eventKey(event) === prev)) {
+                  return prev;
+                }
+                return events[0] ? eventKey(events[0]) : "";
+              });
+            } catch (error) {
+              console.log("Failed to load upcoming events", error);
+              setUpcomingEvents([]);
+            }
+          })();
         }
         return;
       }
@@ -173,6 +177,15 @@ export default function QRCodeScreen() {
       return;
     }
 
+    const selectedEventId = eventId.trim();
+    if (!selectedEventId) {
+      Alert.alert(
+        "Select an event",
+        "Choose which upcoming event this check-in is for.",
+      );
+      return;
+    }
+
     setScanned(false);
     setScannedAttendee(null);
     setIsLoadingScan(true);
@@ -210,43 +223,38 @@ export default function QRCodeScreen() {
     const userEmail = String(userData.email ?? query);
     let points = Number(userData.points ?? 0);
 
-    const currentEvent = await fetchCurrentEventId(jwt);
-    if ("error" in currentEvent) {
-      Alert.alert("Could not award points", currentEvent.error);
-    } else {
-      const awardResponse = await fetch(
-        `${API_BASE_URL}/api/admin/award-points-search`,
-        {
-          method: "POST",
-          credentials: "omit",
-          headers: {
-            "Content-Type": "application/json",
-            Cookie: `token=${jwt}`,
-          },
-          body: JSON.stringify({
-            email: userEmail,
-            amount: 5,
-            eventId: currentEvent.eventId,
-          }),
+    const awardResponse = await fetch(
+      `${API_BASE_URL}/api/admin/award-points-search`,
+      {
+        method: "POST",
+        credentials: "omit",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: `token=${jwt}`,
         },
-      );
+        body: JSON.stringify({
+          email: userEmail,
+          amount: awardAmount,
+          eventId: selectedEventId,
+        }),
+      },
+    );
 
-      if (!awardResponse.ok) {
-        console.log(awardResponse.status, await awardResponse.text());
-        if (awardResponse.status === 409) {
-          Alert.alert(
-            "Already awarded",
-            "This attendee already received points for this event.",
-          );
-        } else {
-          Alert.alert("Search failed", "Could not award points.");
-        }
+    if (!awardResponse.ok) {
+      console.log(awardResponse.status, await awardResponse.text());
+      if (awardResponse.status === 409) {
+        Alert.alert(
+          "Already awarded",
+          "This attendee already received points for this event.",
+        );
       } else {
-        const awardData = (await awardResponse.json()) as {
-          newBalance?: unknown;
-        };
-        points = Number(awardData.newBalance ?? points + 5);
+        Alert.alert("Search failed", "Could not award points.");
       }
+    } else {
+      const awardData = (await awardResponse.json()) as {
+        newBalance?: unknown;
+      };
+      points = Number(awardData.newBalance ?? points + awardAmount);
     }
 
     setScannedAttendee({
@@ -290,12 +298,11 @@ export default function QRCodeScreen() {
           return;
         }
 
-        const currentEvent = await fetchCurrentEventId(jwt);
-        if ("error" in currentEvent) {
-          showScanFailure(currentEvent.error);
+        const selectedEventId = eventIdRef.current.trim();
+        if (!selectedEventId) {
+          showScanFailure("Choose which upcoming event this check-in is for.");
           return;
         }
-        const { eventId } = currentEvent;
 
         const response = await fetch(
           `${API_BASE_URL}/api/admin/award-points-fast`,
@@ -308,8 +315,8 @@ export default function QRCodeScreen() {
             },
             body: JSON.stringify({
               token: result.data,
-              amount: 5,
-              eventId,
+              amount: awardAmountRef.current,
+              eventId: selectedEventId,
             }),
           },
         );
@@ -455,6 +462,72 @@ export default function QRCodeScreen() {
                 />
               )}
             </Pressable>
+          </View>
+
+          {upcomingEvents.length > 0 ? (
+            <View style={styles.selectorRow}>
+              {upcomingEvents.map((event) => {
+                const id = eventKey(event);
+                const selected = eventId === id;
+                return (
+                  <Pressable
+                    key={`${event.startTime}-${id}`}
+                    style={({ pressed }) => [
+                      styles.selectorButton,
+                      selected && styles.selectorButtonSelected,
+                      pressed && styles.selectorButtonPressed,
+                    ]}
+                    onPress={() => setEventId(id)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    accessibilityLabel={`Select event ${event.title}`}
+                  >
+                    <Text
+                      numberOfLines={1}
+                      style={[
+                        styles.selectorButtonText,
+                        selected && styles.selectorButtonTextSelected,
+                      ]}
+                    >
+                      {event.title}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : (
+            <Text style={styles.selectorEmptyText}>
+              No events in the next 30 minutes
+            </Text>
+          )}
+
+          <View style={styles.selectorRow}>
+            {AWARD_AMOUNTS.map((amount) => {
+              const selected = awardAmount === amount;
+              return (
+                <Pressable
+                  key={amount}
+                  style={({ pressed }) => [
+                    styles.selectorButton,
+                    selected && styles.selectorButtonSelected,
+                    pressed && styles.selectorButtonPressed,
+                  ]}
+                  onPress={() => setAwardAmount(amount)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={`Award ${amount} points`}
+                >
+                  <Text
+                    style={[
+                      styles.selectorButtonText,
+                      selected && styles.selectorButtonTextSelected,
+                    ]}
+                  >
+                    {amount} pts
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         </View>
 
@@ -674,6 +747,42 @@ const styles = StyleSheet.create({
   },
   searchButtonActive: {
     backgroundColor: "#d8d8d8",
+  },
+  selectorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 12,
+    gap: 8,
+  },
+  selectorButton: {
+    flex: 1,
+    minHeight: 40,
+    backgroundColor: "#efefef",
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  selectorButtonSelected: {
+    backgroundColor: "#A3CE26",
+  },
+  selectorButtonPressed: {
+    opacity: 0.85,
+  },
+  selectorButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#5a5a5a",
+    textAlign: "center",
+  },
+  selectorButtonTextSelected: {
+    color: "#fff",
+  },
+  selectorEmptyText: {
+    marginTop: 12,
+    fontSize: 13,
+    color: "#9a9a9a",
   },
   scannerSection: {
     flex: 1,
