@@ -22,7 +22,8 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "android.permission.CAMERA"
+        "android.permission.CAMERA",
+        "android.permission.WRITE_SETTINGS"
       ],
       "package": "com.anonymous.mobile"
     },
@@ -52,6 +53,7 @@
           "recordAudioAndroid": false
         }
       ],
+      "expo-brightness",
       "expo-secure-store",
       "./plugins/withAndroidXCorePin"
     ],
