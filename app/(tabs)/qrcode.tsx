@@ -4,6 +4,7 @@ import type { ScheduleEvent } from "@/types/schedule-event";
 import { getJwt, getRole } from "@/utils/auth-token";
 import { Fredoka_700Bold, useFonts } from "@expo-google-fonts/fredoka";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 import { Buffer } from "buffer";
 import * as Brightness from "expo-brightness";
@@ -48,8 +49,9 @@ function eventKey(event: ScheduleEvent) {
   return event.title.trim();
 }
 
+const ORIGINAL_BRIGHTNESS_KEY = "originalBrightness";
+
 export default function QRCodeScreen() {
-  const originalBrightness = useRef<number | null>(null);
   const scanLock = useRef(false);
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
@@ -88,6 +90,33 @@ export default function QRCodeScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      (async () => {
+        try {
+          const current = await Brightness.getBrightnessAsync();
+          await AsyncStorage.setItem(ORIGINAL_BRIGHTNESS_KEY, String(current));
+          await Brightness.setBrightnessAsync(1);
+        } catch {
+          // brightness control not available
+        }
+      })();
+
+      return () => {
+        (async () => {
+          try {
+            const saved = await AsyncStorage.getItem(ORIGINAL_BRIGHTNESS_KEY);
+            if (saved != null) {
+              await Brightness.setBrightnessAsync(Number(saved));
+            }
+          } catch {
+            // brightness control not available
+          }
+        })();
+      };
+    }, []),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
       if (isAdmin !== false) {
         if (isAdmin) {
           setScanned(false);
@@ -116,18 +145,6 @@ export default function QRCodeScreen() {
 
       let active = true;
       (async () => {
-        if (active) {
-          try {
-            // Save the original brightness & set to MAX
-            originalBrightness.current = await Brightness.getBrightnessAsync();
-            await Brightness.setBrightnessAsync(1);
-          } catch {
-            // brightness control not available
-          }
-        }
-      })();
-
-      (async () => {
         try {
           const jwt = await getJwt();
           if (!jwt) return;
@@ -151,7 +168,9 @@ export default function QRCodeScreen() {
             response.headers.get("content-type") ?? "image/png";
           const arrayBuffer = await response.arrayBuffer();
           const base64 = Buffer.from(arrayBuffer).toString("base64");
-          setQrCode(`data:${contentType};base64,${base64}`);
+          if (active) {
+            setQrCode(`data:${contentType};base64,${base64}`);
+          }
         } catch (error) {
           console.log("Failed to load QR code", error);
         }
@@ -159,13 +178,6 @@ export default function QRCodeScreen() {
 
       return () => {
         active = false;
-        if (originalBrightness.current !== null) {
-          try {
-            Brightness.setBrightnessAsync(originalBrightness.current);
-          } catch {
-            // brightness control not available
-          }
-        }
       };
     }, [isAdmin]),
   );
