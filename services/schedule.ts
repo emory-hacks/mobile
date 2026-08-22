@@ -41,6 +41,48 @@ export async function getSchedule(): Promise<ScheduleEvent[]> {
   return data as ScheduleEvent[];
 }
 
+export async function getUpcomingEvents(): Promise<ScheduleEvent[]> {
+  const jwt = await getJwt();
+
+  if (!jwt) {
+    throw new Error("Please sign in to view upcoming events.");
+  }
+
+  const response = await fetch(`${API_BASE_URL}/schedule/upcoming`, {
+    method: "GET",
+    credentials: "omit",
+    headers: {
+      Cookie: `token=${jwt}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to load upcoming events (${response.status}).`);
+  }
+
+  const data: unknown = await response.json();
+  const list = Array.isArray(data)
+    ? data
+    : data &&
+        typeof data === "object" &&
+        Array.isArray((data as { events?: unknown }).events)
+      ? (data as { events: unknown[] }).events
+      : null;
+
+  if (!list) {
+    throw new Error("The upcoming events response has an unexpected format.");
+  }
+
+  return list.filter((item): item is ScheduleEvent => {
+    return (
+      !!item &&
+      typeof item === "object" &&
+      typeof (item as ScheduleEvent).title === "string" &&
+      (item as ScheduleEvent).title.trim().length > 0
+    );
+  });
+}
+
 export async function updateScheduleEvent(
   updates: ScheduleEventUpdate,
 ): Promise<void> {
