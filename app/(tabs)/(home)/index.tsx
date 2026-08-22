@@ -380,6 +380,7 @@ export default function HomePage() {
       >
         <KeyboardAvoidingView
           behavior="padding"
+          keyboardVerticalOffset={0}
           style={styles.modalBackdrop}
         >
           <View style={styles.modalCard}>
