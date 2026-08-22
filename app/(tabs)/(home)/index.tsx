@@ -30,12 +30,10 @@ import { NoticeBar } from "@/components/home/notice-bar";
 import { NoticeDetailComponent } from "@/components/home/notice-detail-component";
 import { ProfileComponent } from "@/components/home/profile-component";
 import { API_BASE_URL } from "@/constants/computer-ip";
-import {
-  getAnnouncements,
-  updateAnnouncement,
-} from "@/services/announcements";
+import { getAnnouncements, updateAnnouncement } from "@/services/announcements";
 import type { Announcement } from "@/types/announcement";
-import { getEmail, getJwt, saveRole } from "@/utils/auth-token";
+import { getEmail, getJwt } from "@/utils/auth-token";
+import { saveUserSession } from "@/utils/session";
 import { getInfo, saveInfo } from "@/utils/user-info";
 
 export default function HomePage() {
@@ -105,15 +103,7 @@ export default function HomePage() {
         const userData = await response.json();
         if (!active) return;
 
-        await saveRole(userData.role);
-        await saveInfo("name", userData.name ?? "");
-        await saveInfo("id", String(userData.id ?? ""));
-        await saveInfo("teamName", userData.teamName ?? "");
-        await saveInfo(
-          "points",
-          String(userData.points ?? userData.totalPoints ?? 0),
-        );
-        await saveInfo("checkedIn", String(!!userData.checkedIn));
+        await saveUserSession(userData, email);
         console.log(String(!!userData.checkedIn));
         setName(userData.name);
         setTeamName(userData.teamName);
@@ -125,7 +115,6 @@ export default function HomePage() {
       };
     }, []),
   );
-
 
   const loadAnnouncements = useCallback(async () => {
     setIsLoadingAnnouncements(true);
@@ -237,7 +226,9 @@ export default function HomePage() {
         });
 
         if (!response.ok) {
-          throw new Error((await response.text()) || "Could not post announcement.");
+          throw new Error(
+            (await response.text()) || "Could not post announcement.",
+          );
         }
       }
 
@@ -246,9 +237,7 @@ export default function HomePage() {
       closeCompose();
       Alert.alert(
         wasEditing ? "Updated" : "Posted",
-        wasEditing
-          ? "Announcement updated."
-          : "Announcement published.",
+        wasEditing ? "Announcement updated." : "Announcement published.",
       );
     } catch (error) {
       Alert.alert(
@@ -265,7 +254,6 @@ export default function HomePage() {
       loadAnnouncements();
     }, [loadAnnouncements]),
   );
-
 
   if (!fontsLoaded) {
     return <View style={styles.screen} />;
@@ -477,7 +465,6 @@ const styles = StyleSheet.create({
     color: "#111111",
     fontFamily: "AlanSans_500Medium",
     fontSize: 15,
-    
   },
   errorText: {
     color: "#C93D2A",
@@ -485,7 +472,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginHorizontal: 32,
     textAlign: "center",
-    
   },
   editButton: {
     alignItems: "center",
