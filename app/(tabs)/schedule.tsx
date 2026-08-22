@@ -22,9 +22,7 @@ import {
   Alert,
   Animated,
   Easing,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -32,6 +30,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const ESTIMATED_SCHEDULE_ITEM_HEIGHT = 112;
@@ -58,12 +57,12 @@ function isBeforeToday(date: Date) {
   const todayStart = new Date(
     today.getFullYear(),
     today.getMonth(),
-    today.getDate()
+    today.getDate(),
   );
   const dateStart = new Date(
     date.getFullYear(),
     date.getMonth(),
-    date.getDate()
+    date.getDate(),
   );
 
   return dateStart < todayStart;
@@ -94,9 +93,7 @@ function formatEventTime(time: string) {
 
 // Split backend timestamps for friendly form inputs.
 function splitEventDateTime(value: string) {
-  const match = value.match(
-    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/,
-  );
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
 
   if (!match) return { date: "", time: "" };
 
@@ -114,9 +111,7 @@ function splitEventDateTime(value: string) {
 // Combine form fields into backend timestamps.
 function combineEventDateTime(dateValue: string, timeValue: string) {
   const dateMatch = dateValue.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  const timeMatch = timeValue.match(
-    /^(1[0-2]|0?[1-9]):([0-5]\d)\s*(AM|PM)$/i,
-  );
+  const timeMatch = timeValue.match(/^(1[0-2]|0?[1-9]):([0-5]\d)\s*(AM|PM)$/i);
 
   if (!dateMatch || !timeMatch) return null;
 
@@ -144,8 +139,7 @@ function combineEventDateTime(dateValue: string, timeValue: string) {
 
 function getActiveEventIndex(items: ScheduleEvent[], now: Date) {
   return items.findIndex(
-    (item) =>
-      new Date(item.startTime) <= now && now < new Date(item.endTime), // Active if now is between start & end time
+    (item) => new Date(item.startTime) <= now && now < new Date(item.endTime), // Active if now is between start & end time
   );
 }
 
@@ -193,10 +187,7 @@ function GradientDateText({
       }
     >
       <LinearGradient
-        colors={[
-          "rgba(163, 206, 38, 0.12)",
-          "rgba(163, 206, 38, 0.72)",
-        ]}
+        colors={["rgba(163, 206, 38, 0.12)", "rgba(163, 206, 38, 0.72)"]}
         start={{ x: isYesterday ? 0 : 1, y: 0.5 }}
         end={{ x: isYesterday ? 1 : 0, y: 0.5 }}
       >
@@ -215,7 +206,7 @@ export default function ScheduleScreen() {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   // null means every event is collapsed; otherwise this stores the backend ID.
   const [expandedScheduleId, setExpandedScheduleId] = useState<string | null>(
-    null
+    null,
   );
   const [scheduleItems, setScheduleItems] = useState<ScheduleEvent[]>([]);
   const [isLoadingSchedule, setIsLoadingSchedule] = useState(true);
@@ -254,7 +245,7 @@ export default function ScheduleScreen() {
   );
   const focusIndex = useMemo(
     () => getScheduleFocusIndex(selectedScheduleItems, selectedDate),
-    [selectedScheduleItems, selectedDate]
+    [selectedScheduleItems, selectedDate],
   );
 
   const loadSchedule = useCallback(async () => {
@@ -273,9 +264,7 @@ export default function ScheduleScreen() {
       );
     } catch (error) {
       setScheduleError(
-        error instanceof Error
-          ? error.message
-          : "Unable to load the schedule.",
+        error instanceof Error ? error.message : "Unable to load the schedule.",
       );
     } finally {
       setIsLoadingSchedule(false);
@@ -312,7 +301,7 @@ export default function ScheduleScreen() {
       scrollViewRef.current?.scrollTo({
         y: Math.max(
           0,
-          focusIndex * ESTIMATED_SCHEDULE_ITEM_HEIGHT - focusedOffset
+          focusIndex * ESTIMATED_SCHEDULE_ITEM_HEIGHT - focusedOffset,
         ),
         animated: true,
       });
@@ -353,7 +342,7 @@ export default function ScheduleScreen() {
 
   const toggleSchedule = (scheduleId: string) => {
     setExpandedScheduleId((currentId) =>
-      currentId === scheduleId ? null : scheduleId
+      currentId === scheduleId ? null : scheduleId,
     );
   };
 
@@ -409,10 +398,7 @@ export default function ScheduleScreen() {
     const endTime = combineEventDateTime(endDate, endTimeValue);
 
     if (!startTime || !endTime) {
-      Alert.alert(
-        "Invalid date or time",
-        "Use MM/DD/YYYY and h:mm AM/PM.",
-      );
+      Alert.alert("Invalid date or time", "Use MM/DD/YYYY and h:mm AM/PM.");
       return;
     }
 
@@ -466,9 +452,7 @@ export default function ScheduleScreen() {
 
   return (
     <View style={styles.screen}>
-      <View
-        style={[styles.header, { paddingTop: insets.top + 62 }]}
-      >
+      <View style={[styles.header, { paddingTop: insets.top + 62 }]}>
         <View style={styles.dateRow}>
           {visibleDates.map((date, index) => {
             const formattedDate = formatDate(date);
@@ -527,37 +511,39 @@ export default function ScheduleScreen() {
                 <Text style={styles.errorText}>{scheduleError}</Text>
               ) : selectedScheduleItems.length === 0 ? (
                 <Text style={styles.statusText}>No events scheduled.</Text>
-              ) : selectedScheduleItems.map((item) => {
-                const itemKey = `${item.startTime}-${item.title}`;
-                const now = new Date();
-                // Green means this event is happening now.
-                const isActive =
-                  isSameDay(selectedDate, now) &&
-                  new Date(item.startTime) <= now &&
-                  now < new Date(item.endTime);
-                const isPassed =
-                  isSelectedDatePast ||
-                  (!isActive && new Date(item.endTime) <= now);
+              ) : (
+                selectedScheduleItems.map((item) => {
+                  const itemKey = `${item.startTime}-${item.title}`;
+                  const now = new Date();
+                  // Green means this event is happening now.
+                  const isActive =
+                    isSameDay(selectedDate, now) &&
+                    new Date(item.startTime) <= now &&
+                    now < new Date(item.endTime);
+                  const isPassed =
+                    isSelectedDatePast ||
+                    (!isActive && new Date(item.endTime) <= now);
 
-                return (
-                  <ScheduleItem
-                    key={itemKey}
-                    time={formatEventTime(item.startTime)}
-                    title={item.title}
-                    startTime={formatEventTime(item.startTime)}
-                    endTime={formatEventTime(item.endTime)}
-                    location={item.location}
-                    body={item.body}
-                    isActive={isActive}
-                    isExpanded={expandedScheduleId === itemKey}
-                    isPassed={isPassed}
-                    activeDate={formatFullDate(selectedDate)}
-                    onEdit={() => openEdit(item)}
-                    onPress={() => toggleSchedule(itemKey)}
-                    showEdit={isAdmin}
-                  />
-                );
-              })}
+                  return (
+                    <ScheduleItem
+                      key={itemKey}
+                      time={formatEventTime(item.startTime)}
+                      title={item.title}
+                      startTime={formatEventTime(item.startTime)}
+                      endTime={formatEventTime(item.endTime)}
+                      location={item.location}
+                      body={item.body}
+                      isActive={isActive}
+                      isExpanded={expandedScheduleId === itemKey}
+                      isPassed={isPassed}
+                      activeDate={formatFullDate(selectedDate)}
+                      onEdit={() => openEdit(item)}
+                      onPress={() => toggleSchedule(itemKey)}
+                      showEdit={isAdmin}
+                    />
+                  );
+                })
+              )}
             </Animated.View>
           </ScrollView>
 
@@ -581,7 +567,8 @@ export default function ScheduleScreen() {
         visible={editingEvent !== null}
       >
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior="padding"
+          keyboardVerticalOffset={-80}
           style={styles.modalBackdrop}
         >
           <View style={styles.modalCard}>

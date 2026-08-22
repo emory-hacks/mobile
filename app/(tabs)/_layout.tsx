@@ -29,6 +29,7 @@ export default function TabLayout() {
           shadowOpacity: 0,
         },
         headerShown: false,
+        tabBarHideOnKeyboard: true,
         tabBarButton: HapticTab,
       }}
     >
