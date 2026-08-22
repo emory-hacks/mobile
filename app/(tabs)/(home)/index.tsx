@@ -338,8 +338,12 @@ export default function HomePage() {
                           })}
                         </Text>
                       </View>
-                      <Text numberOfLines={3} style={styles.noticeBody}>
-                        {notice.content}
+                      <Text
+                        ellipsizeMode="tail"
+                        numberOfLines={5}
+                        style={styles.noticeBody}
+                      >
+                        {notice.content.replace(/\s+/g, " ").trim()}
                       </Text>
                     </View>
                   ))}
@@ -551,7 +555,9 @@ const styles = StyleSheet.create({
     color: "#111111",
     fontFamily: "AlanSans_400Regular",
     fontSize: 11,
+    includeFontPadding: false,
     lineHeight: 15,
+    width: "100%",
   },
   noticeFade: {
     bottom: 0,

@@ -86,8 +86,12 @@ export function NoticeDetailComponent({
                 {formatCreatedAt(followingNotice.createdAt)}
               </Text>
             </View>
-            <Text numberOfLines={3} style={styles.nextBody}>
-              {followingNotice.content}
+            <Text
+              ellipsizeMode="tail"
+              numberOfLines={5}
+              style={styles.nextBody}
+            >
+              {followingNotice.content.replace(/\s+/g, " ").trim()}
             </Text>
           </View>
         ))}
@@ -189,7 +193,9 @@ const styles = StyleSheet.create({
     color: "#111111",
     fontFamily: "AlanSans_400Regular",
     fontSize: 11,
+    includeFontPadding: false,
     lineHeight: 15,
+    width: "100%",
   },
   nextMetadata: {
     alignItems: "center",
