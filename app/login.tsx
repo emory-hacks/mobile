@@ -161,6 +161,7 @@ export default function Login() {
         <Text style={styles.subtitle2}>Emory Hacks !</Text>
         <TextInput
           placeholder="Email@email.edu"
+          placeholderTextColor="#8a8a8a"
           style={styles.input}
           value={email}
           onChangeText={setEmail}
@@ -169,6 +170,7 @@ export default function Login() {
         />
         <TextInput
           placeholder="Password"
+          placeholderTextColor="#8a8a8a"
           style={styles.input}
           value={password}
           onChangeText={setPassword}

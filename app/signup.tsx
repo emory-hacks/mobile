@@ -344,6 +344,7 @@ export default function Signup() {
           <>
             <TextInput
               placeholder="@Name"
+              placeholderTextColor="#8a8a8a"
               style={styles.input}
               value={name}
               onChangeText={setName}
@@ -351,6 +352,7 @@ export default function Signup() {
             />
             <TextInput
               placeholder="Email@email.edu"
+              placeholderTextColor="#8a8a8a"
               style={styles.input}
               value={email}
               onChangeText={setEmail}
@@ -359,6 +361,7 @@ export default function Signup() {
             />
             <TextInput
               placeholder="Password"
+              placeholderTextColor="#8a8a8a"
               style={[styles.input, styles.passwordInput]}
               value={password}
               onChangeText={setPassword}
@@ -366,6 +369,7 @@ export default function Signup() {
             />
             <TextInput
               placeholder="Check the password"
+              placeholderTextColor="#8a8a8a"
               style={styles.input}
               value={confirmPassword}
               onChangeText={setConfirmPassword}

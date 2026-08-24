@@ -327,6 +327,7 @@ export default function ForgotPassword() {
             </View>
             <TextInput
               placeholder="New password"
+              placeholderTextColor="#8a8a8a"
               style={[styles.input, styles.passwordInput]}
               value={password}
               onChangeText={setPassword}
@@ -335,6 +336,7 @@ export default function ForgotPassword() {
             />
             <TextInput
               placeholder="Confirm new password"
+              placeholderTextColor="#8a8a8a"
               style={styles.input}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
@@ -362,6 +364,7 @@ export default function ForgotPassword() {
           <>
             <TextInput
               placeholder="Email@email.edu"
+              placeholderTextColor="#8a8a8a"
               style={styles.input}
               value={email}
               onChangeText={setEmail}
