@@ -66,7 +66,7 @@ export default function QRCodeScreen() {
     Fredoka_700Bold,
   });
   const [qrCode, setQrCode] = useState("");
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(false);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [upcomingEvents, setUpcomingEvents] = useState<ScheduleEvent[]>([]);
   const [eventId, setEventId] = useState("");
   const [awardAmount, setAwardAmount] = useState<AwardAmount>(5);
@@ -639,6 +639,7 @@ export default function QRCodeScreen() {
                 <CameraView
                   style={StyleSheet.absoluteFillObject}
                   facing="back"
+                  mute
                   barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
                   onBarcodeScanned={
                     isLoadingScan ? undefined : handleBarcodeScanned
