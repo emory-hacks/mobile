@@ -42,11 +42,12 @@ function formatUsername(name: string) {
   return trimmed.startsWith("@") ? trimmed : `@${trimmed}`;
 }
 
-const AWARD_AMOUNTS = [0, 5] as const;
-type AwardAmount = (typeof AWARD_AMOUNTS)[number];
-
 function eventKey(event: ScheduleEvent) {
   return event.title.trim();
+}
+
+function eventAwardAmount(event: ScheduleEvent | undefined) {
+  return Number(event?.points ?? 0);
 }
 
 const ORIGINAL_BRIGHTNESS_KEY = "originalBrightness";
@@ -69,17 +70,17 @@ export default function QRCodeScreen() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [upcomingEvents, setUpcomingEvents] = useState<ScheduleEvent[]>([]);
   const [eventId, setEventId] = useState("");
-  const [awardAmount, setAwardAmount] = useState<AwardAmount>(5);
   const eventIdRef = useRef(eventId);
-  const awardAmountRef = useRef(awardAmount);
+  const awardAmountRef = useRef(0);
 
   useEffect(() => {
     eventIdRef.current = eventId;
   }, [eventId]);
 
   useEffect(() => {
-    awardAmountRef.current = awardAmount;
-  }, [awardAmount]);
+    const selected = upcomingEvents.find((event) => eventKey(event) === eventId);
+    awardAmountRef.current = eventAwardAmount(selected);
+  }, [eventId, upcomingEvents]);
 
   useEffect(() => {
     (async () => {
@@ -234,6 +235,9 @@ export default function QRCodeScreen() {
     const userData = await response.json();
     const userEmail = String(userData.email ?? query);
     let points = Number(userData.points ?? 0);
+    const awardAmount = eventAwardAmount(
+      upcomingEvents.find((event) => eventKey(event) === selectedEventId),
+    );
 
     const awardResponse = await fetch(
       `${API_BASE_URL}/api/admin/award-points-search`,
@@ -512,35 +516,6 @@ export default function QRCodeScreen() {
               No events in the next 30 minutes
             </Text>
           )}
-
-          <View style={styles.selectorRow}>
-            {AWARD_AMOUNTS.map((amount) => {
-              const selected = awardAmount === amount;
-              return (
-                <Pressable
-                  key={amount}
-                  style={({ pressed }) => [
-                    styles.selectorButton,
-                    selected && styles.selectorButtonSelected,
-                    pressed && styles.selectorButtonPressed,
-                  ]}
-                  onPress={() => setAwardAmount(amount)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={`Award ${amount} points`}
-                >
-                  <Text
-                    style={[
-                      styles.selectorButtonText,
-                      selected && styles.selectorButtonTextSelected,
-                    ]}
-                  >
-                    {amount} pts
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
         </View>
 
         {scanned && attendee ? (

@@ -532,6 +532,7 @@ export default function ScheduleScreen() {
                       startTime={formatEventTime(item.startTime)}
                       endTime={formatEventTime(item.endTime)}
                       location={item.location}
+                      points={item.points}
                       body={item.body}
                       isActive={isActive}
                       isExpanded={expandedScheduleId === itemKey}
