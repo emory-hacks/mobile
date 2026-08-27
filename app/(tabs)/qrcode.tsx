@@ -426,10 +426,6 @@ export default function QRCodeScreen() {
   if (isAdmin) {
     const cameraReady = cameraActive && permission?.granted && isFocused;
     const attendee = scannedAttendee;
-    const progress =
-      attendee && attendee.maxPoints > 0
-        ? Math.min(attendee.points / attendee.maxPoints, 1.0)
-        : 0;
 
     return (
       <View style={styles.pageContainer}>
@@ -548,38 +544,6 @@ export default function QRCodeScreen() {
                 <Text style={styles.pointsBadgeText}>
                   {attendee.points} points
                 </Text>
-              </View>
-              <View style={styles.progressColumn}>
-                <View style={styles.progressLabels}>
-                  <View />
-                  <View
-                    style={[
-                      styles.progressLabelCurrentWrap,
-                      { left: `${progress * 100}%` },
-                    ]}
-                  >
-                    <Text style={styles.progressLabelCurrent}>
-                      {attendee.points}
-                    </Text>
-                  </View>
-                  <Text style={styles.progressLabelMuted}>
-                    {attendee.maxPoints}
-                  </Text>
-                </View>
-                <View style={styles.progressTrack}>
-                  <View
-                    style={[
-                      styles.progressFill,
-                      { width: `${progress * 100}%` },
-                    ]}
-                  />
-                  <View
-                    style={[
-                      styles.progressThumb,
-                      { left: `${progress * 100}%` },
-                    ]}
-                  />
-                </View>
               </View>
             </View>
 
@@ -882,54 +846,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 22,
     fontWeight: "700",
-  },
-  progressColumn: {
-    flex: 1,
-    paddingTop: 4,
-  },
-  progressLabels: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 6,
-    position: "relative",
-    height: 16,
-  },
-  progressLabelMuted: {
-    fontSize: 12,
-    color: "#c0c0c0",
-  },
-  progressLabelCurrentWrap: {
-    position: "absolute",
-    width: 0,
-    alignItems: "center",
-    overflow: "visible",
-  },
-  progressLabelCurrent: {
-    fontSize: 12,
-    color: "#A3CE26",
-    fontWeight: "600",
-  },
-  progressTrack: {
-    height: 3,
-    backgroundColor: "#111",
-    borderRadius: 2,
-    justifyContent: "center",
-  },
-  progressFill: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    backgroundColor: "#A3CE26",
-    borderRadius: 2,
-  },
-  progressThumb: {
-    position: "absolute",
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: "#A3CE26",
-    marginLeft: -7,
   },
   detailList: {
     marginTop: 36,
