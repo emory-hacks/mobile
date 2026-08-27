@@ -11,6 +11,7 @@ type Props = {
   location?: string;
   onEdit?: () => void;
   onPress?: () => void;
+  points?: number;
   showEdit?: boolean;
   startTime?: string;
   time?: string;
@@ -27,6 +28,7 @@ export default function ScheduleItem({
   location = "Space",
   onEdit,
   onPress,
+  points,
   showEdit = false,
   startTime = "00:00",
   time = "00:00",
@@ -155,6 +157,25 @@ export default function ScheduleItem({
               {startTime} ~ {endTime}
             </Text>
           </View>
+          {points != null ? (
+            <View
+              style={[
+                styles.metadataPill,
+                isActive && styles.activeMetadataPill,
+                isExpanded && styles.expandedMetadataPill,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.metadataText,
+                  isActive && styles.activeMetadataText,
+                  isExpanded && styles.expandedMetadataText,
+                ]}
+              >
+                {points} {points === 1 ? "pt" : "pts"}
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         {/* The API sends one complete body; collapsed rows only clamp its lines. */}
@@ -291,6 +312,7 @@ const styles = StyleSheet.create({
   },
   metadataRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 4,
     marginTop: 5,
   },
