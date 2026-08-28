@@ -1,9 +1,10 @@
 import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text } from "react-native";
 import {
   KeyboardAvoidingView,
   KeyboardProvider,
@@ -26,7 +27,7 @@ export default function RootLayout() {
 
     const splashTimer = setTimeout(() => {
       setIsSplashReady(true);
-    }, 2500);
+    }, 1500);
 
     return () => clearTimeout(splashTimer);
   }, []);
@@ -63,15 +64,16 @@ export default function RootLayout() {
 
 function LandingSplash() {
   return (
-    <View style={styles.splashContainer}>
-      <View style={styles.logoPlaceholder}>
-        <Image
-          source={require("@/assets/images/icon.png")}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-      </View>
-    </View>
+    <LinearGradient
+      colors={["#FFFFFF", "#F3F9E7"]}
+      style={styles.splashContainer}
+    >
+      <Image
+        source={require("@/assets/images/icon.png")}
+        style={styles.logo}
+        resizeMode="contain"
+      />
+    </LinearGradient>
   );
 }
 
@@ -81,20 +83,12 @@ const styles = StyleSheet.create({
   },
   splashContainer: {
     alignItems: "center",
-    backgroundColor: "#ffffff",
     flex: 1,
     justifyContent: "center",
   },
-  logoPlaceholder: {
-    alignItems: "center",
-    backgroundColor: "#f2f5f8",
-    borderRadius: 24,
-    height: 128,
-    justifyContent: "center",
-    width: 128,
-  },
   logo: {
-    height: 84,
-    width: 84,
+    aspectRatio: 654 / 200,
+    maxWidth: 240,
+    width: "60%",
   },
 });
