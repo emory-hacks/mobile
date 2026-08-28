@@ -17,6 +17,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function Signup() {
@@ -342,39 +343,43 @@ export default function Signup() {
           </>
         ) : (
           <>
-            <TextInput
-              placeholder="@Name"
-              placeholderTextColor="#8a8a8a"
-              style={styles.input}
-              value={name}
-              onChangeText={setName}
-              autoCapitalize="none"
-            />
-            <TextInput
-              placeholder="Email@email.edu"
-              placeholderTextColor="#8a8a8a"
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-            <TextInput
-              placeholder="Password"
-              placeholderTextColor="#8a8a8a"
-              style={[styles.input, styles.passwordInput]}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-            <TextInput
-              placeholder="Check the password"
-              placeholderTextColor="#8a8a8a"
-              style={styles.input}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-            />
+            <KeyboardAvoidingView
+              style={{ width: "100%", alignItems: "center" }}
+            >
+              <TextInput
+                placeholder="@Name"
+                placeholderTextColor="#8a8a8a"
+                style={styles.input}
+                value={name}
+                onChangeText={setName}
+                autoCapitalize="none"
+              />
+              <TextInput
+                placeholder="Email@email.edu"
+                placeholderTextColor="#8a8a8a"
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
+              <TextInput
+                placeholder="Password"
+                placeholderTextColor="#8a8a8a"
+                style={[styles.input, styles.passwordInput]}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+              <TextInput
+                placeholder="Check the password"
+                placeholderTextColor="#8a8a8a"
+                style={styles.input}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+              />
+            </KeyboardAvoidingView>
             {errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
             <TouchableOpacity style={styles.button} onPress={handleSignup}>
               <Text
