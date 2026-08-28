@@ -1,6 +1,7 @@
 import {
   AlanSans_400Regular,
   AlanSans_500Medium,
+  AlanSans_600SemiBold,
   AlanSans_700Bold,
 } from "@expo-google-fonts/alan-sans"; // fonts
 import { Grandstander_900Black } from "@expo-google-fonts/grandstander";
@@ -45,6 +46,7 @@ export default function HomePage() {
   const [fontsLoaded] = useFonts({
     AlanSans_400Regular,
     AlanSans_500Medium,
+    AlanSans_600SemiBold,
     AlanSans_700Bold,
     Grandstander_900Black,
   });
@@ -324,14 +326,12 @@ export default function HomePage() {
                       </View>
                       <View style={styles.metadata}>
                         <Text style={styles.metadataText}>
-                          {notice.publisherName}
-                        </Text>
-                        <View style={styles.metadataDivider} />
-                        <Text style={styles.metadataText}>
-                          {notice.publisher}
-                        </Text>
-                        <View style={styles.metadataDivider} />
-                        <Text style={styles.metadataText}>
+                          {new Date(notice.createdAt).toLocaleDateString([], {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                          {" · "}
                           {new Date(notice.createdAt).toLocaleTimeString([], {
                             hour: "2-digit",
                             minute: "2-digit",
@@ -510,21 +510,14 @@ const styles = StyleSheet.create({
     marginHorizontal: 32,
   },
   metadata: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 8,
+    alignItems: "flex-start",
     marginBottom: 5,
     marginTop: 4,
-  },
-  metadataDivider: {
-    backgroundColor: "#C3C3C3",
-    height: 12,
-    width: 1,
   },
   metadataText: {
     color: "#AFAFAF",
     fontFamily: "AlanSans_400Regular",
-    fontSize: 9,
+    fontSize: 10,
   },
   modalActions: {
     flexDirection: "row",
@@ -598,9 +591,9 @@ const styles = StyleSheet.create({
   noticeTitle: {
     color: "#111111",
     flex: 1,
-    fontFamily: "AlanSans_700Bold",
-    fontSize: 16,
-    lineHeight: 20,
+    fontFamily: "AlanSans_600SemiBold",
+    fontSize: 18,
+    lineHeight: 24,
   },
   postButton: {
     alignItems: "center",
