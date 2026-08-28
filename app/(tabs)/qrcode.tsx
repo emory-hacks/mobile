@@ -278,7 +278,8 @@ export default function QRCodeScreen() {
       teamName: userData.teamName ?? "",
       points,
       maxPoints: userData.maxPoints ?? 100,
-      checkInValid: !!userData.checkedIn,
+      checkInValid:
+        selectedEventId === "Registration" || !!userData.checkedIn,
       email: userEmail,
     });
     setScanned(true);
@@ -389,7 +390,8 @@ export default function QRCodeScreen() {
           teamName: String(userData.teamName ?? ""),
           points: Number(data.newBalance ?? userData.points ?? 0),
           maxPoints: Number(userData.maxPoints ?? 100),
-          checkInValid: !!userData.checkedIn,
+          checkInValid:
+            selectedEventId === "Registration" || !!userData.checkedIn,
           email: displayEmail,
         });
         setIsLoadingScan(false);
