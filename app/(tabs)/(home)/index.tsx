@@ -554,9 +554,9 @@ const styles = StyleSheet.create({
   noticeBody: {
     color: "#111111",
     fontFamily: "AlanSans_400Regular",
-    fontSize: 11,
+    fontSize: 14,
     includeFontPadding: false,
-    lineHeight: 15,
+    lineHeight: 20,
     width: "100%",
   },
   noticeFade: {
