@@ -302,51 +302,85 @@ export default function HomePage() {
                   showsVerticalScrollIndicator={false}
                   style={styles.noticeScroll}
                 >
-                  {announcements.map((notice) => (
-                    <View
-                      key={`${notice.createdAt}-${notice.publisher}-${notice.title}`} // uses time + publisher + title to avoid collisions in id.
-                      style={styles.noticeItem}
-                    >
-                      <View style={styles.noticeHeadingRow}>
-                        <Text style={styles.noticeTitle}>{notice.title}</Text>
-                        {isAdmin && (
-                          <Pressable
-                            accessibilityLabel={`Edit ${notice.title}`}
-                            accessibilityRole="button"
-                            hitSlop={10}
-                            onPress={() => openEdit(notice)}
-                            style={({ pressed }) => [
-                              styles.editButton,
-                              { opacity: pressed ? 0.6 : 1 },
-                            ]}
-                          >
-                            <Text style={styles.editButtonText}>Edit</Text>
-                          </Pressable>
+                  {announcements.map((notice, index) => {
+                    const date = new Date(notice.createdAt);
+                    const dateKey = date.toDateString();
+                    const previousDateKey =
+                      index > 0
+                        ? new Date(
+                            announcements[index - 1].createdAt,
+                          ).toDateString()
+                        : null;
+                    const nextDateKey =
+                      index < announcements.length - 1
+                        ? new Date(
+                            announcements[index + 1].createdAt,
+                          ).toDateString()
+                        : null;
+
+                    return (
+                      <View
+                        key={`${notice.createdAt}-${notice.publisher}-${notice.title}`}
+                        style={[
+                          styles.noticeItem,
+                          nextDateKey !== null &&
+                            dateKey !== nextDateKey &&
+                            styles.noticeItemBeforeDateDivider,
+                        ]}
+                      >
+                        {dateKey !== previousDateKey && (
+                          <View style={styles.dateDivider}>
+                            <Text style={styles.dateDividerText}>
+                              {date.toLocaleDateString("en-US", {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                              })}
+                            </Text>
+                            <View style={styles.dateDividerLine} />
+                          </View>
                         )}
-                      </View>
-                      <View style={styles.metadata}>
-                        <Text style={styles.metadataText}>
-                          {new Date(notice.createdAt).toLocaleDateString([], {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                          {" · "}
-                          {new Date(notice.createdAt).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                        <View style={styles.noticeHeadingRow}>
+                          <Text style={styles.noticeTitle}>{notice.title}</Text>
+                          {isAdmin && (
+                            <Pressable
+                              accessibilityLabel={`Edit ${notice.title}`}
+                              accessibilityRole="button"
+                              hitSlop={10}
+                              onPress={() => openEdit(notice)}
+                              style={({ pressed }) => [
+                                styles.editButton,
+                                { opacity: pressed ? 0.6 : 1 },
+                              ]}
+                            >
+                              <Text style={styles.editButtonText}>Edit</Text>
+                            </Pressable>
+                          )}
+                        </View>
+                        <View style={styles.metadata}>
+                          <Text style={styles.metadataText}>
+                            {new Date(notice.createdAt).toLocaleDateString([], {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                            {" · "}
+                            {new Date(notice.createdAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </Text>
+                        </View>
+                        <Text
+                          ellipsizeMode="tail"
+                          numberOfLines={5}
+                          style={styles.noticeBody}
+                        >
+                          {notice.content.replace(/\s+/g, " ").trim()}
                         </Text>
                       </View>
-                      <Text
-                        ellipsizeMode="tail"
-                        numberOfLines={5}
-                        style={styles.noticeBody}
-                      >
-                        {notice.content.replace(/\s+/g, " ").trim()}
-                      </Text>
-                    </View>
-                  ))}
+                    );
+                  })}
                 </ScrollView>
 
                 <LinearGradient
@@ -470,6 +504,22 @@ const styles = StyleSheet.create({
     fontFamily: "AlanSans_500Medium",
     fontSize: 15,
   },
+  dateDivider: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 12,
+    paddingBottom: 4,
+  },
+  dateDividerLine: {
+    backgroundColor: "#DADADA",
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+  },
+  dateDividerText: {
+    color: "#668713",
+    fontFamily: "AlanSans_500Medium",
+    fontSize: 12,
+  },
   errorText: {
     color: "#C93D2A",
     fontFamily: "AlanSans_400Regular",
@@ -570,6 +620,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     paddingHorizontal: 4,
     paddingVertical: 14,
+  },
+  noticeItemBeforeDateDivider: {
+    borderBottomWidth: 0,
   },
   noticeList: {
     // Lets the final notice scroll completely above the fixed fade overlay.
