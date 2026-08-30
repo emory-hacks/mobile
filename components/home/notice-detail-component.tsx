@@ -1,6 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
+import { NoticeListItem } from "@/components/home/notice-list-item";
 import type { Announcement } from "@/types/announcement";
 
 type NoticeDetailComponentProps = {
@@ -16,13 +17,15 @@ function formatCreatedAt(createdAt: string) {
     return createdAt;
   }
 
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  const hour = date.getHours().toString().padStart(2, "0");
-  const minute = date.getMinutes().toString().padStart(2, "0");
-
-  return `${year}.${month}.${day} ${hour}:${minute}`;
+  return `${date.toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })} · ${date.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    hour12: true,
+    minute: "2-digit",
+  })}`;
 }
 
 export function NoticeDetailComponent({
@@ -30,6 +33,12 @@ export function NoticeDetailComponent({
   notice,
   onClose,
 }: NoticeDetailComponentProps) {
+  const firstFollowingNotice = followingNotices[0];
+  const firstFollowingStartsNewDate =
+    firstFollowingNotice &&
+    new Date(firstFollowingNotice.createdAt).toDateString() !==
+      new Date(notice.createdAt).toDateString();
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -58,27 +67,17 @@ export function NoticeDetailComponent({
           </View>
         </View>
 
-        <View style={[styles.divider, styles.featuredSeparator]} />
+        {!firstFollowingStartsNewDate && (
+          <View style={[styles.divider, styles.featuredSeparator]} />
+        )}
 
-        {followingNotices.map((followingNotice) => (
-          <View
+        {followingNotices.map((followingNotice, index) => (
+          <NoticeListItem
             key={`${followingNotice.createdAt}-${followingNotice.publisher}-${followingNotice.title}`}
-            style={styles.followingNotice}
-          >
-            <Text style={styles.nextTitle}>{followingNotice.title}</Text>
-            <View style={styles.nextMetadata}>
-              <Text style={styles.nextMetadataText}>
-                {formatCreatedAt(followingNotice.createdAt)}
-              </Text>
-            </View>
-            <Text
-              ellipsizeMode="tail"
-              numberOfLines={5}
-              style={styles.nextBody}
-            >
-              {followingNotice.content.replace(/\s+/g, " ").trim()}
-            </Text>
-          </View>
+            nextNotice={followingNotices[index + 1]}
+            notice={followingNotice}
+            previousNotice={index === 0 ? notice : followingNotices[index - 1]}
+          />
         ))}
       </ScrollView>
 
@@ -145,38 +144,6 @@ const styles = StyleSheet.create({
     left: 0,
     position: "absolute",
     right: 0,
-  },
-  followingNotice: {
-    borderBottomColor: "#DADADA",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 4,
-    paddingVertical: 14,
-  },
-  nextBody: {
-    color: "#111111",
-    fontFamily: "AlanSans_400Regular",
-    fontSize: 14,
-    includeFontPadding: false,
-    lineHeight: 20,
-    width: "100%",
-  },
-  nextMetadata: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 10,
-    marginBottom: 6,
-    marginTop: 5,
-  },
-  nextMetadataText: {
-    color: "#AFAFAF",
-    fontFamily: "AlanSans_400Regular",
-    fontSize: 10,
-  },
-  nextTitle: {
-    color: "#111111",
-    fontFamily: "AlanSans_600SemiBold",
-    fontSize: 18,
-    lineHeight: 24,
   },
   paragraph: {
     color: "#111111",
