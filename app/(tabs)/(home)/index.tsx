@@ -28,6 +28,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { NoticeBar } from "@/components/home/notice-bar";
 import { NoticeDetailComponent } from "@/components/home/notice-detail-component";
+import { NoticeListItem } from "@/components/home/notice-list-item";
 import { ProfileComponent } from "@/components/home/profile-component";
 import { API_BASE_URL } from "@/constants/computer-ip";
 import { getAnnouncements, updateAnnouncement } from "@/services/announcements";
@@ -302,85 +303,15 @@ export default function HomePage() {
                   showsVerticalScrollIndicator={false}
                   style={styles.noticeScroll}
                 >
-                  {announcements.map((notice, index) => {
-                    const date = new Date(notice.createdAt);
-                    const dateKey = date.toDateString();
-                    const previousDateKey =
-                      index > 0
-                        ? new Date(
-                            announcements[index - 1].createdAt,
-                          ).toDateString()
-                        : null;
-                    const nextDateKey =
-                      index < announcements.length - 1
-                        ? new Date(
-                            announcements[index + 1].createdAt,
-                          ).toDateString()
-                        : null;
-
-                    return (
-                      <View
-                        key={`${notice.createdAt}-${notice.publisher}-${notice.title}`}
-                        style={[
-                          styles.noticeItem,
-                          nextDateKey !== null &&
-                            dateKey !== nextDateKey &&
-                            styles.noticeItemBeforeDateDivider,
-                        ]}
-                      >
-                        {dateKey !== previousDateKey && (
-                          <View style={styles.dateDivider}>
-                            <Text style={styles.dateDividerText}>
-                              {date.toLocaleDateString("en-US", {
-                                day: "numeric",
-                                month: "long",
-                                year: "numeric",
-                              })}
-                            </Text>
-                            <View style={styles.dateDividerLine} />
-                          </View>
-                        )}
-                        <View style={styles.noticeHeadingRow}>
-                          <Text style={styles.noticeTitle}>{notice.title}</Text>
-                          {isAdmin && (
-                            <Pressable
-                              accessibilityLabel={`Edit ${notice.title}`}
-                              accessibilityRole="button"
-                              hitSlop={10}
-                              onPress={() => openEdit(notice)}
-                              style={({ pressed }) => [
-                                styles.editButton,
-                                { opacity: pressed ? 0.6 : 1 },
-                              ]}
-                            >
-                              <Text style={styles.editButtonText}>Edit</Text>
-                            </Pressable>
-                          )}
-                        </View>
-                        <View style={styles.metadata}>
-                          <Text style={styles.metadataText}>
-                            {new Date(notice.createdAt).toLocaleDateString([], {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            })}
-                            {" · "}
-                            {new Date(notice.createdAt).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </Text>
-                        </View>
-                        <Text
-                          ellipsizeMode="tail"
-                          numberOfLines={5}
-                          style={styles.noticeBody}
-                        >
-                          {notice.content.replace(/\s+/g, " ").trim()}
-                        </Text>
-                      </View>
-                    );
-                  })}
+                  {announcements.map((notice, index) => (
+                    <NoticeListItem
+                      key={`${notice.createdAt}-${notice.publisher}-${notice.title}`}
+                      nextNotice={announcements[index + 1]}
+                      notice={notice}
+                      onEdit={isAdmin ? openEdit : undefined}
+                      previousNotice={announcements[index - 1]}
+                    />
+                  ))}
                 </ScrollView>
 
                 <LinearGradient
@@ -504,39 +435,12 @@ const styles = StyleSheet.create({
     fontFamily: "AlanSans_500Medium",
     fontSize: 15,
   },
-  dateDivider: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 12,
-    paddingBottom: 4,
-  },
-  dateDividerLine: {
-    backgroundColor: "#DADADA",
-    flex: 1,
-    height: StyleSheet.hairlineWidth,
-  },
-  dateDividerText: {
-    color: "#668713",
-    fontFamily: "AlanSans_500Medium",
-    fontSize: 12,
-  },
   errorText: {
     color: "#C93D2A",
     fontFamily: "AlanSans_400Regular",
     fontSize: 14,
     marginHorizontal: 32,
     textAlign: "center",
-  },
-  editButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-  },
-  editButtonText: {
-    color: "#7DA515",
-    fontFamily: "AlanSans_500Medium",
-    fontSize: 16,
   },
   fab: {
     alignItems: "center",
@@ -558,16 +462,6 @@ const styles = StyleSheet.create({
     height: 40,
     marginBottom: 28,
     marginHorizontal: 32,
-  },
-  metadata: {
-    alignItems: "flex-start",
-    marginBottom: 5,
-    marginTop: 4,
-  },
-  metadataText: {
-    color: "#AFAFAF",
-    fontFamily: "AlanSans_400Regular",
-    fontSize: 10,
   },
   modalActions: {
     flexDirection: "row",
@@ -594,35 +488,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     marginBottom: 16,
   },
-  noticeBody: {
-    color: "#111111",
-    fontFamily: "AlanSans_400Regular",
-    fontSize: 14,
-    includeFontPadding: false,
-    lineHeight: 20,
-    width: "100%",
-  },
   noticeFade: {
     bottom: 0,
     height: 120,
     left: 0,
     position: "absolute",
     right: 0,
-  },
-  noticeHeadingRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 8,
-    justifyContent: "space-between",
-  },
-  noticeItem: {
-    borderBottomColor: "#DADADA",
-    borderBottomWidth: 1,
-    paddingHorizontal: 4,
-    paddingVertical: 14,
-  },
-  noticeItemBeforeDateDivider: {
-    borderBottomWidth: 0,
   },
   noticeList: {
     // Lets the final notice scroll completely above the fixed fade overlay.
@@ -640,13 +511,6 @@ const styles = StyleSheet.create({
   noticeSection: {
     flex: 1,
     paddingTop: 34,
-  },
-  noticeTitle: {
-    color: "#111111",
-    flex: 1,
-    fontFamily: "AlanSans_600SemiBold",
-    fontSize: 18,
-    lineHeight: 24,
   },
   postButton: {
     alignItems: "center",

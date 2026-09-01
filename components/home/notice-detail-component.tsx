@@ -1,7 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { DefaultPfp } from "@/components/home/default-pfp";
+import { NoticeListItem } from "@/components/home/notice-list-item";
 import type { Announcement } from "@/types/announcement";
 
 type NoticeDetailComponentProps = {
@@ -17,8 +17,13 @@ function formatCreatedAt(createdAt: string) {
     return createdAt;
   }
 
-  return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], {
+  return `${date.toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })} · ${date.toLocaleTimeString("en-US", {
     hour: "2-digit",
+    hour12: true,
     minute: "2-digit",
   })}`;
 }
@@ -28,6 +33,12 @@ export function NoticeDetailComponent({
   notice,
   onClose,
 }: NoticeDetailComponentProps) {
+  const firstFollowingNotice = followingNotices[0];
+  const firstFollowingStartsNewDate =
+    firstFollowingNotice &&
+    new Date(firstFollowingNotice.createdAt).toDateString() !==
+      new Date(notice.createdAt).toDateString();
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -40,60 +51,33 @@ export function NoticeDetailComponent({
         </Pressable>
         <View style={[styles.divider, styles.topDivider]} />
 
-        <View style={styles.headingRow}>
+        <View style={styles.featuredNotice}>
           <Text style={styles.title}>{notice.title}</Text>
           <Text style={styles.date}>{formatCreatedAt(notice.createdAt)}</Text>
-        </View>
 
-        <View style={styles.authorRow}>
-          <DefaultPfp size={40} isAdmin={true} />
-          <View style={styles.authorDetails}>
-            <Text style={styles.author}>
-              {notice.publisherName} | {notice.publisher}
-            </Text>
+          <View style={styles.body}>
+            {notice.content
+              .split(/\n+/)
+              .filter(Boolean)
+              .map((paragraph) => (
+                <Text key={paragraph} style={styles.paragraph}>
+                  {paragraph}
+                </Text>
+              ))}
           </View>
         </View>
 
-        <View style={styles.body}>
-          {notice.content
-            .split(/\n+/)
-            .filter(Boolean)
-            .map((paragraph) => (
-              <Text key={paragraph} style={styles.paragraph}>
-                {paragraph}
-              </Text>
-            ))}
-        </View>
+        {!firstFollowingStartsNewDate && (
+          <View style={[styles.divider, styles.featuredSeparator]} />
+        )}
 
-        <View style={[styles.divider, styles.featuredDivider]} />
-
-        {followingNotices.map((followingNotice) => (
-          <View
+        {followingNotices.map((followingNotice, index) => (
+          <NoticeListItem
             key={`${followingNotice.createdAt}-${followingNotice.publisher}-${followingNotice.title}`}
-            style={styles.followingNotice}
-          >
-            <Text style={styles.nextTitle}>{followingNotice.title}</Text>
-            <View style={styles.nextMetadata}>
-              <Text style={styles.nextMetadataText}>
-                {followingNotice.publisherName}
-              </Text>
-              <View style={styles.metadataDivider} />
-              <Text style={styles.nextMetadataText}>
-                {followingNotice.publisher}
-              </Text>
-              <View style={styles.metadataDivider} />
-              <Text style={styles.nextMetadataText}>
-                {formatCreatedAt(followingNotice.createdAt)}
-              </Text>
-            </View>
-            <Text
-              ellipsizeMode="tail"
-              numberOfLines={5}
-              style={styles.nextBody}
-            >
-              {followingNotice.content.replace(/\s+/g, " ").trim()}
-            </Text>
-          </View>
+            nextNotice={followingNotices[index + 1]}
+            notice={followingNotice}
+            previousNotice={index === 0 ? notice : followingNotices[index - 1]}
+          />
         ))}
       </ScrollView>
 
@@ -122,24 +106,8 @@ const styles = StyleSheet.create({
     fontFamily: "AlanSans_500Medium",
     fontSize: 12,
   },
-  author: {
-    color: "#A9A9A9",
-    fontFamily: "AlanSans_400Regular",
-    fontSize: 10,
-  },
-  authorDetails: {
-    alignItems: "flex-start",
-    gap: 4,
-  },
-  authorRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 10,
-  },
   body: {
-    gap: 16,
-    marginTop: 24,
+    gap: 20,
   },
   container: {
     flex: 1,
@@ -152,8 +120,8 @@ const styles = StyleSheet.create({
   date: {
     color: "#A9A9A9",
     fontFamily: "AlanSans_400Regular",
-    flexShrink: 0,
-    fontSize: 10,
+    fontSize: 11,
+    marginTop: 6,
   },
   divider: {
     backgroundColor: "#D8D8D8",
@@ -161,9 +129,14 @@ const styles = StyleSheet.create({
     marginVertical: 18,
     width: "100%",
   },
-  featuredDivider: {
-    backgroundColor: "#000000",
-    height: 2,
+  featuredNotice: {
+    backgroundColor: "#F4F8E8",
+    marginHorizontal: -34,
+    paddingHorizontal: 34,
+    paddingVertical: 20,
+  },
+  featuredSeparator: {
+    marginVertical: 0,
   },
   fade: {
     bottom: 0,
@@ -172,54 +145,11 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 0,
   },
-  followingNotice: {
-    borderBottomColor: "#DADADA",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 4,
-    paddingVertical: 14,
-  },
-  headingRow: {
-    alignItems: "baseline",
-    flexDirection: "row",
-    gap: 10,
-    justifyContent: "space-between",
-  },
-  metadataDivider: {
-    backgroundColor: "#C3C3C3",
-    height: 12,
-    width: 1,
-  },
-  nextBody: {
-    color: "#111111",
-    fontFamily: "AlanSans_400Regular",
-    fontSize: 11,
-    includeFontPadding: false,
-    lineHeight: 15,
-    width: "100%",
-  },
-  nextMetadata: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 10,
-    marginBottom: 6,
-    marginTop: 5,
-  },
-  nextMetadataText: {
-    color: "#AFAFAF",
-    fontFamily: "AlanSans_400Regular",
-    fontSize: 9,
-  },
-  nextTitle: {
-    color: "#111111",
-    fontFamily: "AlanSans_700Bold",
-    fontSize: 16,
-    lineHeight: 20,
-  },
   paragraph: {
     color: "#111111",
     fontFamily: "AlanSans_400Regular",
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 23,
   },
   scroll: {
     flex: 1,
@@ -228,10 +158,11 @@ const styles = StyleSheet.create({
     color: "#111111",
     flex: 1,
     fontFamily: "AlanSans_700Bold",
-    fontSize: 20,
-    lineHeight: 25,
+    fontSize: 24,
+    lineHeight: 32,
   },
   topDivider: {
+    marginBottom: 0,
     marginTop: 12,
   },
 });
