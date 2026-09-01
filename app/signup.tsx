@@ -87,6 +87,7 @@ export default function Signup() {
       color: "red",
       marginLeft: "15%",
       marginRight: "15%",
+      marginTop: 10,
       textAlign: "center",
     },
     copyright: {
