@@ -78,8 +78,8 @@ export function NoticeListItem({
         })}
       </Text>
 
-      <Text ellipsizeMode="tail" numberOfLines={5} style={styles.body}>
-        {notice.content.replace(/\s+/g, " ").trim()}
+      <Text ellipsizeMode="tail" numberOfLines={7} style={styles.body}>
+        {notice.content}
       </Text>
     </View>
   );
