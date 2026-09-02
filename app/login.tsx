@@ -194,7 +194,9 @@ export default function Login() {
             </Text>
           )}
         </Pressable>
-        {errorMessage && <Text style={{ color: "red" }}>{errorMessage}</Text>}
+        {errorMessage && (
+          <Text style={{ color: "red", marginTop: 20 }}>{errorMessage}</Text>
+        )}
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text
             style={{
