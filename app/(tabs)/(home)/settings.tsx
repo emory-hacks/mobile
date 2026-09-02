@@ -195,6 +195,12 @@ export default function SettingsScreen() {
             pillColor={checkedIn ? undefined : "#E53935"}
             value={checkedIn ? "Valid" : "Invalid"}
           />
+          {!checkedIn && (
+            <Text style={styles.registerInfoText}>
+              In order to check in, you need to get scanned onsite. Visit the
+              events tab for more information.
+            </Text>
+          )}
         </View>
       </View>
     </SafeAreaView>
@@ -321,6 +327,10 @@ const styles = StyleSheet.create({
     fontFamily: "Grandstander_900Black",
     fontSize: 22,
     lineHeight: 27,
+  },
+  registerInfoText: {
+    color: "red",
+    marginTop: 15,
   },
   screen: {
     backgroundColor: "#FFFFFF",
