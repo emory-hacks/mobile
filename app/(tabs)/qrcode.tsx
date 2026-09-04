@@ -19,6 +19,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -91,10 +92,15 @@ export default function QRCodeScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      let cancelled = false;
+
       (async () => {
         try {
-          const current = await Brightness.getBrightnessAsync();
-          await AsyncStorage.setItem(ORIGINAL_BRIGHTNESS_KEY, String(current));
+          if (Platform.OS !== "android") {
+            const current = await Brightness.getBrightnessAsync();
+            await AsyncStorage.setItem(ORIGINAL_BRIGHTNESS_KEY, String(current));
+          }
+          if (cancelled) return;
           await Brightness.setBrightnessAsync(1);
         } catch {
           // brightness control not available
@@ -102,8 +108,13 @@ export default function QRCodeScreen() {
       })();
 
       return () => {
+        cancelled = true;
         (async () => {
           try {
+            if (Platform.OS === "android") {
+              await Brightness.restoreSystemBrightnessAsync();
+              return;
+            }
             const saved = await AsyncStorage.getItem(ORIGINAL_BRIGHTNESS_KEY);
             if (saved != null) {
               await Brightness.setBrightnessAsync(Number(saved));
