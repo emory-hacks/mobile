@@ -101,9 +101,9 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   dateDividerLine: {
-    backgroundColor: "#DADADA",
+    backgroundColor: "#111111",
     flex: 1,
-    height: 1,
+    height: 1.35,
   },
   dateDividerText: {
     color: "#668713",

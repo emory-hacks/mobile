@@ -54,11 +54,11 @@ export default function ScannedProfileScreen() {
             <Ionicons name="checkmark" size={12} color="#fff" />
           </View>
         </View>
-        {teamName ? (
+        {/* {teamName ? (
           <View style={styles.teamBadge}>
             <Text style={styles.teamBadgeText}>{teamName}</Text>
           </View>
-        ) : null}
+        ) : null} */}
       </View>
 
       <View style={styles.pointsRow}>
