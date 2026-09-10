@@ -21,7 +21,7 @@ export function ProfileComponent({
     <View style={styles.container}>
       <View style={styles.card}>
         <View style={styles.headingRow}>
-          <Text style={styles.greeting}>Hello!</Text>
+          <Text style={styles.greeting}>Emory Hacks 2026</Text>
           <Pressable
             accessibilityLabel="Open settings"
             accessibilityRole="button"
@@ -105,6 +105,7 @@ const styles = StyleSheet.create({
     fontFamily: "Grandstander_900Black",
     fontSize: 40,
     lineHeight: 44,
+    maxWidth: "75%",
   },
   headingRow: {
     alignItems: "flex-start",
