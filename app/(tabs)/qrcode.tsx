@@ -79,7 +79,9 @@ export default function QRCodeScreen() {
   }, [eventId]);
 
   useEffect(() => {
-    const selected = upcomingEvents.find((event) => eventKey(event) === eventId);
+    const selected = upcomingEvents.find(
+      (event) => eventKey(event) === eventId,
+    );
     awardAmountRef.current = eventAwardAmount(selected);
   }, [eventId, upcomingEvents]);
 
@@ -98,7 +100,10 @@ export default function QRCodeScreen() {
         try {
           if (Platform.OS !== "android") {
             const current = await Brightness.getBrightnessAsync();
-            await AsyncStorage.setItem(ORIGINAL_BRIGHTNESS_KEY, String(current));
+            await AsyncStorage.setItem(
+              ORIGINAL_BRIGHTNESS_KEY,
+              String(current),
+            );
           }
           if (cancelled) return;
           await Brightness.setBrightnessAsync(1);
@@ -289,8 +294,7 @@ export default function QRCodeScreen() {
       teamName: userData.teamName ?? "",
       points,
       maxPoints: userData.maxPoints ?? 100,
-      checkInValid:
-        selectedEventId === "Registration" || !!userData.checkedIn,
+      checkInValid: selectedEventId === "Registration" || !!userData.checkedIn,
       email: userEmail,
     });
     setScanned(true);
@@ -545,11 +549,11 @@ export default function QRCodeScreen() {
               <View style={styles.usernameRow}>
                 <Text style={styles.username}>{attendee.username}</Text>
               </View>
-              {attendee.teamName ? (
+              {/* {attendee.teamName ? (
                 <View style={styles.teamBadge}>
                   <Text style={styles.teamBadgeText}>{attendee.teamName}</Text>
                 </View>
-              ) : null}
+              ) : null} */}
             </View>
 
             <View style={styles.pointsRow}>

@@ -188,7 +188,7 @@ export default function SettingsScreen() {
         <View style={[styles.section, styles.activitySection]}>
           <Text style={styles.sectionTitle}>Activity</Text>
           <InfoRow label="Points" value={points} />
-          <InfoRow label="Team" pill value={teamName} />
+          {/* <InfoRow label="Team" pill value={teamName} /> */}
           <InfoRow
             label="Check in"
             pill

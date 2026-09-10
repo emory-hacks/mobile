@@ -36,9 +36,9 @@ export function ProfileComponent({
         <View style={styles.content}>
           <View style={styles.copy}>
             <Text style={styles.name}>{name}</Text>
-            <View style={styles.teamPill}>
+            {/* <View style={styles.teamPill}>
               <Text style={styles.teamText}>{teamName}</Text>
-            </View>
+            </View> */}
           </View>
 
           <DefaultPfp
