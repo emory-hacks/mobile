@@ -15,12 +15,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useKeyboardState } from "react-native-keyboard-controller";
 import { saveEmail, saveJwt } from "../utils/auth-token";
 
 export default function Login() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const isKeyboardVisible = useKeyboardState((state) => state.isVisible);
   const [fontsLoaded] = useFonts({
     Fredoka_600SemiBold,
     Fredoka_700Bold,
@@ -222,11 +224,13 @@ export default function Login() {
           </Pressable>
         </View>
       </View>
-      <View style={{ justifyContent: "center", alignItems: "center" }}>
-        <Text style={styles.copyright}>
-          @ 2026 Emory Hacks. All rights reserved
-        </Text>
-      </View>
+      {!isKeyboardVisible && (
+        <View style={{ justifyContent: "center", alignItems: "center" }}>
+          <Text style={styles.copyright}>
+            @ 2026 Emory Hacks. All rights reserved
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
