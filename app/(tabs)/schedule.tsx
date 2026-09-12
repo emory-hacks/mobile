@@ -23,6 +23,7 @@ import {
   Animated,
   Easing,
   Modal,
+  PanResponder,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -50,6 +51,12 @@ function formatDate(date: Date) {
 
 function formatFullDate(date: Date) {
   return `${date.getFullYear()}.${date.getMonth() + 1}.${date.getDate()}`;
+}
+
+function formatWeekday(date: Date) {
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+  });
 }
 
 function isBeforeToday(date: Date) {
@@ -235,6 +242,7 @@ export default function ScheduleScreen() {
     addDays(selectedDate, 1),
   ];
   const isSelectedDatePast = isBeforeToday(selectedDate);
+  const isSelectedDateToday = isSameDay(selectedDate, new Date());
   // Show only events starting on the selected date.
   const selectedScheduleItems = useMemo(
     () =>
@@ -339,6 +347,28 @@ export default function ScheduleScreen() {
     setExpandedScheduleId(null);
     setSelectedDate(date);
   };
+
+  // Swipe
+  const dateSwipeResponder = PanResponder.create({
+    onMoveShouldSetPanResponder: (_, gestureState) => {
+      const isHorizontal =
+        Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+      return isHorizontal && Math.abs(gestureState.dx) > 10;
+    },
+
+    onPanResponderRelease: (_, gestureState) => {
+      const swipeThreshold = 50;
+
+      // Left = Tomorrow
+      if (gestureState.dx < -swipeThreshold) {
+        selectDate(addDays(selectedDate, 1));
+      }
+      // Right = Yesterday
+      else if (gestureState.dx > swipeThreshold) {
+        selectDate(addDays(selectedDate, -1));
+      }
+    },
+  });
 
   const toggleSchedule = (scheduleId: string) => {
     setExpandedScheduleId((currentId) =>
@@ -452,24 +482,40 @@ export default function ScheduleScreen() {
 
   return (
     <View style={styles.screen}>
-      <View style={[styles.header, { paddingTop: insets.top + 62 }]}>
-        <View style={styles.dateRow}>
+      <View style={[styles.header, { paddingTop: insets.top + 24 }]}>
+        <View
+          pointerEvents="box-none"
+          style={[styles.backToTodaySlot, { top: insets.top + 26 }]}
+        >
+          {!isSelectedDateToday && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Back to today's schedule"
+              hitSlop={8}
+              onPress={() => selectDate(new Date())}
+              style={styles.backToTodayButton}
+            >
+              <Text style={styles.backToTodayText}>Back to Today</Text>
+            </Pressable>
+          )}
+        </View>
+        <View style={styles.dateRow} {...dateSwipeResponder.panHandlers}>
           {visibleDates.map((date, index) => {
             const formattedDate = formatDate(date);
+            const weekday = formatWeekday(date);
             const isSelected = index === 1;
 
             if (isSelected) {
               return (
-                <Animated.Text
+                <Animated.View
                   key={formattedDate}
-                  style={[
-                    styles.dateText,
-                    styles.selectedDateText,
-                    selectedDateStyle,
-                  ]}
+                  style={[styles.selectedDateColumn, selectedDateStyle]}
                 >
-                  {formattedDate}
-                </Animated.Text>
+                  <Text style={styles.weekdayText}>{weekday}</Text>
+                  <Text style={[styles.dateText, styles.selectedDateText]}>
+                    {formattedDate}
+                  </Text>
+                </Animated.View>
               );
             }
 
@@ -772,7 +818,8 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
     elevation: 8,
-    paddingBottom: 28,
+    paddingBottom: 16,
+    position: "relative",
     shadowColor: "#000000",
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.14,
@@ -788,6 +835,24 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     position: "relative",
   },
+  backToTodayButton: {
+    paddingHorizontal: 2,
+  },
+  backToTodaySlot: {
+    alignItems: "center",
+    height: 24,
+    justifyContent: "center",
+    position: "absolute",
+    right: 20,
+    width: 100,
+    zIndex: 1,
+  },
+  backToTodayText: {
+    color: "#739B00",
+    fontFamily: "AlanSans_700Bold",
+    fontSize: 13,
+    lineHeight: 16,
+  },
   dateRow: {
     alignItems: "flex-end",
     flexDirection: "row",
@@ -797,8 +862,8 @@ const styles = StyleSheet.create({
   dateText: {
     color: "#A3CE26",
     fontFamily: "Grandstander_900Black",
-    fontSize: 48,
-    lineHeight: 58,
+    fontSize: 52,
+    lineHeight: 62,
   },
   gradientDateMask: {
     backgroundColor: "transparent",
@@ -808,8 +873,18 @@ const styles = StyleSheet.create({
   },
   selectedDateText: {
     color: "#A3CE26",
-    fontSize: 56,
+    fontSize: 64,
     lineHeight: 72,
+  },
+  selectedDateColumn: {
+    alignItems: "center",
+  },
+  weekdayText: {
+    color: "#A3CE26",
+    fontFamily: "Grandstander_900Black",
+    fontSize: 24,
+    lineHeight: 30,
+    paddingTop: 2,
   },
   statusText: {
     color: "#777777",
