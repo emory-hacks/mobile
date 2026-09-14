@@ -331,6 +331,7 @@ const styles = StyleSheet.create({
   registerInfoText: {
     color: "red",
     marginTop: 15,
+    marginBottom: 15,
   },
   screen: {
     backgroundColor: "#FFFFFF",
