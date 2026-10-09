@@ -143,7 +143,9 @@ export default function QRCodeScreen() {
 
           (async () => {
             try {
-              const events = await getUpcomingEvents();
+              const events = (await getUpcomingEvents()).filter(
+                (event) => event.isDeadline !== true,
+              );
               setUpcomingEvents(events);
               setEventId((prev) => {
                 if (prev && events.some((event) => eventKey(event) === prev)) {

@@ -22,6 +22,7 @@ import {
   Alert,
   Animated,
   Easing,
+  Keyboard,
   Modal,
   PanResponder,
   Pressable,
@@ -245,6 +246,7 @@ export default function ScheduleScreen() {
   const [eventEndDate, setEventEndDate] = useState("");
   const [eventEndTime, setEventEndTime] = useState("");
   const [eventBody, setEventBody] = useState("");
+  const [eventIsDeadline, setEventIsDeadline] = useState(false);
   const [isSavingEvent, setIsSavingEvent] = useState(false);
   const [fontsLoaded] = useFonts({
     AlanSans_400Regular,
@@ -413,6 +415,7 @@ export default function ScheduleScreen() {
     setEventEndDate(end.date);
     setEventEndTime(end.time);
     setEventBody(event.body ?? "");
+    setEventIsDeadline(event.isDeadline === true);
   };
 
   const closeEdit = () => {
@@ -424,6 +427,7 @@ export default function ScheduleScreen() {
     setEventEndDate("");
     setEventEndTime("");
     setEventBody("");
+    setEventIsDeadline(false);
   };
 
   const handleSaveEvent = async () => {
@@ -478,6 +482,9 @@ export default function ScheduleScreen() {
       new Date(endTime).getTime() !== new Date(editingEvent.endTime).getTime()
     ) {
       updates.correctedEndTime = endTime;
+    }
+    if (eventIsDeadline !== (editingEvent.isDeadline === true)) {
+      updates.correctedIsDeadline = eventIsDeadline;
     }
 
     if (Object.keys(updates).length === 1) {
@@ -654,6 +661,7 @@ export default function ScheduleScreen() {
                       endTime={formatEventTime(item.endTime)}
                       location={item.location}
                       points={item.points}
+                      isDeadline={item.isDeadline === true}
                       body={item.body}
                       isActive={isActive}
                       isExpanded={expandedScheduleId === itemKey}
@@ -693,6 +701,11 @@ export default function ScheduleScreen() {
           keyboardVerticalOffset={-80}
           style={styles.modalBackdrop}
         >
+          <Pressable
+            accessibilityLabel="Dismiss keyboard"
+            onPress={Keyboard.dismiss}
+            style={styles.modalDismissArea}
+          />
           <View style={styles.modalCard}>
             <Text style={styles.modalHeading}>Edit event</Text>
             <TextInput
@@ -712,12 +725,33 @@ export default function ScheduleScreen() {
             <TextInput
               multiline
               onChangeText={setEventBody}
+              onSubmitEditing={Keyboard.dismiss}
               placeholder="Event body"
               placeholderTextColor="#AFAFAF"
+              returnKeyType="done"
               style={[styles.input, styles.bodyInput]}
+              submitBehavior="blurAndSubmit"
               textAlignVertical="top"
               value={eventBody}
             />
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: eventIsDeadline }}
+              onPress={() => setEventIsDeadline((current) => !current)}
+              style={styles.deadlineToggle}
+            >
+              <View
+                style={[
+                  styles.checkbox,
+                  eventIsDeadline && styles.checkboxChecked,
+                ]}
+              >
+                {eventIsDeadline ? (
+                  <Text style={styles.checkboxMark}>✓</Text>
+                ) : null}
+              </View>
+              <Text style={styles.deadlineToggleText}>Deadline</Text>
+            </Pressable>
             <View style={styles.dateTimeSection}>
               <Text style={styles.fieldLabel}>Start</Text>
               <View style={styles.dateTimeRow}>
@@ -810,11 +844,41 @@ const styles = StyleSheet.create({
     fontFamily: "AlanSans_500Medium",
     fontSize: 15,
   },
+  checkbox: {
+    alignItems: "center",
+    borderColor: "#DADADA",
+    borderRadius: 4,
+    borderWidth: 1,
+    height: 22,
+    justifyContent: "center",
+    width: 22,
+  },
+  checkboxChecked: {
+    backgroundColor: "#C93D2A",
+    borderColor: "#C93D2A",
+  },
+  checkboxMark: {
+    color: "#FFFFFF",
+    fontFamily: "AlanSans_700Bold",
+    fontSize: 14,
+    lineHeight: 16,
+  },
   clockInput: {
     flex: 1,
   },
   dateInput: {
     flex: 1,
+  },
+  deadlineToggle: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 16,
+  },
+  deadlineToggleText: {
+    color: "#111111",
+    fontFamily: "AlanSans_500Medium",
+    fontSize: 15,
   },
   dateTimeRow: {
     flexDirection: "row",
@@ -849,6 +913,9 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.4)",
     flex: 1,
     justifyContent: "flex-end",
+  },
+  modalDismissArea: {
+    flex: 1,
   },
   modalCard: {
     backgroundColor: "#FFFFFF",
