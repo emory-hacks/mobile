@@ -7,6 +7,7 @@ import { getJwt } from "@/utils/auth-token";
 export type ScheduleEventUpdate = {
   correctedBody?: string;
   correctedEndTime?: string;
+  correctedIsDeadline?: boolean;
   correctedLocation?: string;
   correctedStartTime?: string;
   correctedTitle?: string;

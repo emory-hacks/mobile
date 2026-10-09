@@ -6,6 +6,7 @@ type Props = {
   body?: string;
   endTime?: string;
   isActive?: boolean;
+  isDeadline?: boolean;
   isExpanded?: boolean;
   isPassed?: boolean;
   location?: string;
@@ -23,6 +24,7 @@ export default function ScheduleItem({
   body = "Write down the body of the schedule. The administrator can provide the body in a unified format or the user can write it as a memo function.",
   endTime = "00:00",
   isActive = false,
+  isDeadline = false,
   isExpanded = false,
   isPassed = false,
   location = "Space",
@@ -70,12 +72,7 @@ export default function ScheduleItem({
         <View style={[styles.timeline, styles.inactiveTimeline]} />
       )}
 
-      <View
-        style={[
-          styles.details,
-          isExpanded && styles.expandedDetails,
-        ]}
-      >
+      <View style={[styles.details, isExpanded && styles.expandedDetails]}>
         <View style={styles.headingRow}>
           <View style={styles.titleWrap}>
             <View
@@ -110,7 +107,9 @@ export default function ScheduleItem({
                 { opacity: pressed ? 0.6 : 1 },
               ]}
             >
-              <Text style={[styles.editText, isActive && styles.activeEditText]}>
+              <Text
+                style={[styles.editText, isActive && styles.activeEditText]}
+              >
                 Edit
               </Text>
             </Pressable>
@@ -118,10 +117,7 @@ export default function ScheduleItem({
         </View>
 
         <View
-          style={[
-            styles.metadataRow,
-            isExpanded && styles.expandedMetadataRow,
-          ]}
+          style={[styles.metadataRow, isExpanded && styles.expandedMetadataRow]}
         >
           <View
             style={[
@@ -173,6 +169,24 @@ export default function ScheduleItem({
                 ]}
               >
                 {points} {points === 1 ? "pt" : "pts"}
+              </Text>
+            </View>
+          ) : null}
+          {isDeadline ? (
+            <View
+              style={[
+                styles.metadataPill,
+                styles.deadlinePill,
+                isExpanded && styles.expandedMetadataPill,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.deadlineText,
+                  isExpanded && styles.expandedDeadlineText,
+                ]}
+              >
+                Deadline
               </Text>
             </View>
           ) : null}
@@ -232,6 +246,15 @@ const styles = StyleSheet.create({
     minHeight: 112,
     position: "relative",
   },
+  deadlinePill: {
+    backgroundColor: "#C93D2A",
+  },
+  deadlineText: {
+    color: "#FFFFFF",
+    fontFamily: "AlanSans_700Bold",
+    fontSize: 9,
+    lineHeight: 11,
+  },
   details: {
     alignItems: "flex-start",
     flex: 1,
@@ -244,6 +267,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 17,
     marginTop: 12,
+  },
+  expandedDeadlineText: {
+    fontSize: 12,
+    lineHeight: 15,
   },
   expandedDetails: {
     paddingBottom: 20,
