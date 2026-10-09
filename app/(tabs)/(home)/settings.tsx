@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   screen: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#DCECF7",
     flex: 1,
   },
   section: {

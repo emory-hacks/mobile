@@ -18,7 +18,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Image,
   Platform,
   Pressable,
   StyleSheet,
@@ -67,7 +66,7 @@ export default function QRCodeScreen() {
   const [fontsLoaded] = useFonts({
     Fredoka_700Bold,
   });
-  const [qrCode, setQrCode] = useState("");
+  const [, setQrCode] = useState("");
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [upcomingEvents, setUpcomingEvents] = useState<ScheduleEvent[]>([]);
   const [eventId, setEventId] = useState("");
@@ -653,14 +652,7 @@ export default function QRCodeScreen() {
       <View
         style={{ flex: 0.9, alignItems: "center", justifyContent: "center" }}
       >
-        <View>
-          {qrCode ? (
-            <Image
-              source={{ uri: qrCode }}
-              style={{ width: 300, height: 300, borderRadius: 10 }}
-            />
-          ) : null}
-        </View>
+        <View style={styles.participantQr} />
         <Text style={styles.instructionText}>
           Please show your{" "}
           <Text style={styles.instructionHighlight}>QR code</Text> to an
@@ -674,14 +666,21 @@ export default function QRCodeScreen() {
 const styles = StyleSheet.create({
   pageContainer: {
     flex: 1,
-    backgroundColor: "#ececec",
+    backgroundColor: "#DCECF7",
   },
   pageHeader: {
-    backgroundColor: "#fff",
+    backgroundColor: "#DCECF7",
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
+    elevation: 8,
     paddingHorizontal: 22,
     paddingBottom: 20,
+    position: "relative",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.14,
+    shadowRadius: 8,
+    zIndex: 2,
   },
   titleRow: {
     flexDirection: "row",
@@ -757,6 +756,7 @@ const styles = StyleSheet.create({
   },
   scannerSection: {
     flex: 1,
+    backgroundColor: "#DCECF7",
     paddingHorizontal: 28,
     paddingTop: 28,
     paddingBottom: 24,
@@ -800,6 +800,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginLeft: 5,
     marginRight: 5,
+  },
+  participantQr: {
+    backgroundColor: "#B0B0B0",
+    borderRadius: 10,
+    height: 300,
+    width: 300,
   },
   instructionHighlight: {
     color: "#A3CE26",
