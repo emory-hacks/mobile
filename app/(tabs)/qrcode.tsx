@@ -844,11 +844,11 @@ const styles = StyleSheet.create({
   },
   participantQrTint: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#f2b0a6",
+    backgroundColor: "#fdfdfd",
     mixBlendMode: "multiply",
   },
   instructionHighlight: {
-    color: "#f1452b",
+    color: "#A3CE26",
     fontWeight: "600",
   },
   profileSection: {
