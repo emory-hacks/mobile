@@ -65,7 +65,7 @@ export default function RootLayout() {
 function LandingSplash() {
   return (
     <LinearGradient
-      colors={["#FFFFFF", "#F3F9E7"]}
+      colors={["#EDF3F7", "#F3F9E7"]}
       style={styles.splashContainer}
     >
       <Image

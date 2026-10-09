@@ -455,14 +455,21 @@ export default function QRCodeScreen() {
           ]}
         >
           <View style={styles.titleRow}>
-            <Text
-              style={[
-                styles.scanTitle,
-                fontsLoaded && { fontFamily: "Fredoka_700Bold" },
-              ]}
-            >
-              Scan
-            </Text>
+            <View style={styles.scanTitleGroup}>
+              <Text
+                style={[
+                  styles.scanTitle,
+                  fontsLoaded && { fontFamily: "Fredoka_700Bold" },
+                ]}
+              >
+                Scan
+              </Text>
+              <Image
+                accessibilityIgnoresInvertColors
+                source={require("@/assets/images/bug-caterpillar.png")}
+                style={styles.scanBug}
+              />
+            </View>
           </View>
 
           <View style={styles.searchRow}>
@@ -640,30 +647,35 @@ export default function QRCodeScreen() {
         ]}
       >
         <View style={styles.titleRow}>
-          <Text
-            style={[
-              styles.scanTitle,
-              fontsLoaded && { fontFamily: "Fredoka_700Bold" },
-            ]}
-          >
-            Show
-          </Text>
+          <View style={styles.scanTitleGroup}>
+            <Text
+              style={[
+                styles.scanTitle,
+                fontsLoaded && { fontFamily: "Fredoka_700Bold" },
+              ]}
+            >
+              Show
+            </Text>
+            <Image
+              accessibilityIgnoresInvertColors
+              source={require("@/assets/images/bug-caterpillar.png")}
+              style={styles.scanBug}
+            />
+          </View>
         </View>
       </View>
       <View
         style={{ flex: 0.9, alignItems: "center", justifyContent: "center" }}
       >
-        <View>
-          {qrCode ? (
-            <Image
-              source={{ uri: qrCode }}
-              style={{ width: 300, height: 300, borderRadius: 10 }}
-            />
-          ) : null}
-        </View>
+        {qrCode ? (
+          <View style={styles.participantQr}>
+            <Image source={{ uri: qrCode }} style={styles.participantQrImage} />
+            <View pointerEvents="none" style={styles.participantQrTint} />
+          </View>
+        ) : null}
         <Text style={styles.instructionText}>
           Please show your{" "}
-          <Text style={styles.instructionHighlight}>QR code</Text> to an
+          <Text style={styles.instructionHighlight}>QR bug</Text> to an
           organizer
         </Text>
       </View>
@@ -674,14 +686,21 @@ export default function QRCodeScreen() {
 const styles = StyleSheet.create({
   pageContainer: {
     flex: 1,
-    backgroundColor: "#ececec",
+    backgroundColor: "#EDF3F7",
   },
   pageHeader: {
-    backgroundColor: "#fff",
+    backgroundColor: "#EDF3F7",
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
+    elevation: 8,
     paddingHorizontal: 22,
     paddingBottom: 20,
+    position: "relative",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.14,
+    shadowRadius: 8,
+    zIndex: 2,
   },
   titleRow: {
     flexDirection: "row",
@@ -692,6 +711,17 @@ const styles = StyleSheet.create({
     fontSize: 42,
     fontWeight: "700",
     color: "#A3CE26",
+  },
+  scanTitleGroup: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 10,
+  },
+  scanBug: {
+    height: 44,
+    width: 84,
+    marginLeft: 10,
+    marginTop: 10,
   },
   searchRow: {
     flexDirection: "row",
@@ -757,6 +787,7 @@ const styles = StyleSheet.create({
   },
   scannerSection: {
     flex: 1,
+    backgroundColor: "#EDF3F7",
     paddingHorizontal: 28,
     paddingTop: 28,
     paddingBottom: 24,
@@ -772,7 +803,7 @@ const styles = StyleSheet.create({
   },
   scannerPlaceholder: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#f2f2f2",
+    backgroundColor: "#dcd6d6",
   },
   crosshair: {
     ...StyleSheet.absoluteFillObject,
@@ -783,14 +814,14 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: 28,
     height: 1.5,
-    backgroundColor: "#b0b0b0",
+    backgroundColor: "#313131",
     borderRadius: 1,
   },
   crosshairVertical: {
     position: "absolute",
     width: 1.5,
     height: 28,
-    backgroundColor: "#b0b0b0",
+    backgroundColor: "#313131",
     borderRadius: 1,
   },
   instructionText: {
@@ -801,8 +832,23 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     marginRight: 5,
   },
+  participantQr: {
+    borderRadius: 10,
+    height: 300,
+    overflow: "hidden",
+    width: 300,
+  },
+  participantQrImage: {
+    height: "100%",
+    width: "100%",
+  },
+  participantQrTint: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#f2b0a6",
+    mixBlendMode: "multiply",
+  },
   instructionHighlight: {
-    color: "#A3CE26",
+    color: "#f1452b",
     fontWeight: "600",
   },
   profileSection: {

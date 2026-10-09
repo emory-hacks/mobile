@@ -1,5 +1,14 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef } from "react";
+import {
+  Animated,
+  Easing,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 import { NoticeListItem } from "@/components/home/notice-list-item";
 import type { Announcement } from "@/types/announcement";
@@ -38,9 +47,34 @@ export function NoticeDetailComponent({
     firstFollowingNotice &&
     new Date(firstFollowingNotice.createdAt).toDateString() !==
       new Date(notice.createdAt).toDateString();
+  const enterAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(enterAnim, {
+      toValue: 1,
+      duration: 280,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [enterAnim]);
 
   return (
-    <View style={styles.container}>
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          opacity: enterAnim,
+          transform: [
+            {
+              translateY: enterAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [16, 0],
+              }),
+            },
+          ],
+        },
+      ]}
+    >
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -84,15 +118,15 @@ export function NoticeDetailComponent({
       {/* Fade by viewport position without measuring individual notice rows. */}
       <LinearGradient
         colors={[
-          "rgba(255, 255, 255, 0)",
-          "rgba(255, 255, 255, 0.72)",
-          "rgba(255, 255, 255, 0.98)",
+          "rgba(237, 243, 247, 0)",
+          "rgba(237, 243, 247, 0.72)",
+          "rgba(237, 243, 247, 0.98)",
         ]}
         locations={[0, 0.55, 1]}
         pointerEvents="none"
         style={styles.fade}
       />
-    </View>
+    </Animated.View>
   );
 }
 

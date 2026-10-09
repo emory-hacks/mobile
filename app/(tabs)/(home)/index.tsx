@@ -316,9 +316,9 @@ export default function HomePage() {
 
                 <LinearGradient
                   colors={[
-                    "rgba(255, 255, 255, 0)",
-                    "rgba(255, 255, 255, 0.72)",
-                    "rgba(255, 255, 255, 0.98)",
+                    "rgba(237, 243, 247, 0)",
+                    "rgba(237, 243, 247, 0.72)",
+                    "rgba(237, 243, 247, 0.98)",
                   ]}
                   locations={[0, 0.55, 1]}
                   pointerEvents="none"
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#EDF3F7",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: "85%",
@@ -526,7 +526,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   screen: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#EDF3F7",
     flex: 1,
   },
 

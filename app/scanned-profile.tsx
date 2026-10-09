@@ -112,7 +112,7 @@ export default function ScannedProfileScreen() {
 const styles = StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#EDF3F7",
     paddingHorizontal: 28,
   },
   topRow: {

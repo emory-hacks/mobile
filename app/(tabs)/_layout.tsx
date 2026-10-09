@@ -23,7 +23,7 @@ export default function TabLayout() {
         },
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: "#fff",
+          backgroundColor: "#EDF3F7",
           borderTopWidth: 0,
           elevation: 0,
           shadowOpacity: 0,

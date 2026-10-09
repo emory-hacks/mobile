@@ -38,7 +38,7 @@ export default function Signup() {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: "#fff",
+      backgroundColor: "#EDF3F7",
     },
     scrollContent: {
       flexGrow: 1,

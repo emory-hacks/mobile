@@ -679,9 +679,9 @@ export default function ScheduleScreen() {
 
           <LinearGradient
             colors={[
-              "rgba(255, 255, 255, 0)",
-              "rgba(255, 255, 255, 0.72)",
-              "rgba(255, 255, 255, 0.98)",
+              "rgba(237, 243, 247, 0)",
+              "rgba(237, 243, 247, 0.72)",
+              "rgba(237, 243, 247, 0.98)",
             ]}
             locations={[0, 0.55, 1]}
             pointerEvents="none"
@@ -918,7 +918,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   modalCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#EDF3F7",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingBottom: 28,
@@ -952,11 +952,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   screen: {
-    backgroundColor: "#fff",
+    backgroundColor: "#EDF3F7",
     flex: 1,
   },
   header: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#EDF3F7",
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
     elevation: 8,
@@ -972,7 +972,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   panelContent: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#EDF3F7",
     flex: 1,
     overflow: "hidden",
     position: "relative",

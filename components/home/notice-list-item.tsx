@@ -78,7 +78,7 @@ export function NoticeListItem({
         })}
       </Text>
 
-      <Text ellipsizeMode="tail" numberOfLines={7} style={styles.body}>
+      <Text ellipsizeMode="tail" numberOfLines={12} style={styles.body}>
         {notice.content}
       </Text>
     </View>
