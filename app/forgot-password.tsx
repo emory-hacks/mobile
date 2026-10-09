@@ -307,6 +307,8 @@ export default function ForgotPassword() {
             <View style={styles.codeRow}>
               {digits.map((digit, index) => (
                 <TextInput
+                  autoCorrect={false}
+                  spellCheck={false}
                   key={index}
                   ref={(ref) => {
                     digitRefs.current[index] = ref;
@@ -326,6 +328,8 @@ export default function ForgotPassword() {
               ))}
             </View>
             <TextInput
+              autoCorrect={false}
+              spellCheck={false}
               placeholder="New password"
               placeholderTextColor="#8a8a8a"
               style={[styles.input, styles.passwordInput]}
@@ -335,6 +339,8 @@ export default function ForgotPassword() {
               editable={!submitting}
             />
             <TextInput
+              autoCorrect={false}
+              spellCheck={false}
               placeholder="Confirm new password"
               placeholderTextColor="#8a8a8a"
               style={styles.input}
@@ -363,6 +369,8 @@ export default function ForgotPassword() {
         ) : (
           <>
             <TextInput
+              autoCorrect={false}
+              spellCheck={false}
               placeholder="Email@email.edu"
               placeholderTextColor="#8a8a8a"
               style={styles.input}

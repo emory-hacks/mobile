@@ -481,6 +481,7 @@ export default function QRCodeScreen() {
               onChangeText={setSearchQuery}
               autoCapitalize="none"
               autoCorrect={false}
+              spellCheck={false}
             />
             <Pressable
               style={({ pressed, hovered }) => [
