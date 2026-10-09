@@ -357,6 +357,8 @@ export default function HomePage() {
               {editingAnnouncement ? "Edit announcement" : "New announcement"}
             </Text>
             <TextInput
+              autoCorrect={false}
+              spellCheck={false}
               onChangeText={setAnnouncementTitle}
               placeholder="Title"
               placeholderTextColor="#AFAFAF"
@@ -364,6 +366,8 @@ export default function HomePage() {
               value={announcementTitle}
             />
             <TextInput
+              autoCorrect={false}
+              spellCheck={true}
               multiline
               onChangeText={setAnnouncementBody}
               placeholder="Body paragraph"

@@ -709,6 +709,8 @@ export default function ScheduleScreen() {
           <View style={styles.modalCard}>
             <Text style={styles.modalHeading}>Edit event</Text>
             <TextInput
+              autoCorrect={false}
+              spellCheck={false}
               onChangeText={setEventName}
               placeholder="Event name"
               placeholderTextColor="#AFAFAF"
@@ -716,6 +718,8 @@ export default function ScheduleScreen() {
               value={eventName}
             />
             <TextInput
+              autoCorrect={false}
+              spellCheck={false}
               onChangeText={setEventLocation}
               placeholder="Location"
               placeholderTextColor="#AFAFAF"
@@ -723,6 +727,8 @@ export default function ScheduleScreen() {
               value={eventLocation}
             />
             <TextInput
+              autoCorrect={false}
+              spellCheck={true}
               multiline
               onChangeText={setEventBody}
               onSubmitEditing={Keyboard.dismiss}
@@ -756,6 +762,8 @@ export default function ScheduleScreen() {
               <Text style={styles.fieldLabel}>Start</Text>
               <View style={styles.dateTimeRow}>
                 <TextInput
+                  autoCorrect={false}
+                  spellCheck={false}
                   keyboardType="numbers-and-punctuation"
                   onChangeText={setEventStartDate}
                   placeholder="MM/DD/YYYY"
@@ -765,6 +773,8 @@ export default function ScheduleScreen() {
                 />
                 <TextInput
                   autoCapitalize="characters"
+                  autoCorrect={false}
+                  spellCheck={false}
                   onChangeText={setEventStartTime}
                   placeholder="h:mm AM/PM"
                   placeholderTextColor="#AFAFAF"
@@ -777,6 +787,8 @@ export default function ScheduleScreen() {
               <Text style={styles.fieldLabel}>End</Text>
               <View style={styles.dateTimeRow}>
                 <TextInput
+                  autoCorrect={false}
+                  spellCheck={false}
                   keyboardType="numbers-and-punctuation"
                   onChangeText={setEventEndDate}
                   placeholder="MM/DD/YYYY"
@@ -786,6 +798,8 @@ export default function ScheduleScreen() {
                 />
                 <TextInput
                   autoCapitalize="characters"
+                  autoCorrect={false}
+                  spellCheck={false}
                   onChangeText={setEventEndTime}
                   placeholder="h:mm AM/PM"
                   placeholderTextColor="#AFAFAF"

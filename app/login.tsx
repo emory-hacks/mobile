@@ -162,6 +162,8 @@ export default function Login() {
         <Text style={styles.subtitle1}>Welcome to</Text>
         <Text style={styles.subtitle2}>Emory Hacks !</Text>
         <TextInput
+          autoCorrect={false}
+          spellCheck={false}
           placeholder="Email@email.edu"
           placeholderTextColor="#8a8a8a"
           style={styles.input}
@@ -171,6 +173,8 @@ export default function Login() {
           keyboardType="email-address"
         />
         <TextInput
+          autoCorrect={false}
+          spellCheck={false}
           placeholder="Password"
           placeholderTextColor="#8a8a8a"
           style={styles.input}

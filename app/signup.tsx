@@ -321,6 +321,8 @@ export default function Signup() {
             <View style={styles.codeRow}>
               {digits.map((digit, index) => (
                 <TextInput
+                  autoCorrect={false}
+                  spellCheck={false}
                   key={index}
                   ref={(ref) => {
                     digitRefs.current[index] = ref;
@@ -344,6 +346,8 @@ export default function Signup() {
         ) : (
           <>
             <TextInput
+              autoCorrect={false}
+              spellCheck={false}
               placeholder="@Name"
               placeholderTextColor="#8a8a8a"
               style={styles.input}
@@ -352,6 +356,8 @@ export default function Signup() {
               autoCapitalize="none"
             />
             <TextInput
+              autoCorrect={false}
+              spellCheck={false}
               placeholder="Email@email.edu"
               placeholderTextColor="#8a8a8a"
               style={styles.input}
@@ -361,6 +367,8 @@ export default function Signup() {
               keyboardType="email-address"
             />
             <TextInput
+              autoCorrect={false}
+              spellCheck={false}
               placeholder="Password"
               placeholderTextColor="#8a8a8a"
               style={[styles.input, styles.passwordInput]}
@@ -369,6 +377,8 @@ export default function Signup() {
               secureTextEntry
             />
             <TextInput
+              autoCorrect={false}
+              spellCheck={false}
               placeholder="Check the password"
               placeholderTextColor="#8a8a8a"
               style={styles.input}
