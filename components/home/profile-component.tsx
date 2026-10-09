@@ -27,7 +27,10 @@ export function ProfileComponent({
             accessibilityRole="button"
             hitSlop={12}
             onPress={onSettingsPress}
-            style={styles.settingsButton}
+            style={({ pressed }) => [
+              styles.settingsButton,
+              pressed && styles.settingsButtonPressed,
+            ]}
           >
             <Ionicons color="#111111" name="settings-outline" size={26} />
           </Pressable>
@@ -120,9 +123,15 @@ const styles = StyleSheet.create({
   },
   settingsButton: {
     alignItems: "center",
-    height: 26,
+    borderRadius: 16,
+    height: 32,
     justifyContent: "center",
-    width: 26,
+    marginRight: -3,
+    marginTop: -3,
+    width: 32,
+  },
+  settingsButtonPressed: {
+    backgroundColor: "rgba(0, 0, 0, 0.18)",
   },
   teamPill: {
     backgroundColor: "#9BD31B",

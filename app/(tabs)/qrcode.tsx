@@ -668,11 +668,14 @@ export default function QRCodeScreen() {
         style={{ flex: 0.9, alignItems: "center", justifyContent: "center" }}
       >
         {qrCode ? (
-          <Image source={{ uri: qrCode }} style={styles.participantQr} />
+          <View style={styles.participantQr}>
+            <Image source={{ uri: qrCode }} style={styles.participantQrImage} />
+            <View pointerEvents="none" style={styles.participantQrTint} />
+          </View>
         ) : null}
         <Text style={styles.instructionText}>
           Please show your{" "}
-          <Text style={styles.instructionHighlight}>QR code</Text> to an
+          <Text style={styles.instructionHighlight}>QR bug</Text> to an
           organizer
         </Text>
       </View>
@@ -800,7 +803,7 @@ const styles = StyleSheet.create({
   },
   scannerPlaceholder: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#f2f2f2",
+    backgroundColor: "#dcd6d6",
   },
   crosshair: {
     ...StyleSheet.absoluteFillObject,
@@ -811,14 +814,14 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: 28,
     height: 1.5,
-    backgroundColor: "#b0b0b0",
+    backgroundColor: "#313131",
     borderRadius: 1,
   },
   crosshairVertical: {
     position: "absolute",
     width: 1.5,
     height: 28,
-    backgroundColor: "#b0b0b0",
+    backgroundColor: "#313131",
     borderRadius: 1,
   },
   instructionText: {
@@ -832,10 +835,20 @@ const styles = StyleSheet.create({
   participantQr: {
     borderRadius: 10,
     height: 300,
+    overflow: "hidden",
     width: 300,
   },
+  participantQrImage: {
+    height: "100%",
+    width: "100%",
+  },
+  participantQrTint: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#f2b0a6",
+    mixBlendMode: "multiply",
+  },
   instructionHighlight: {
-    color: "#A3CE26",
+    color: "#f1452b",
     fontWeight: "600",
   },
   profileSection: {
