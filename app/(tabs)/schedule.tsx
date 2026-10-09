@@ -83,6 +83,17 @@ function isSameDay(firstDate: Date, secondDate: Date) {
   );
 }
 
+function isHackathonDate(date: Date) {
+  const day = date.getDate();
+
+  return (
+    date.getFullYear() === 2026 &&
+    date.getMonth() === 10 &&
+    day >= 13 &&
+    day <= 15
+  );
+}
+
 function toMinutes(time: string) {
   const date = new Date(time);
 
@@ -181,9 +192,11 @@ function getScheduleFocusIndex(items: ScheduleEvent[], selectedDate: Date) {
 function GradientDateText({
   date,
   direction,
+  muted = false,
 }: {
   date: string;
   direction: "yesterday" | "tomorrow";
+  muted?: boolean;
 }) {
   const isYesterday = direction === "yesterday";
 
@@ -194,7 +207,11 @@ function GradientDateText({
       }
     >
       <LinearGradient
-        colors={["rgba(163, 206, 38, 0.12)", "rgba(163, 206, 38, 0.72)"]}
+        colors={
+          muted
+            ? ["rgba(154, 154, 154, 0.28)", "rgba(154, 154, 154, 0.82)"]
+            : ["rgba(163, 206, 38, 0.12)", "rgba(163, 206, 38, 0.72)"]
+        }
         start={{ x: isYesterday ? 0 : 1, y: 0.5 }}
         end={{ x: isYesterday ? 1 : 0, y: 0.5 }}
       >
@@ -210,6 +227,7 @@ export default function ScheduleScreen() {
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
   const transitionAnim = useRef(new Animated.Value(1)).current;
+  const todayPressAnim = useRef(new Animated.Value(0)).current;
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   // null means every event is collapsed; otherwise this stores the backend ID.
   const [expandedScheduleId, setExpandedScheduleId] = useState<string | null>(
@@ -243,6 +261,13 @@ export default function ScheduleScreen() {
   ];
   const isSelectedDatePast = isBeforeToday(selectedDate);
   const isSelectedDateToday = isSameDay(selectedDate, new Date());
+
+  useEffect(() => {
+    if (!isSelectedDateToday) {
+      todayPressAnim.setValue(0);
+    }
+  }, [isSelectedDateToday, todayPressAnim]);
+
   // Show only events starting on the selected date.
   const selectedScheduleItems = useMemo(
     () =>
@@ -493,9 +518,44 @@ export default function ScheduleScreen() {
               accessibilityLabel="Back to today's schedule"
               hitSlop={8}
               onPress={() => selectDate(new Date())}
-              style={styles.backToTodayButton}
+              onPressIn={() => {
+                Animated.timing(todayPressAnim, {
+                  toValue: 1,
+                  duration: 80,
+                  easing: Easing.out(Easing.quad),
+                  useNativeDriver: true,
+                }).start();
+              }}
+              onPressOut={() => {
+                Animated.timing(todayPressAnim, {
+                  toValue: 0,
+                  duration: 110,
+                  easing: Easing.out(Easing.quad),
+                  useNativeDriver: true,
+                }).start();
+              }}
             >
-              <Text style={styles.backToTodayText}>Back to Today</Text>
+              <Animated.View
+                style={[
+                  styles.backToTodayButton,
+                  {
+                    opacity: todayPressAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [1, 0.65],
+                    }),
+                    transform: [
+                      {
+                        scale: todayPressAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [1, 0.94],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              >
+                <Text style={styles.backToTodayText}>Today ⏎ 🐞</Text>
+              </Animated.View>
             </Pressable>
           )}
         </View>
@@ -504,6 +564,7 @@ export default function ScheduleScreen() {
             const formattedDate = formatDate(date);
             const weekday = formatWeekday(date);
             const isSelected = index === 1;
+            const hackathonDate = isHackathonDate(date);
 
             if (isSelected) {
               return (
@@ -511,8 +572,21 @@ export default function ScheduleScreen() {
                   key={formattedDate}
                   style={[styles.selectedDateColumn, selectedDateStyle]}
                 >
-                  <Text style={styles.weekdayText}>{weekday}</Text>
-                  <Text style={[styles.dateText, styles.selectedDateText]}>
+                  <Text
+                    style={[
+                      styles.weekdayText,
+                      !hackathonDate && styles.mutedDateText,
+                    ]}
+                  >
+                    {weekday}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.dateText,
+                      styles.selectedDateText,
+                      !hackathonDate && styles.mutedDateText,
+                    ]}
+                  >
                     {formattedDate}
                   </Text>
                 </Animated.View>
@@ -530,6 +604,7 @@ export default function ScheduleScreen() {
                 <GradientDateText
                   date={formattedDate}
                   direction={index === 0 ? "yesterday" : "tomorrow"}
+                  muted={!hackathonDate}
                 />
               </Pressable>
             );
@@ -836,7 +911,11 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   backToTodayButton: {
-    paddingHorizontal: 2,
+    backgroundColor: "#f0e7b8",
+    padding: 4,
+    borderRadius: 5,
+    borderColor: "#4e4933",
+    borderWidth: 1,
   },
   backToTodaySlot: {
     alignItems: "center",
@@ -848,7 +927,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   backToTodayText: {
-    color: "#739B00",
+    color: "#000000",
     fontFamily: "AlanSans_700Bold",
     fontSize: 13,
     lineHeight: 16,
@@ -875,6 +954,9 @@ const styles = StyleSheet.create({
     color: "#A3CE26",
     fontSize: 64,
     lineHeight: 72,
+  },
+  mutedDateText: {
+    color: "#9A9A9A",
   },
   selectedDateColumn: {
     alignItems: "center",
