@@ -33,7 +33,7 @@ export default function Login() {
       flex: 1,
       justifyContent: "center",
       alignItems: "stretch",
-      backgroundColor: "#DCECF7",
+      backgroundColor: "#EDF3F7",
     },
     subcontainer: {
       flex: 1,

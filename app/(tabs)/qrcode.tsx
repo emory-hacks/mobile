@@ -18,6 +18,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Platform,
   Pressable,
   StyleSheet,
@@ -66,7 +67,7 @@ export default function QRCodeScreen() {
   const [fontsLoaded] = useFonts({
     Fredoka_700Bold,
   });
-  const [, setQrCode] = useState("");
+  const [qrCode, setQrCode] = useState("");
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [upcomingEvents, setUpcomingEvents] = useState<ScheduleEvent[]>([]);
   const [eventId, setEventId] = useState("");
@@ -454,14 +455,21 @@ export default function QRCodeScreen() {
           ]}
         >
           <View style={styles.titleRow}>
-            <Text
-              style={[
-                styles.scanTitle,
-                fontsLoaded && { fontFamily: "Fredoka_700Bold" },
-              ]}
-            >
-              Scan
-            </Text>
+            <View style={styles.scanTitleGroup}>
+              <Text
+                style={[
+                  styles.scanTitle,
+                  fontsLoaded && { fontFamily: "Fredoka_700Bold" },
+                ]}
+              >
+                Scan
+              </Text>
+              <Image
+                accessibilityIgnoresInvertColors
+                source={require("@/assets/images/bug-caterpillar.png")}
+                style={styles.scanBug}
+              />
+            </View>
           </View>
 
           <View style={styles.searchRow}>
@@ -639,20 +647,29 @@ export default function QRCodeScreen() {
         ]}
       >
         <View style={styles.titleRow}>
-          <Text
-            style={[
-              styles.scanTitle,
-              fontsLoaded && { fontFamily: "Fredoka_700Bold" },
-            ]}
-          >
-            Show
-          </Text>
+          <View style={styles.scanTitleGroup}>
+            <Text
+              style={[
+                styles.scanTitle,
+                fontsLoaded && { fontFamily: "Fredoka_700Bold" },
+              ]}
+            >
+              Show
+            </Text>
+            <Image
+              accessibilityIgnoresInvertColors
+              source={require("@/assets/images/bug-caterpillar.png")}
+              style={styles.scanBug}
+            />
+          </View>
         </View>
       </View>
       <View
         style={{ flex: 0.9, alignItems: "center", justifyContent: "center" }}
       >
-        <View style={styles.participantQr} />
+        {qrCode ? (
+          <Image source={{ uri: qrCode }} style={styles.participantQr} />
+        ) : null}
         <Text style={styles.instructionText}>
           Please show your{" "}
           <Text style={styles.instructionHighlight}>QR code</Text> to an
@@ -666,10 +683,10 @@ export default function QRCodeScreen() {
 const styles = StyleSheet.create({
   pageContainer: {
     flex: 1,
-    backgroundColor: "#DCECF7",
+    backgroundColor: "#EDF3F7",
   },
   pageHeader: {
-    backgroundColor: "#DCECF7",
+    backgroundColor: "#EDF3F7",
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
     elevation: 8,
@@ -691,6 +708,17 @@ const styles = StyleSheet.create({
     fontSize: 42,
     fontWeight: "700",
     color: "#A3CE26",
+  },
+  scanTitleGroup: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 10,
+  },
+  scanBug: {
+    height: 44,
+    width: 84,
+    marginLeft: 10,
+    marginTop: 10,
   },
   searchRow: {
     flexDirection: "row",
@@ -756,7 +784,7 @@ const styles = StyleSheet.create({
   },
   scannerSection: {
     flex: 1,
-    backgroundColor: "#DCECF7",
+    backgroundColor: "#EDF3F7",
     paddingHorizontal: 28,
     paddingTop: 28,
     paddingBottom: 24,
@@ -802,7 +830,6 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   participantQr: {
-    backgroundColor: "#B0B0B0",
     borderRadius: 10,
     height: 300,
     width: 300,

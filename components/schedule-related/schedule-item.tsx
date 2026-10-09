@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   container: {
-    backgroundColor: "#DCECF7",
+    backgroundColor: "#EDF3F7",
     flexDirection: "row",
     minHeight: 112,
     position: "relative",

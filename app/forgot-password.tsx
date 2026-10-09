@@ -37,7 +37,7 @@ export default function ForgotPassword() {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: "#DCECF7",
+      backgroundColor: "#EDF3F7",
     },
     scrollContent: {
       flexGrow: 1,

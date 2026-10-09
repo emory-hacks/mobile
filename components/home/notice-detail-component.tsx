@@ -118,9 +118,9 @@ export function NoticeDetailComponent({
       {/* Fade by viewport position without measuring individual notice rows. */}
       <LinearGradient
         colors={[
-          "rgba(220, 236, 247, 0)",
-          "rgba(220, 236, 247, 0.72)",
-          "rgba(220, 236, 247, 0.98)",
+          "rgba(237, 243, 247, 0)",
+          "rgba(237, 243, 247, 0.72)",
+          "rgba(237, 243, 247, 0.98)",
         ]}
         locations={[0, 0.55, 1]}
         pointerEvents="none"
