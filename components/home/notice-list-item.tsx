@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { LinkedText } from "@/components/linked-text";
 import type { Announcement } from "@/types/announcement";
 
 type NoticeListItemProps = {
@@ -78,9 +79,9 @@ export function NoticeListItem({
         })}
       </Text>
 
-      <Text ellipsizeMode="tail" numberOfLines={12} style={styles.body}>
+      <LinkedText ellipsizeMode="tail" numberOfLines={12} style={styles.body}>
         {notice.content}
-      </Text>
+      </LinkedText>
     </View>
   );
 }
