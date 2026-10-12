@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 
+import { LinkedText } from "@/components/linked-text";
 import { NoticeListItem } from "@/components/home/notice-list-item";
 import type { Announcement } from "@/types/announcement";
 
@@ -94,9 +95,9 @@ export function NoticeDetailComponent({
               .split(/\n+/)
               .filter(Boolean)
               .map((paragraph) => (
-                <Text key={paragraph} style={styles.paragraph}>
+                <LinkedText key={paragraph} style={styles.paragraph}>
                   {paragraph}
-                </Text>
+                </LinkedText>
               ))}
           </View>
         </View>

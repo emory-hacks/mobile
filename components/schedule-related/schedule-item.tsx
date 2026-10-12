@@ -1,6 +1,8 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { LinkedText } from "@/components/linked-text";
+
 type Props = {
   activeDate?: string;
   body?: string;
@@ -153,7 +155,7 @@ export default function ScheduleItem({
               {startTime} ~ {endTime}
             </Text>
           </View>
-          {points != null ? (
+          {points != null && !isDeadline ? (
             <View
               style={[
                 styles.metadataPill,
@@ -193,7 +195,7 @@ export default function ScheduleItem({
         </View>
 
         {/* The API sends one complete body; collapsed rows only clamp its lines. */}
-        <Text
+        <LinkedText
           numberOfLines={isExpanded ? undefined : 2}
           style={[
             styles.bodyText,
@@ -202,7 +204,7 @@ export default function ScheduleItem({
           ]}
         >
           {body}
-        </Text>
+        </LinkedText>
       </View>
     </Pressable>
   );

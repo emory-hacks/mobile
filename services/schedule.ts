@@ -9,6 +9,7 @@ export type ScheduleEventUpdate = {
   correctedEndTime?: string;
   correctedIsDeadline?: boolean;
   correctedLocation?: string;
+  correctedPoints?: number;
   correctedStartTime?: string;
   correctedTitle?: string;
   title: string;

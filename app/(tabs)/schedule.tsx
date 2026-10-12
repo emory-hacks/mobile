@@ -246,6 +246,7 @@ export default function ScheduleScreen() {
   const [eventEndDate, setEventEndDate] = useState("");
   const [eventEndTime, setEventEndTime] = useState("");
   const [eventBody, setEventBody] = useState("");
+  const [eventPoints, setEventPoints] = useState("");
   const [eventIsDeadline, setEventIsDeadline] = useState(false);
   const [isSavingEvent, setIsSavingEvent] = useState(false);
   const [fontsLoaded] = useFonts({
@@ -415,6 +416,7 @@ export default function ScheduleScreen() {
     setEventEndDate(end.date);
     setEventEndTime(end.time);
     setEventBody(event.body ?? "");
+    setEventPoints(String(event.points ?? 0));
     setEventIsDeadline(event.isDeadline === true);
   };
 
@@ -427,6 +429,7 @@ export default function ScheduleScreen() {
     setEventEndDate("");
     setEventEndTime("");
     setEventBody("");
+    setEventPoints("");
     setEventIsDeadline(false);
   };
 
@@ -440,6 +443,7 @@ export default function ScheduleScreen() {
     const endDate = eventEndDate.trim();
     const endTimeValue = eventEndTime.trim();
     const body = eventBody.trim();
+    const pointsValue = Number(eventPoints.trim());
 
     if (
       !name ||
@@ -466,6 +470,15 @@ export default function ScheduleScreen() {
       return;
     }
 
+    if (
+      eventPoints.trim() === "" ||
+      !Number.isInteger(pointsValue) ||
+      pointsValue < 0
+    ) {
+      Alert.alert("Invalid points", "Points must be a whole number.");
+      return;
+    }
+
     const updates: ScheduleEventUpdate = { title: editingEvent.title };
     if (name !== editingEvent.title) updates.correctedTitle = name;
     if (body !== (editingEvent.body ?? "")) updates.correctedBody = body;
@@ -485,6 +498,9 @@ export default function ScheduleScreen() {
     }
     if (eventIsDeadline !== (editingEvent.isDeadline === true)) {
       updates.correctedIsDeadline = eventIsDeadline;
+    }
+    if (pointsValue !== (editingEvent.points ?? 0)) {
+      updates.correctedPoints = pointsValue;
     }
 
     if (Object.keys(updates).length === 1) {
@@ -739,6 +755,14 @@ export default function ScheduleScreen() {
               submitBehavior="blurAndSubmit"
               textAlignVertical="top"
               value={eventBody}
+            />
+            <TextInput
+              keyboardType="number-pad"
+              onChangeText={setEventPoints}
+              placeholder="Points"
+              placeholderTextColor="#AFAFAF"
+              style={styles.input}
+              value={eventPoints}
             />
             <Pressable
               accessibilityRole="checkbox"
