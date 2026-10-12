@@ -2,6 +2,7 @@
 Mainly for finding urls in schedule text and rendering properly
 */
 import { Linking, Text, type TextProps, type TextStyle } from "react-native";
+import Animated from "react-native-reanimated";
 
 function splitTrailingPunctuation(value: string) {
   const match = value.match(/^(.*?)([.,;:!?)\]]+)$/);
@@ -19,7 +20,7 @@ export function LinkedText({ children, ...rest }: TextProps) {
   const parts = text.split(/(https?:\/\/[^\s]+)/gi);
 
   return (
-    <Text {...rest}>
+    <Animated.Text {...rest}>
       {parts.map((part, index) => {
         if (!/^https?:\/\//i.test(part)) return part;
 
@@ -39,6 +40,6 @@ export function LinkedText({ children, ...rest }: TextProps) {
           </Text>
         );
       })}
-    </Text>
+    </Animated.Text>
   );
 }

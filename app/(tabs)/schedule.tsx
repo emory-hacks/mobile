@@ -95,6 +95,13 @@ function isHackathonDate(date: Date) {
   );
 }
 
+// Outside November 13–15, open the schedule on the first hackathon day.
+function scheduleHomeDate() {
+  const today = new Date();
+  if (isHackathonDate(today)) return today;
+  return new Date(2026, 10, 13);
+}
+
 function toMinutes(time: string) {
   const date = new Date(time);
 
@@ -229,7 +236,7 @@ export default function ScheduleScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const transitionAnim = useRef(new Animated.Value(1)).current;
   const todayPressAnim = useRef(new Animated.Value(0)).current;
-  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [selectedDate, setSelectedDate] = useState(scheduleHomeDate);
   // null means every event is collapsed; otherwise this stores the backend ID.
   const [expandedScheduleId, setExpandedScheduleId] = useState<string | null>(
     null,
