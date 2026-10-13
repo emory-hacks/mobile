@@ -1,3 +1,4 @@
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack } from "expo-router";
@@ -39,6 +40,7 @@ export default function RootLayout() {
   return (
     <KeyboardProvider>
       <ThemeProvider value={DefaultTheme}>
+        <PushRegistration />
         <KeyboardAvoidingView
           behavior="padding"
           keyboardVerticalOffset={0}
@@ -60,6 +62,11 @@ export default function RootLayout() {
       </ThemeProvider>
     </KeyboardProvider>
   );
+}
+
+function PushRegistration() {
+  usePushNotifications();
+  return null;
 }
 
 function LandingSplash() {

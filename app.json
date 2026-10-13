@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.mobile"
+      "bundleIdentifier": "com.EmoryHacks.mobile"
     },
     "android": {
       "adaptiveIcon": {
@@ -25,7 +25,7 @@
         "android.permission.CAMERA",
         "android.permission.WRITE_SETTINGS"
       ],
-      "package": "com.anonymous.mobile"
+      "package": "com.EmoryHacks.mobile"
     },
     "web": {
       "output": "static",
@@ -52,6 +52,7 @@
       ],
       "expo-brightness",
       "expo-secure-store",
+      "expo-notifications",
       "./plugins/withAndroidXCorePin"
     ],
     "experiments": {
