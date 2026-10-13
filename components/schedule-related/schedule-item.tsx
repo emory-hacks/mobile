@@ -1,7 +1,20 @@
 import { LinearGradient } from "expo-linear-gradient";
+import { useEffect } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, {
+  Easing,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 import { LinkedText } from "@/components/linked-text";
+
+const EXPAND_TIMING = {
+  duration: 150,
+  easing: Easing.out(Easing.cubic),
+};
 
 type Props = {
   activeDate?: string;
@@ -38,6 +51,40 @@ export default function ScheduleItem({
   time = "00:00",
   title = "Schedule Title",
 }: Props) {
+  const expand = useSharedValue(isExpanded ? 1 : 0);
+
+  useEffect(() => {
+    expand.value = withTiming(isExpanded ? 1 : 0, EXPAND_TIMING);
+  }, [expand, isExpanded]);
+
+  const detailsStyle = useAnimatedStyle(() => ({
+    paddingBottom: interpolate(expand.value, [0, 1], [14, 20]),
+    paddingTop: interpolate(expand.value, [0, 1], [14, 16]),
+  }));
+  const titlePillStyle = useAnimatedStyle(() => ({
+    borderRadius: interpolate(expand.value, [0, 1], [9, 11]),
+    paddingHorizontal: interpolate(expand.value, [0, 1], [10, 12]),
+    paddingVertical: interpolate(expand.value, [0, 1], [4, 6]),
+  }));
+  const titleTextStyle = useAnimatedStyle(() => ({
+    fontSize: interpolate(expand.value, [0, 1], [13, 19]),
+    lineHeight: interpolate(expand.value, [0, 1], [16, 23]),
+  }));
+  const metadataPillStyle = useAnimatedStyle(() => ({
+    borderRadius: interpolate(expand.value, [0, 1], [10, 12]),
+    paddingHorizontal: interpolate(expand.value, [0, 1], [8, 10]),
+    paddingVertical: interpolate(expand.value, [0, 1], [3, 5]),
+  }));
+  const metadataTextStyle = useAnimatedStyle(() => ({
+    fontSize: interpolate(expand.value, [0, 1], [9, 12]),
+    lineHeight: interpolate(expand.value, [0, 1], [11, 15]),
+  }));
+  const bodyTextStyle = useAnimatedStyle(() => ({
+    fontSize: interpolate(expand.value, [0, 1], [11, 12]),
+    lineHeight: interpolate(expand.value, [0, 1], [15, 17]),
+    marginTop: interpolate(expand.value, [0, 1], [3, 12]),
+  }));
+
   return (
     <Pressable
       accessibilityHint={
@@ -74,26 +121,26 @@ export default function ScheduleItem({
         <View style={[styles.timeline, styles.inactiveTimeline]} />
       )}
 
-      <View style={[styles.details, isExpanded && styles.expandedDetails]}>
+      <Animated.View style={[styles.details, detailsStyle]}>
         <View style={styles.headingRow}>
           <View style={styles.titleWrap}>
-            <View
+            <Animated.View
               style={[
                 styles.titlePill,
                 isActive && styles.activeTitlePill,
-                isExpanded && styles.expandedTitlePill,
+                titlePillStyle,
               ]}
             >
-              <Text
+              <Animated.Text
                 style={[
                   styles.titleText,
                   isActive && styles.activeTitleText,
-                  isExpanded && styles.expandedTitleText,
+                  titleTextStyle,
                 ]}
               >
                 {title}
-              </Text>
-            </View>
+              </Animated.Text>
+            </Animated.View>
           </View>
           {showEdit && (
             <Pressable
@@ -121,76 +168,75 @@ export default function ScheduleItem({
         <View
           style={[styles.metadataRow, isExpanded && styles.expandedMetadataRow]}
         >
-          <View
+          <Animated.View
             style={[
               styles.metadataPill,
               isActive && styles.activeMetadataPill,
               isExpanded && styles.expandedMetadataPill,
+              metadataPillStyle,
             ]}
           >
-            <Text
+            <Animated.Text
               style={[
                 styles.metadataText,
                 isActive && styles.activeMetadataText,
-                isExpanded && styles.expandedMetadataText,
+                metadataTextStyle,
               ]}
             >
               {location}
-            </Text>
-          </View>
-          <View
+            </Animated.Text>
+          </Animated.View>
+          <Animated.View
             style={[
               styles.metadataPill,
               isActive && styles.activeMetadataPill,
               isExpanded && styles.expandedMetadataPill,
+              metadataPillStyle,
             ]}
           >
-            <Text
+            <Animated.Text
               style={[
                 styles.metadataText,
                 isActive && styles.activeMetadataText,
-                isExpanded && styles.expandedMetadataText,
+                metadataTextStyle,
               ]}
             >
               {startTime} ~ {endTime}
-            </Text>
-          </View>
+            </Animated.Text>
+          </Animated.View>
           {points != null && !isDeadline ? (
-            <View
+            <Animated.View
               style={[
                 styles.metadataPill,
                 isActive && styles.activeMetadataPill,
                 isExpanded && styles.expandedMetadataPill,
+                metadataPillStyle,
               ]}
             >
-              <Text
+              <Animated.Text
                 style={[
                   styles.metadataText,
                   isActive && styles.activeMetadataText,
-                  isExpanded && styles.expandedMetadataText,
+                  metadataTextStyle,
                 ]}
               >
                 {points} {points === 1 ? "pt" : "pts"}
-              </Text>
-            </View>
+              </Animated.Text>
+            </Animated.View>
           ) : null}
           {isDeadline ? (
-            <View
+            <Animated.View
               style={[
                 styles.metadataPill,
                 styles.deadlinePill,
                 isExpanded && styles.expandedMetadataPill,
+                metadataPillStyle,
               ]}
             >
-              <Text
-                style={[
-                  styles.deadlineText,
-                  isExpanded && styles.expandedDeadlineText,
-                ]}
-              >
+              <Animated.Text style={[styles.deadlineText, metadataTextStyle]}>
                 Deadline
-              </Text>
-            </View>
+              </Animated.Text>
+            </Animated.View>
           ) : null}
         </View>
 
@@ -200,12 +246,12 @@ export default function ScheduleItem({
           style={[
             styles.bodyText,
             isActive && styles.activeText,
-            isExpanded && styles.expandedBodyText,
+            bodyTextStyle,
           ]}
         >
           {body}
         </LinkedText>
-      </View>
+      </Animated.View>
     </Pressable>
   );
 }
