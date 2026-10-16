@@ -26,7 +26,7 @@ export default function ForgotPassword() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [awaitingCode, setAwaitingCode] = useState(false);
-  const [digits, setDigits] = useState<string[]>(["", "", "", "", ""]);
+  const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
   const [submitting, setSubmitting] = useState(false);
   const digitRefs = useRef<(TextInput | null)[]>([]);
   const [fontsLoaded] = useFonts({
@@ -123,11 +123,11 @@ export default function ForgotPassword() {
     codeRow: {
       flexDirection: "row",
       justifyContent: "center",
-      gap: 10,
+      gap: 8,
       marginBottom: 8,
     },
     codeDigit: {
-      width: 48,
+      width: 40,
       height: 56,
       borderRadius: 9,
       backgroundColor: "#eaeaea",
@@ -181,7 +181,7 @@ export default function ForgotPassword() {
         return;
       }
 
-      setDigits(["", "", "", "", ""]);
+      setDigits(["", "", "", "", "", ""]);
       setPassword("");
       setConfirmPassword("");
       setAwaitingCode(true);
@@ -200,8 +200,8 @@ export default function ForgotPassword() {
     setErrorMessage(null);
 
     const code = digits.join("");
-    if (code.length !== 5) {
-      setErrorMessage("Please enter the 5-digit code");
+    if (code.length !== 6) {
+      setErrorMessage("Please enter the 6-digit code");
       return;
     }
 
@@ -245,7 +245,7 @@ export default function ForgotPassword() {
       if (!response.ok) {
         const message = await response.text();
         setErrorMessage(message?.trim() || "Invalid or expired code");
-        setDigits(["", "", "", "", ""]);
+        setDigits(["", "", "", "", "", ""]);
         digitRefs.current[0]?.focus();
         return;
       }
@@ -264,7 +264,7 @@ export default function ForgotPassword() {
     next[index] = digit;
     setDigits(next);
 
-    if (digit && index < 4) {
+    if (digit && index < 5) {
       digitRefs.current[index + 1]?.focus();
     }
   };
@@ -302,7 +302,7 @@ export default function ForgotPassword() {
         {awaitingCode ? (
           <>
             <Text style={styles.codeHint}>
-              Enter the 5-digit code sent to {email}, then choose a new password
+              Enter the 6-digit code sent to {email}, then choose a new password
             </Text>
             <View style={styles.codeRow}>
               {digits.map((digit, index) => (
