@@ -712,6 +712,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   scanTitle: {
+    marginLeft: 15,
     fontSize: 42,
     fontWeight: "700",
     color: "#A3CE26",
@@ -723,7 +724,7 @@ const styles = StyleSheet.create({
   },
   scanBug: {
     height: 44,
-    width: 84,
+    width: 132,
     marginLeft: 10,
     marginTop: 10,
   },
