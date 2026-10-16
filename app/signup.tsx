@@ -27,7 +27,7 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [awaitingCode, setAwaitingCode] = useState(false);
-  const [digits, setDigits] = useState<string[]>(["", "", "", "", ""]);
+  const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
   const [verifying, setVerifying] = useState(false);
   const digitRefs = useRef<(TextInput | null)[]>([]);
   const [fontsLoaded] = useFonts({
@@ -125,11 +125,11 @@ export default function Signup() {
     codeRow: {
       flexDirection: "row",
       justifyContent: "center",
-      gap: 10,
+      gap: 8,
       marginBottom: 8,
     },
     codeDigit: {
-      width: 48,
+      width: 40,
       height: 56,
       borderRadius: 9,
       backgroundColor: "#eaeaea",
@@ -188,7 +188,7 @@ export default function Signup() {
 
       if (!verifyResponse.ok) {
         setErrorMessage("Invalid or expired code");
-        setDigits(["", "", "", "", ""]);
+        setDigits(["", "", "", "", "", ""]);
         digitRefs.current[0]?.focus();
         return;
       }
@@ -223,7 +223,7 @@ export default function Signup() {
     next[index] = digit;
     setDigits(next);
 
-    if (digit && index < 4) {
+    if (digit && index < 5) {
       digitRefs.current[index + 1]?.focus();
     }
 
@@ -282,7 +282,7 @@ export default function Signup() {
         return;
       }
 
-      setDigits(["", "", "", "", ""]);
+      setDigits(["", "", "", "", "", ""]);
       setAwaitingCode(true);
     } catch {
       setErrorMessage("Unable to connect to server");
@@ -316,7 +316,7 @@ export default function Signup() {
         {awaitingCode ? (
           <>
             <Text style={styles.codeHint}>
-              Enter the 5-digit code sent to {email}
+              Enter the 6-digit code sent to {email}
             </Text>
             <View style={styles.codeRow}>
               {digits.map((digit, index) => (
