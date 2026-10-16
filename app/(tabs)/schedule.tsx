@@ -14,7 +14,7 @@ import {
 } from "@expo-google-fonts/alan-sans";
 import { Grandstander_900Black } from "@expo-google-fonts/grandstander";
 import MaskedView from "@react-native-masked-view/masked-view";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -234,6 +234,7 @@ function GradientDateText({
 
 export default function ScheduleScreen() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
   const scrollViewRef = useRef<ScrollView>(null);
   const transitionAnim = useRef(new Animated.Value(1)).current;
   const todayPressAnim = useRef(new Animated.Value(0)).current;
@@ -292,9 +293,11 @@ export default function ScheduleScreen() {
     [selectedScheduleItems, selectedDate],
   );
 
-  const loadSchedule = useCallback(async () => {
-    setIsLoadingSchedule(true);
-    setScheduleError(null);
+  const loadSchedule = useCallback(async (silent = false) => {
+    if (!silent) {
+      setIsLoadingSchedule(true);
+      setScheduleError(null);
+    }
 
     try {
       const data = await getSchedule();
@@ -306,24 +309,61 @@ export default function ScheduleScreen() {
             toMinutes(left.startTime) - toMinutes(right.startTime),
         ),
       );
+      if (silent) setScheduleError(null);
     } catch (error) {
-      setScheduleError(
-        error instanceof Error ? error.message : "Unable to load the schedule.",
-      );
+      if (!silent) {
+        setScheduleError(
+          error instanceof Error
+            ? error.message
+            : "Unable to load the schedule.",
+        );
+      }
     } finally {
-      setIsLoadingSchedule(false);
+      if (!silent) setIsLoadingSchedule(false);
     }
   }, []);
 
+  useEffect(() => {
+    loadSchedule();
+  }, [loadSchedule]);
+
+  //refresh while the user is on home or qr, so opening schedule does not reload
+  useEffect(() => {
+    let tabs = navigation.getParent();
+    while (tabs) {
+      const names = tabs.getState()?.routeNames ?? [];
+      if (names.includes("(home)") && names.includes("qrcode")) {
+        break;
+      }
+      tabs = tabs.getParent();
+    }
+    if (!tabs) {
+      return;
+    }
+
+    const tabNav = tabs;
+    let previousTab = tabNav.getState().routes[tabNav.getState().index]?.name;
+
+    return tabNav.addListener("state", () => {
+      const state = tabNav.getState();
+      const currentTab = state.routes[state.index]?.name;
+      if (!currentTab || currentTab === previousTab) {
+        return;
+      }
+      previousTab = currentTab;
+      if (currentTab === "(home)" || currentTab === "qrcode") {
+        loadSchedule(true);
+      }
+    });
+  }, [loadSchedule, navigation]);
+
   useFocusEffect(
     useCallback(() => {
-      loadSchedule();
-
       // This controls the UI; the backend must also enforce Admin access.
       getRole().then((role) =>
         setIsAdmin(role?.toLowerCase().includes("admin") ?? false),
       );
-    }, [loadSchedule]),
+    }, []),
   );
 
   useEffect(() => {
