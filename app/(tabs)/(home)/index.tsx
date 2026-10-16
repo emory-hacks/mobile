@@ -6,12 +6,12 @@ import {
 } from "@expo-google-fonts/alan-sans"; // fonts
 import { Grandstander_900Black } from "@expo-google-fonts/grandstander";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { fetch } from "expo/fetch";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -39,6 +39,7 @@ import { getInfo, saveInfo } from "@/utils/user-info";
 
 export default function HomePage() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
   const router = useRouter();
   const [isNoticeExpanded, setIsNoticeExpanded] = useState(false);
   const [lastReadCreatedAt, setLastReadCreatedAt] = useState<string | null>(
@@ -118,9 +119,11 @@ export default function HomePage() {
     }, []),
   );
 
-  const loadAnnouncements = useCallback(async () => {
-    setIsLoadingAnnouncements(true);
-    setAnnouncementError(null);
+  const loadAnnouncements = useCallback(async (silent = false) => {
+    if (!silent) {
+      setIsLoadingAnnouncements(true);
+      setAnnouncementError(null);
+    }
 
     try {
       const data = await getAnnouncements();
@@ -138,14 +141,17 @@ export default function HomePage() {
         setIsNoticeExpanded(false);
       }
       setAnnouncements(newestFirst);
+      if (silent) setAnnouncementError(null);
     } catch (error) {
-      setAnnouncementError(
-        error instanceof Error
-          ? error.message
-          : "Unable to load announcements.",
-      );
+      if (!silent) {
+        setAnnouncementError(
+          error instanceof Error
+            ? error.message
+            : "Unable to load announcements.",
+        );
+      }
     } finally {
-      setIsLoadingAnnouncements(false);
+      if (!silent) setIsLoadingAnnouncements(false);
     }
   }, []);
 
@@ -251,11 +257,33 @@ export default function HomePage() {
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      loadAnnouncements();
-    }, [loadAnnouncements]),
-  );
+  useEffect(() => {
+    loadAnnouncements();
+  }, [loadAnnouncements]);
+
+  // Refresh while the user is on Schedule or QR, so opening Home does not reload.
+  useEffect(() => {
+    let tabs = navigation.getParent();
+    while (tabs) {
+      const names = tabs.getState()?.routeNames ?? [];
+      if (names.includes("schedule") && names.includes("qrcode")) break;
+      tabs = tabs.getParent();
+    }
+    if (!tabs) return;
+
+    const tabNav = tabs;
+    let previousTab = tabNav.getState().routes[tabNav.getState().index]?.name;
+
+    return tabNav.addListener("state", () => {
+      const state = tabNav.getState();
+      const currentTab = state.routes[state.index]?.name;
+      if (!currentTab || currentTab === previousTab) return;
+      previousTab = currentTab;
+      if (currentTab === "schedule" || currentTab === "qrcode") {
+        loadAnnouncements(true);
+      }
+    });
+  }, [loadAnnouncements, navigation]);
 
   if (!fontsLoaded) {
     return <View style={styles.screen} />;
