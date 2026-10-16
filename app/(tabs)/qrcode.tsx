@@ -1,3 +1,4 @@
+import { FlowerPattern } from "@/components/flower-pattern";
 import { API_BASE_URL } from "@/constants/computer-ip";
 import { getUpcomingEvents } from "@/services/schedule";
 import type { ScheduleEvent } from "@/types/schedule-event";
@@ -454,6 +455,7 @@ export default function QRCodeScreen() {
             { paddingTop: Math.max(insets.top, 16) + 8 },
           ]}
         >
+          <FlowerPattern radius={28} />
           <View style={styles.titleRow}>
             <View style={styles.scanTitleGroup}>
               <Text
@@ -647,6 +649,7 @@ export default function QRCodeScreen() {
           { paddingTop: Math.max(insets.top, 16) + 8 },
         ]}
       >
+        <FlowerPattern radius={28} />
         <View style={styles.titleRow}>
           <View style={styles.scanTitleGroup}>
             <Text

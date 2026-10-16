@@ -3,6 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { DefaultPfp } from "@/components/home/default-pfp";
+import { FlowerPattern } from "@/components/flower-pattern";
 
 type ProfileComponentProps = {
   isAdmin?: boolean;
@@ -20,6 +21,7 @@ export function ProfileComponent({
   return (
     <View style={styles.container}>
       <View style={styles.card}>
+        <FlowerPattern />
         <View style={styles.headingRow}>
           <Text style={styles.greeting}>Emory Hacks 2026</Text>
           <Pressable
