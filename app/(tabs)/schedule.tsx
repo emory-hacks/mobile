@@ -1,3 +1,4 @@
+import { FlowerPattern } from "@/components/flower-pattern";
 import ScheduleItem from "@/components/schedule-related/schedule-item";
 import {
   getSchedule,
@@ -538,6 +539,7 @@ export default function ScheduleScreen() {
   return (
     <View style={styles.screen}>
       <View style={[styles.header, { paddingTop: insets.top + 24 }]}>
+        <FlowerPattern />
         <View
           pointerEvents="box-none"
           style={[styles.backToTodaySlot, { top: insets.top + 26 }]}
