@@ -1,9 +1,9 @@
+import { FlowerPattern } from "@/components/flower-pattern";
+import { DefaultPfp } from "@/components/home/default-pfp";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-
-import { DefaultPfp } from "@/components/home/default-pfp";
-import { FlowerPattern } from "@/components/flower-pattern";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type ProfileComponentProps = {
   isAdmin?: boolean;
@@ -18,40 +18,43 @@ export function ProfileComponent({
   onSettingsPress,
   teamName,
 }: ProfileComponentProps) {
+  const insets = useSafeAreaInsets();
   return (
     <View style={styles.container}>
       <View style={styles.card}>
         <FlowerPattern />
-        <View style={styles.headingRow}>
-          <Text style={styles.greeting}>Emory Hacks 2026</Text>
-          <Pressable
-            accessibilityLabel="Open settings"
-            accessibilityRole="button"
-            hitSlop={12}
-            onPress={onSettingsPress}
-            style={({ pressed }) => [
-              styles.settingsButton,
-              pressed && styles.settingsButtonPressed,
-            ]}
-          >
-            <Ionicons color="#111111" name="settings-outline" size={26} />
-          </Pressable>
-        </View>
-
-        <View style={styles.content}>
-          <View style={styles.copy}>
-            <Text style={styles.name}>{name}</Text>
-            {/* <View style={styles.teamPill}>
-              <Text style={styles.teamText}>{teamName}</Text>
-            </View> */}
+        <View style={{ paddingTop: insets.top }}>
+          <View style={styles.headingRow}>
+            <Text style={styles.greeting}>Emory Hacks 2026</Text>
+            <Pressable
+              accessibilityLabel="Open settings"
+              accessibilityRole="button"
+              hitSlop={12}
+              onPress={onSettingsPress}
+              style={({ pressed }) => [
+                styles.settingsButton,
+                pressed && styles.settingsButtonPressed,
+              ]}
+            >
+              <Ionicons color="#111111" name="settings-outline" size={26} />
+            </Pressable>
           </View>
 
-          <DefaultPfp
-            accessibilityLabel={`${name}'s profile picture`}
-            size={66}
-            style={styles.avatar}
-            isAdmin={isAdmin}
-          />
+          <View style={styles.content}>
+            <View style={styles.copy}>
+              <Text style={styles.name}>{name}</Text>
+              {/* <View style={styles.teamPill}>
+                <Text style={styles.teamText}>{teamName}</Text>
+              </View> */}
+            </View>
+
+            <DefaultPfp
+              accessibilityLabel={`${name}'s profile picture`}
+              size={66}
+              style={styles.avatar}
+              isAdmin={isAdmin}
+            />
+          </View>
         </View>
       </View>
 
