@@ -52,6 +52,23 @@ function eventAwardAmount(event: ScheduleEvent | undefined) {
   return Number(event?.points ?? 0);
 }
 
+const PURCHASE_EVENT_ID = "purchase";
+
+function isPurchaseEvent(id: string) {
+  return id.trim() === PURCHASE_EVENT_ID;
+}
+
+function emailFromAwardResponse(data: Record<string, unknown>) {
+  if (typeof data.user === "string" && data.user) return data.user;
+  if (typeof data.userEmail === "string" && data.userEmail) return data.userEmail;
+  const user = data.user;
+  if (user && typeof user === "object" && "email" in user) {
+    const email = (user as { email?: unknown }).email;
+    if (typeof email === "string") return email;
+  }
+  return "";
+}
+
 const ORIGINAL_BRIGHTNESS_KEY = "originalBrightness";
 
 export default function QRCodeScreen() {
@@ -72,6 +89,8 @@ export default function QRCodeScreen() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [upcomingEvents, setUpcomingEvents] = useState<ScheduleEvent[]>([]);
   const [eventId, setEventId] = useState("");
+  const [pointsUsed, setPointsUsed] = useState("");
+  const [isApplyingPurchase, setIsApplyingPurchase] = useState(false);
   const eventIdRef = useRef(eventId);
   const awardAmountRef = useRef(0);
 
@@ -149,14 +168,16 @@ export default function QRCodeScreen() {
               );
               setUpcomingEvents(events);
               setEventId((prev) => {
+                if (isPurchaseEvent(prev)) return prev;
                 if (prev && events.some((event) => eventKey(event) === prev)) {
                   return prev;
                 }
-                return events[0] ? eventKey(events[0]) : "";
+                return events[0] ? eventKey(events[0]) : PURCHASE_EVENT_ID;
               });
             } catch (error) {
               console.log("Failed to load upcoming events", error);
               setUpcomingEvents([]);
+              setEventId((prev) => (prev ? prev : PURCHASE_EVENT_ID));
             }
           })();
         }
@@ -220,6 +241,7 @@ export default function QRCodeScreen() {
 
     setScanned(false);
     setScannedAttendee(null);
+    setPointsUsed("");
     setIsLoadingScan(true);
 
     const jwt = await getJwt();
@@ -371,12 +393,7 @@ export default function QRCodeScreen() {
         const data = (await response.json()) as Record<string, unknown>;
         console.log(data);
 
-        const userEmail =
-          typeof data.user === "string"
-            ? data.user
-            : String(
-                (data.user as Record<string, unknown> | undefined)?.email ?? "",
-              );
+        const userEmail = emailFromAwardResponse(data);
 
         if (!userEmail) {
           showScanFailure("Could not load user profile.");
@@ -412,6 +429,7 @@ export default function QRCodeScreen() {
             selectedEventId === "Registration" || !!userData.checkedIn,
           email: displayEmail,
         });
+        setPointsUsed("");
         setIsLoadingScan(false);
         setCameraActive(false);
         setScanned(true);
@@ -437,7 +455,57 @@ export default function QRCodeScreen() {
   const handleDismissScanResult = useCallback(() => {
     setScanned(false);
     setScannedAttendee(null);
+    setPointsUsed("");
   }, []);
+
+  const handleApplyPurchase = useCallback(async () => {
+    const attendee = scannedAttendee;
+    if (!attendee || isApplyingPurchase) return;
+
+    const spent = Number(pointsUsed);
+    if (!Number.isInteger(spent) || spent <= 0) {
+      Alert.alert("Enter points", "Enter how many points this purchase used.");
+      return;
+    }
+
+    setIsApplyingPurchase(true);
+    try {
+      const jwt = await getJwt();
+      if (!jwt) {
+        Alert.alert("Purchase failed", "Not authenticated.");
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/users/${encodeURIComponent(attendee.email)}/add-points?amount=${-spent}`,
+        {
+          method: "PUT",
+          credentials: "omit",
+          headers: {
+            Cookie: `token=${jwt}`,
+          },
+        },
+      );
+      const bodyText = await response.text();
+      if (!response.ok) {
+        console.log(response.status, bodyText);
+        Alert.alert("Purchase failed", "Could not update points.");
+        return;
+      }
+
+      const match = bodyText.match(/New balance:\s*(-?\d+)/);
+      const nextPoints = match ? Number(match[1]) : attendee.points - spent;
+      setScannedAttendee((current) =>
+        current ? { ...current, points: nextPoints } : current,
+      );
+      setPointsUsed("");
+    } catch (error) {
+      console.log("Purchase failed", error);
+      Alert.alert("Purchase failed", "Could not update points.");
+    } finally {
+      setIsApplyingPurchase(false);
+    }
+  }, [isApplyingPurchase, pointsUsed, scannedAttendee]);
 
   if (isAdmin === null) {
     return <View style={styles.pageContainer} />;
@@ -505,42 +573,64 @@ export default function QRCodeScreen() {
             </Pressable>
           </View>
 
-          {upcomingEvents.length > 0 ? (
-            <View style={styles.selectorRow}>
-              {upcomingEvents.map((event) => {
-                const id = eventKey(event);
-                const selected = eventId === id;
-                return (
-                  <Pressable
-                    key={`${event.startTime}-${id}`}
-                    style={({ pressed }) => [
-                      styles.selectorButton,
-                      selected && styles.selectorButtonSelected,
-                      pressed && styles.selectorButtonPressed,
+          <View style={styles.selectorRow}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.selectorButton,
+                styles.purchaseButton,
+                isPurchaseEvent(eventId) && styles.purchaseButtonSelected,
+                pressed && styles.selectorButtonPressed,
+              ]}
+              onPress={() => setEventId(PURCHASE_EVENT_ID)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isPurchaseEvent(eventId) }}
+              accessibilityLabel="Select purchase"
+            >
+              <Text
+                numberOfLines={1}
+                style={[
+                  styles.selectorButtonText,
+                  styles.purchaseButtonText,
+                  isPurchaseEvent(eventId) && styles.selectorButtonTextSelected,
+                ]}
+              >
+                Purchase
+              </Text>
+            </Pressable>
+            {upcomingEvents.map((event) => {
+              const id = eventKey(event);
+              const selected = eventId === id;
+              return (
+                <Pressable
+                  key={`${event.startTime}-${id}`}
+                  style={({ pressed }) => [
+                    styles.selectorButton,
+                    selected && styles.selectorButtonSelected,
+                    pressed && styles.selectorButtonPressed,
+                  ]}
+                  onPress={() => setEventId(id)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={`Select event ${event.title}`}
+                >
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.selectorButtonText,
+                      selected && styles.selectorButtonTextSelected,
                     ]}
-                    onPress={() => setEventId(id)}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected }}
-                    accessibilityLabel={`Select event ${event.title}`}
                   >
-                    <Text
-                      numberOfLines={1}
-                      style={[
-                        styles.selectorButtonText,
-                        selected && styles.selectorButtonTextSelected,
-                      ]}
-                    >
-                      {event.title}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          ) : (
+                    {event.title}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          {upcomingEvents.length === 0 ? (
             <Text style={styles.selectorEmptyText}>
               No events in the next 30 minutes
             </Text>
-          )}
+          ) : null}
         </View>
 
         {scanned && attendee ? (
@@ -575,6 +665,39 @@ export default function QRCodeScreen() {
                 </Text>
               </View>
             </View>
+
+            {isPurchaseEvent(eventId) ? (
+              <View style={styles.purchaseForm}>
+                <TextInput
+                  style={styles.purchaseInput}
+                  placeholder="Points used"
+                  placeholderTextColor="#9a9a9a"
+                  value={pointsUsed}
+                  onChangeText={(value) =>
+                    setPointsUsed(value.replace(/[^0-9]/g, ""))
+                  }
+                  keyboardType="number-pad"
+                  editable={!isApplyingPurchase}
+                />
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.purchaseSubmit,
+                    pressed && styles.selectorButtonPressed,
+                    isApplyingPurchase && styles.purchaseSubmitDisabled,
+                  ]}
+                  onPress={handleApplyPurchase}
+                  disabled={isApplyingPurchase}
+                  accessibilityRole="button"
+                  accessibilityLabel="Deduct points for purchase"
+                >
+                  {isApplyingPurchase ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.purchaseSubmitText}>Deduct</Text>
+                  )}
+                </Pressable>
+              </View>
+            ) : null}
 
             <View style={styles.detailList}>
               <View style={styles.detailRow}>
@@ -776,6 +899,53 @@ const styles = StyleSheet.create({
   },
   selectorButtonSelected: {
     backgroundColor: "#A3CE26",
+  },
+  purchaseButton: {
+    flex: 0,
+    backgroundColor: "#FDECEC",
+    borderWidth: 1,
+    borderColor: "#E53935",
+    paddingHorizontal: 14,
+  },
+  purchaseButtonSelected: {
+    backgroundColor: "#E53935",
+  },
+  purchaseButtonText: {
+    color: "#E53935",
+  },
+  purchaseForm: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 20,
+    gap: 10,
+  },
+  purchaseInput: {
+    flex: 1,
+    height: 48,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#E53935",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: "#333",
+  },
+  purchaseSubmit: {
+    minWidth: 96,
+    height: 48,
+    backgroundColor: "#E53935",
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+  },
+  purchaseSubmitDisabled: {
+    opacity: 0.7,
+  },
+  purchaseSubmitText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
   },
   selectorButtonPressed: {
     opacity: 0.85,
