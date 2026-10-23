@@ -24,7 +24,6 @@ import {
   View,
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { NoticeBar } from "@/components/home/notice-bar";
 import { NoticeDetailComponent } from "@/components/home/notice-detail-component";
@@ -38,7 +37,6 @@ import { saveUserSession } from "@/utils/session";
 import { getInfo, saveInfo } from "@/utils/user-info";
 
 export default function HomePage() {
-  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const router = useRouter();
   const [isNoticeExpanded, setIsNoticeExpanded] = useState(false);
@@ -291,7 +289,7 @@ export default function HomePage() {
 
   return (
     <View style={styles.screen}>
-      <View style={{ paddingTop: insets.top }}>
+      <View style={{ paddingTop: 0 }}>
         <ProfileComponent
           isAdmin={isAdmin}
           name={name}
