@@ -1,3 +1,4 @@
+import { ErrorBoundary } from "@/components/error-boundary";
 import { FlowerPattern } from "@/components/flower-pattern";
 import { API_BASE_URL } from "@/constants/computer-ip";
 import { getUpcomingEvents } from "@/services/schedule";
@@ -72,6 +73,14 @@ function emailFromAwardResponse(data: Record<string, unknown>) {
 const ORIGINAL_BRIGHTNESS_KEY = "originalBrightness";
 
 export default function QRCodeScreen() {
+  return (
+    <ErrorBoundary fallback={<View style={styles.pageContainer} />}>
+      <QRCodeScreenBody />
+    </ErrorBoundary>
+  );
+}
+
+function QRCodeScreenBody() {
   const scanLock = useRef(false);
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
@@ -106,10 +115,20 @@ export default function QRCodeScreen() {
   }, [eventId, upcomingEvents]);
 
   useEffect(() => {
+    let active = true;
+
     (async () => {
-      const role = await getRole();
-      setIsAdmin(!!role && role.includes("admin"));
+      try {
+        const role = await getRole();
+        if (active) setIsAdmin(!!role && role.includes("admin"));
+      } catch {
+        if (active) setIsAdmin(false);
+      }
     })();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   useFocusEffect(
@@ -732,6 +751,7 @@ export default function QRCodeScreen() {
                   facing="back"
                   mute
                   barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
+                  onMountError={() => setCameraActive(false)}
                   onBarcodeScanned={
                     isLoadingScan ? undefined : handleBarcodeScanned
                   }

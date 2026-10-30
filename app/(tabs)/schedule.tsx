@@ -1,4 +1,5 @@
 import { FlowerPattern } from "@/components/flower-pattern";
+import { SafeKeyboardAvoidingView } from "@/components/safe-keyboard";
 import ScheduleItem from "@/components/schedule-related/schedule-item";
 import {
   getSchedule,
@@ -33,7 +34,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const ESTIMATED_SCHEDULE_ITEM_HEIGHT = 112;
@@ -761,7 +761,7 @@ export default function ScheduleScreen() {
         transparent
         visible={editingEvent !== null}
       >
-        <KeyboardAvoidingView
+        <SafeKeyboardAvoidingView
           behavior="padding"
           keyboardVerticalOffset={-80}
           style={styles.modalBackdrop}
@@ -908,7 +908,7 @@ export default function ScheduleScreen() {
               </Pressable>
             </View>
           </View>
-        </KeyboardAvoidingView>
+        </SafeKeyboardAvoidingView>
       </Modal>
     </View>
   );
