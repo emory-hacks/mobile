@@ -6,7 +6,6 @@ import type { ScheduleEvent } from "@/types/schedule-event";
 import { getJwt, getRole } from "@/utils/auth-token";
 import { Fredoka_700Bold, useFonts } from "@expo-google-fonts/fredoka";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 import { Buffer } from "buffer";
 import * as Brightness from "expo-brightness";
@@ -69,8 +68,6 @@ function emailFromAwardResponse(data: Record<string, unknown>) {
   }
   return "";
 }
-
-const ORIGINAL_BRIGHTNESS_KEY = "originalBrightness";
 
 export default function QRCodeScreen() {
   return (
@@ -137,13 +134,6 @@ function QRCodeScreenBody() {
 
       (async () => {
         try {
-          if (Platform.OS !== "android") {
-            const current = await Brightness.getBrightnessAsync();
-            await AsyncStorage.setItem(
-              ORIGINAL_BRIGHTNESS_KEY,
-              String(current),
-            );
-          }
           if (cancelled) return;
           await Brightness.setBrightnessAsync(1);
         } catch {
@@ -153,16 +143,10 @@ function QRCodeScreenBody() {
 
       return () => {
         cancelled = true;
+        if (Platform.OS !== "android") return;
         (async () => {
           try {
-            if (Platform.OS === "android") {
-              await Brightness.restoreSystemBrightnessAsync();
-              return;
-            }
-            const saved = await AsyncStorage.getItem(ORIGINAL_BRIGHTNESS_KEY);
-            if (saved != null) {
-              await Brightness.setBrightnessAsync(Number(saved));
-            }
+            await Brightness.restoreSystemBrightnessAsync();
           } catch {
             // brightness control not available
           }
