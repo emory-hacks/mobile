@@ -2,6 +2,7 @@ import { fetch } from "expo/fetch";
 
 import { API_BASE_URL } from "@/constants/computer-ip";
 import type { ScheduleEvent } from "@/types/schedule-event";
+import { authRequest } from "@/utils/auth-request";
 import { getJwt } from "@/utils/auth-token";
 
 export type ScheduleEventUpdate = {
@@ -24,10 +25,7 @@ export async function getSchedule(): Promise<ScheduleEvent[]> {
 
   const response = await fetch(`${API_BASE_URL}/schedule`, {
     method: "GET",
-    credentials: "omit",
-    headers: {
-      Cookie: `token=${jwt}`,
-    },
+    ...authRequest(jwt),
   });
 
   if (!response.ok) {
@@ -52,10 +50,7 @@ export async function getUpcomingEvents(): Promise<ScheduleEvent[]> {
 
   const response = await fetch(`${API_BASE_URL}/schedule/upcoming`, {
     method: "GET",
-    credentials: "omit",
-    headers: {
-      Cookie: `token=${jwt}`,
-    },
+    ...authRequest(jwt),
   });
 
   if (!response.ok) {
@@ -89,13 +84,14 @@ export async function updateScheduleEvent(
   updates: ScheduleEventUpdate,
 ): Promise<void> {
   const jwt = await getJwt();
+  const auth = authRequest(jwt ?? "");
 
   const response = await fetch(`${API_BASE_URL}/schedule`, {
     method: "PATCH",
-    credentials: "omit",
+    ...auth,
     headers: {
+      ...auth.headers,
       "Content-Type": "application/json",
-      Cookie: `token=${jwt}`,
     },
     body: JSON.stringify(updates),
   });

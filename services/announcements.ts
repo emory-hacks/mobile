@@ -2,6 +2,7 @@ import { fetch } from "expo/fetch";
 
 import { API_BASE_URL } from "@/constants/computer-ip";
 import type { Announcement } from "@/types/announcement";
+import { authRequest } from "@/utils/auth-request";
 import { getJwt } from "@/utils/auth-token";
 
 type AnnouncementUpdate = {
@@ -17,13 +18,9 @@ export async function getAnnouncements(): Promise<Announcement[]> {
     throw new Error("Please sign in to view announcements.");
   }
 
-  // expo/fetch keeps our manual Cookie header. React Native's regular fetch may treat Cookie as managed and remove it before sending the request.
   const response = await fetch(`${API_BASE_URL}/api/announcements`, {
     method: "GET",
-    credentials: "omit",
-    headers: {
-      Cookie: `token=${jwt}`,
-    },
+    ...authRequest(jwt),
   });
 
   if (!response.ok) {
@@ -44,14 +41,15 @@ export async function updateAnnouncement(
   updates: AnnouncementUpdate,
 ): Promise<void> {
   const jwt = await getJwt();
+  const auth = authRequest(jwt ?? "");
 
   // The original title identifies the announcement being corrected.
   const response = await fetch(`${API_BASE_URL}/api/announcements`, {
     method: "PATCH",
-    credentials: "omit",
+    ...auth,
     headers: {
+      ...auth.headers,
       "Content-Type": "application/json",
-      Cookie: `token=${jwt}`,
     },
     body: JSON.stringify(updates),
   });
