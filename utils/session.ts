@@ -1,6 +1,7 @@
 import { fetch } from "expo/fetch";
 
 import { API_BASE_URL } from "@/constants/computer-ip";
+import { authRequest } from "@/utils/auth-request";
 
 import { getEmail, getJwt, getRole, saveEmail, saveRole } from "./auth-token";
 import { saveInfo } from "./user-info";
@@ -45,11 +46,7 @@ export async function restoreSession(): Promise<boolean> {
 
   const response = await fetch(`${API_BASE_URL}/api/users/${email}`, {
     method: "GET",
-    credentials: "omit",
-    headers: {
-      "Content-Type": "application/json",
-      Cookie: `token=${jwt}`,
-    },
+    ...authRequest(jwt),
   });
 
   if (!response.ok) {

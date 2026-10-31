@@ -3,6 +3,7 @@ import { FlowerPattern } from "@/components/flower-pattern";
 import { API_BASE_URL } from "@/constants/computer-ip";
 import { getUpcomingEvents } from "@/services/schedule";
 import type { ScheduleEvent } from "@/types/schedule-event";
+import { authRequest } from "@/utils/auth-request";
 import { getJwt, getRole } from "@/utils/auth-token";
 import { Fredoka_700Bold, useFonts } from "@expo-google-fonts/fredoka";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -193,14 +194,9 @@ function QRCodeScreenBody() {
           const jwt = await getJwt();
           if (!jwt) return;
 
-          // Use expo/fetch + credentials: "omit" so manual Cookie header is sent.
           const response = await fetch(`${API_BASE_URL}/api/users/me/qr`, {
             method: "GET",
-            credentials: "omit",
-            headers: {
-              "Content-Type": "application/json",
-              Cookie: `token=${jwt}`,
-            },
+            ...authRequest(jwt),
           });
 
           if (!response.ok) {
@@ -257,11 +253,7 @@ function QRCodeScreenBody() {
       `${API_BASE_URL}/api/users/${encodeURIComponent(query)}`,
       {
         method: "GET",
-        credentials: "omit",
-        headers: {
-          "Content-Type": "application/json",
-          Cookie: `token=${jwt}`,
-        },
+        ...authRequest(jwt),
       },
     );
     if (!response.ok) {
@@ -283,14 +275,15 @@ function QRCodeScreenBody() {
       upcomingEvents.find((event) => eventKey(event) === selectedEventId),
     );
 
+    const auth = authRequest(jwt);
     const awardResponse = await fetch(
       `${API_BASE_URL}/api/admin/award-points-search`,
       {
         method: "POST",
-        credentials: "omit",
+        ...auth,
         headers: {
+          ...auth.headers,
           "Content-Type": "application/json",
-          Cookie: `token=${jwt}`,
         },
         body: JSON.stringify({
           email: userEmail,
@@ -364,14 +357,15 @@ function QRCodeScreenBody() {
           return;
         }
 
+        const auth = authRequest(jwt);
         const response = await fetch(
           `${API_BASE_URL}/api/admin/award-points-fast`,
           {
             method: "POST",
-            credentials: "omit",
+            ...auth,
             headers: {
+              ...auth.headers,
               "Content-Type": "application/json",
-              Cookie: `token=${jwt}`,
             },
             body: JSON.stringify({
               token: result.data,
@@ -407,11 +401,7 @@ function QRCodeScreenBody() {
           `${API_BASE_URL}/api/users/${encodeURIComponent(userEmail)}`,
           {
             method: "GET",
-            credentials: "omit",
-            headers: {
-              "Content-Type": "application/json",
-              Cookie: `token=${jwt}`,
-            },
+            ...authRequest(jwt),
           },
         );
 
@@ -483,10 +473,7 @@ function QRCodeScreenBody() {
         `${API_BASE_URL}/api/users/${encodeURIComponent(attendee.email)}/add-points?amount=${-spent}`,
         {
           method: "PUT",
-          credentials: "omit",
-          headers: {
-            Cookie: `token=${jwt}`,
-          },
+          ...authRequest(jwt),
         },
       );
       const bodyText = await response.text();
