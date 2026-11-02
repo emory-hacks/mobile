@@ -3,7 +3,7 @@ import type { PropsWithChildren } from "react";
 
 export default function Root({ children }: PropsWithChildren) {
   return (
-    <html lang="en">
+    <html lang="en" style={{ backgroundColor: "#EDF3F7" }}>
       <head>
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
@@ -23,7 +23,7 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <ScrollViewStyleReset />
       </head>
-      <body>{children}</body>
+      <body style={{ backgroundColor: "#EDF3F7" }}>{children}</body>
     </html>
   );
 }
