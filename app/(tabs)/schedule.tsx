@@ -1089,9 +1089,11 @@ const styles = StyleSheet.create({
   },
   dateRow: {
     alignItems: "flex-end",
+    alignSelf: "stretch",
     flexDirection: "row",
     gap: 12,
     justifyContent: "center",
+    overflow: "hidden",
   },
   dateText: {
     color: "#A3CE26",
