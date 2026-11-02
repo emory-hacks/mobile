@@ -32,7 +32,6 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  useWindowDimensions,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -200,12 +199,10 @@ function getScheduleFocusIndex(items: ScheduleEvent[], selectedDate: Date) {
 }
 
 function GradientDateText({
-  compact,
   date,
   direction,
   muted = false,
 }: {
-  compact: boolean;
   date: string;
   direction: "yesterday" | "tomorrow";
   muted?: boolean;
@@ -215,15 +212,7 @@ function GradientDateText({
   return (
     <MaskedView
       maskElement={
-        <Text
-          style={[
-            styles.dateText,
-            compact && styles.compactDateText,
-            styles.gradientDateMask,
-          ]}
-        >
-          {date}
-        </Text>
+        <Text style={[styles.dateText, styles.gradientDateMask]}>{date}</Text>
       }
     >
       <LinearGradient
@@ -235,13 +224,7 @@ function GradientDateText({
         start={{ x: isYesterday ? 0 : 1, y: 0.5 }}
         end={{ x: isYesterday ? 1 : 0, y: 0.5 }}
       >
-        <Text
-          style={[
-            styles.dateText,
-            compact && styles.compactDateText,
-            styles.transparentDateText,
-          ]}
-        >
+        <Text style={[styles.dateText, styles.transparentDateText]}>
           {date}
         </Text>
       </LinearGradient>
@@ -251,8 +234,6 @@ function GradientDateText({
 
 export default function ScheduleScreen() {
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const isCompactLayout = width < 430;
   const navigation = useNavigation();
   const scrollViewRef = useRef<ScrollView>(null);
   const transitionAnim = useRef(new Animated.Value(1)).current;
@@ -601,11 +582,7 @@ export default function ScheduleScreen() {
         <FlowerPattern />
         <View
           pointerEvents="box-none"
-          style={[
-            styles.backToTodaySlot,
-            isCompactLayout && styles.compactBackToTodaySlot,
-            { top: insets.top + 26 },
-          ]}
+          style={[styles.backToTodaySlot, { top: insets.top + 26 }]}
         >
           {!isSelectedDateToday && (
             <Pressable
@@ -633,7 +610,6 @@ export default function ScheduleScreen() {
               <Animated.View
                 style={[
                   styles.backToTodayButton,
-                  isCompactLayout && styles.compactBackToTodayButton,
                   {
                     opacity: todayPressAnim.interpolate({
                       inputRange: [0, 1],
@@ -650,22 +626,12 @@ export default function ScheduleScreen() {
                   },
                 ]}
               >
-                <Text
-                  style={[
-                    styles.backToTodayText,
-                    isCompactLayout && styles.compactBackToTodayText,
-                  ]}
-                >
-                  Back to Today 🐞
-                </Text>
+                <Text style={styles.backToTodayText}>Back to Today 🐞</Text>
               </Animated.View>
             </Pressable>
           )}
         </View>
-        <View
-          style={[styles.dateRow, isCompactLayout && styles.compactDateRow]}
-          {...dateSwipeResponder.panHandlers}
-        >
+        <View style={styles.dateRow} {...dateSwipeResponder.panHandlers}>
           {visibleDates.map((date, index) => {
             const formattedDate = formatDate(date);
             const weekday = formatWeekday(date);
@@ -681,7 +647,6 @@ export default function ScheduleScreen() {
                   <Text
                     style={[
                       styles.weekdayText,
-                      isCompactLayout && styles.compactWeekdayText,
                       !hackathonDate && styles.mutedDateText,
                     ]}
                   >
@@ -691,7 +656,6 @@ export default function ScheduleScreen() {
                     style={[
                       styles.dateText,
                       styles.selectedDateText,
-                      isCompactLayout && styles.compactSelectedDateText,
                       !hackathonDate && styles.mutedDateText,
                     ]}
                   >
@@ -710,7 +674,6 @@ export default function ScheduleScreen() {
                 onPress={() => selectDate(date)}
               >
                 <GradientDateText
-                  compact={isCompactLayout}
                   date={formattedDate}
                   direction={index === 0 ? "yesterday" : "tomorrow"}
                   muted={!hackathonDate}
@@ -1124,18 +1087,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 14,
   },
-  compactBackToTodayButton: {
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-  },
-  compactBackToTodaySlot: {
-    right: 8,
-    width: 104,
-  },
-  compactBackToTodayText: {
-    fontSize: 10,
-    lineHeight: 13,
-  },
   dateRow: {
     alignItems: "flex-end",
     alignSelf: "stretch",
@@ -1150,13 +1101,6 @@ const styles = StyleSheet.create({
     fontSize: 52,
     lineHeight: 62,
   },
-  compactDateRow: {
-    gap: 4,
-  },
-  compactDateText: {
-    fontSize: 44,
-    lineHeight: 54,
-  },
   gradientDateMask: {
     backgroundColor: "transparent",
   },
@@ -1167,10 +1111,6 @@ const styles = StyleSheet.create({
     color: "#A3CE26",
     fontSize: 64,
     lineHeight: 72,
-  },
-  compactSelectedDateText: {
-    fontSize: 56,
-    lineHeight: 64,
   },
   mutedDateText: {
     color: "#9A9A9A",
@@ -1184,10 +1124,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     lineHeight: 30,
     paddingTop: 2,
-  },
-  compactWeekdayText: {
-    fontSize: 22,
-    lineHeight: 27,
   },
   statusText: {
     color: "#777777",
