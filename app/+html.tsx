@@ -27,17 +27,11 @@ export default function Root({ children }: PropsWithChildren) {
           body,
           #root {
             width: 100%;
+            height: 100%;
             min-height: 100%;
             min-height: 100dvh;
             margin: 0;
             background-color: #EDF3F7;
-          }
-
-          body,
-          #root {
-            display: flex;
-            flex: 1;
-            flex-direction: column;
           }
         `}</style>
       </head>
