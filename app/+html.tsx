@@ -16,7 +16,7 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
           name="apple-mobile-web-app-status-bar-style"
-          content="default"
+          content="black-translucent"
         />
         <meta name="apple-mobile-web-app-title" content="Emory Hacks" />
         <link rel="manifest" href="/manifest.json" />
