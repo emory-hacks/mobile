@@ -24,13 +24,7 @@ export default function Root({ children }: PropsWithChildren) {
         <ScrollViewStyleReset />
         <style>{`
           html,
-          body,
-          #root {
-            width: 100%;
-            height: 100%;
-            min-height: 100%;
-            min-height: 100dvh;
-            margin: 0;
+          body {
             background-color: #EDF3F7;
           }
         `}</style>
