@@ -3,7 +3,7 @@ import type { PropsWithChildren } from "react";
 
 export default function Root({ children }: PropsWithChildren) {
   return (
-    <html lang="en" style={{ backgroundColor: "#EDF3F7" }}>
+    <html lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
@@ -22,8 +22,26 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <ScrollViewStyleReset />
+        <style>{`
+          html,
+          body,
+          #root {
+            width: 100%;
+            min-height: 100%;
+            min-height: 100dvh;
+            margin: 0;
+            background-color: #EDF3F7;
+          }
+
+          body,
+          #root {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+          }
+        `}</style>
       </head>
-      <body style={{ backgroundColor: "#EDF3F7" }}>{children}</body>
+      <body>{children}</body>
     </html>
   );
 }
