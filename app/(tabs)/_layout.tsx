@@ -84,6 +84,7 @@ const styles = StyleSheet.create({
   corners: {
     ...StyleSheet.absoluteFillObject,
     opacity: 0.4,
+    overflow: "hidden",
   },
   bottomLeft: {
     position: "absolute",
