@@ -1,4 +1,5 @@
 import { DefaultPfp } from "@/components/home/default-pfp";
+import { API_BASE_URL } from "@/constants/computer-ip";
 import {
   AlanSans_400Regular,
   AlanSans_500Medium,
@@ -7,6 +8,7 @@ import {
 import { Grandstander_900Black } from "@expo-google-fonts/grandstander";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect } from "@react-navigation/native";
+import { fetch } from "expo/fetch";
 import { useFonts } from "expo-font";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -17,6 +19,7 @@ import {
   clearJwt,
   clearRole,
   getEmail,
+  getJwt,
   getRole,
 } from "../../../utils/auth-token";
 import { getInfo } from "../../../utils/user-info";
@@ -99,20 +102,69 @@ export default function SettingsScreen() {
     params.checkedIn,
   ]);
 
+  const signOut = async () => {
+    await clearJwt();
+    await clearEmail();
+    await clearRole();
+    router.replace("/login");
+  };
+
   const handleLogout = () => {
     Alert.alert("Log out", "Are you sure you want to log out?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Log out",
         style: "destructive",
-        onPress: async () => {
-          await clearJwt();
-          await clearEmail();
-          await clearRole();
-          router.replace("/login");
-        },
+        onPress: signOut,
       },
     ]);
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete account",
+      "This permanently deletes your account. This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            const jwt = await getJwt();
+            const accountEmail = email || (await getEmail());
+            if (!jwt || !accountEmail) {
+              Alert.alert(
+                "Delete account",
+                "Could not find your account. Try logging in again.",
+              );
+              return;
+            }
+
+            const response = await fetch(
+              `${API_BASE_URL}/api/users/${encodeURIComponent(accountEmail)}`,
+              {
+                method: "DELETE",
+                credentials: "omit",
+                headers: {
+                  "Content-Type": "application/json",
+                  Cookie: `token=${jwt}`,
+                },
+              },
+            );
+
+            if (!response.ok) {
+              Alert.alert(
+                "Delete account",
+                "Could not delete your account. Please try again.",
+              );
+              return;
+            }
+
+            await signOut();
+          },
+        },
+      ],
+    );
   };
 
   if (!fontsLoaded) {
@@ -202,6 +254,21 @@ export default function SettingsScreen() {
             </Text>
           )}
         </View>
+
+        {!fromScan ? (
+          <Pressable
+            accessibilityLabel="Delete account"
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={handleDeleteAccount}
+            style={({ pressed }) => [
+              styles.deleteButton,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.deleteText}>DELETE ACCOUNT</Text>
+          </Pressable>
+        ) : null}
       </View>
     </SafeAreaView>
   );
@@ -252,6 +319,14 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 32,
     paddingTop: 26,
+  },
+  deleteButton: {
+    marginTop: 40,
+  },
+  deleteText: {
+    color: "#E53935",
+    fontFamily: "AlanSans_500Medium",
+    fontSize: 13,
   },
   identity: {
     flex: 1,

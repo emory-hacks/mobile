@@ -23,12 +23,11 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-
 import { NoticeBar } from "@/components/home/notice-bar";
 import { NoticeDetailComponent } from "@/components/home/notice-detail-component";
 import { NoticeListItem } from "@/components/home/notice-list-item";
 import { ProfileComponent } from "@/components/home/profile-component";
+import { SafeKeyboardAvoidingView } from "@/components/safe-keyboard";
 import { API_BASE_URL } from "@/constants/computer-ip";
 import { getAnnouncements, updateAnnouncement } from "@/services/announcements";
 import type { Announcement } from "@/types/announcement";
@@ -373,7 +372,7 @@ export default function HomePage() {
         transparent
         visible={composeOpen}
       >
-        <KeyboardAvoidingView
+        <SafeKeyboardAvoidingView
           behavior="padding"
           keyboardVerticalOffset={0}
           style={styles.modalBackdrop}
@@ -431,7 +430,7 @@ export default function HomePage() {
               </Pressable>
             </View>
           </View>
-        </KeyboardAvoidingView>
+        </SafeKeyboardAvoidingView>
       </Modal>
     </View>
   );

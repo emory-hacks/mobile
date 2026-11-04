@@ -1,3 +1,4 @@
+import { ErrorBoundary } from "@/components/error-boundary";
 import { FlowerPattern } from "@/components/flower-pattern";
 import { API_BASE_URL } from "@/constants/computer-ip";
 import { getUpcomingEvents } from "@/services/schedule";
@@ -5,7 +6,6 @@ import type { ScheduleEvent } from "@/types/schedule-event";
 import { getJwt, getRole } from "@/utils/auth-token";
 import { Fredoka_700Bold, useFonts } from "@expo-google-fonts/fredoka";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 import { Buffer } from "buffer";
 import * as Brightness from "expo-brightness";
@@ -69,9 +69,15 @@ function emailFromAwardResponse(data: Record<string, unknown>) {
   return "";
 }
 
-const ORIGINAL_BRIGHTNESS_KEY = "originalBrightness";
-
 export default function QRCodeScreen() {
+  return (
+    <ErrorBoundary fallback={<View style={styles.pageContainer} />}>
+      <QRCodeScreenBody />
+    </ErrorBoundary>
+  );
+}
+
+function QRCodeScreenBody() {
   const scanLock = useRef(false);
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
@@ -106,10 +112,20 @@ export default function QRCodeScreen() {
   }, [eventId, upcomingEvents]);
 
   useEffect(() => {
+    let active = true;
+
     (async () => {
-      const role = await getRole();
-      setIsAdmin(!!role && role.includes("admin"));
+      try {
+        const role = await getRole();
+        if (active) setIsAdmin(!!role && role.includes("admin"));
+      } catch {
+        if (active) setIsAdmin(false);
+      }
     })();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   useFocusEffect(
@@ -118,13 +134,6 @@ export default function QRCodeScreen() {
 
       (async () => {
         try {
-          if (Platform.OS !== "android") {
-            const current = await Brightness.getBrightnessAsync();
-            await AsyncStorage.setItem(
-              ORIGINAL_BRIGHTNESS_KEY,
-              String(current),
-            );
-          }
           if (cancelled) return;
           await Brightness.setBrightnessAsync(1);
         } catch {
@@ -134,16 +143,10 @@ export default function QRCodeScreen() {
 
       return () => {
         cancelled = true;
+        if (Platform.OS !== "android") return;
         (async () => {
           try {
-            if (Platform.OS === "android") {
-              await Brightness.restoreSystemBrightnessAsync();
-              return;
-            }
-            const saved = await AsyncStorage.getItem(ORIGINAL_BRIGHTNESS_KEY);
-            if (saved != null) {
-              await Brightness.setBrightnessAsync(Number(saved));
-            }
+            await Brightness.restoreSystemBrightnessAsync();
           } catch {
             // brightness control not available
           }
@@ -732,6 +735,7 @@ export default function QRCodeScreen() {
                   facing="back"
                   mute
                   barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
+                  onMountError={() => setCameraActive(false)}
                   onBarcodeScanned={
                     isLoadingScan ? undefined : handleBarcodeScanned
                   }
