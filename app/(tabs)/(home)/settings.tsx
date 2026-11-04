@@ -10,7 +10,14 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Alert,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   clearEmail,
@@ -99,18 +106,27 @@ export default function SettingsScreen() {
     params.checkedIn,
   ]);
 
+  const performLogout = async () => {
+    await clearJwt();
+    await clearEmail();
+    await clearRole();
+    router.replace("/login");
+  };
+
   const handleLogout = () => {
+    if (Platform.OS === "web") {
+      if (window.confirm("Are you sure you want to log out?")) {
+        void performLogout();
+      }
+      return;
+    }
+
     Alert.alert("Log out", "Are you sure you want to log out?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Log out",
         style: "destructive",
-        onPress: async () => {
-          await clearJwt();
-          await clearEmail();
-          await clearRole();
-          router.replace("/login");
-        },
+        onPress: () => void performLogout(),
       },
     ]);
   };
