@@ -8,6 +8,7 @@ import { router } from "expo-router";
 import { useState } from "react";
 import {
   Image,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -120,6 +121,7 @@ export default function Login() {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
+        credentials: Platform.OS === "web" ? "include" : undefined,
         headers: {
           "Content-Type": "application/json",
         },

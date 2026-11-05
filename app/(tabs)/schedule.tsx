@@ -626,7 +626,7 @@ export default function ScheduleScreen() {
                   },
                 ]}
               >
-                <Text style={styles.backToTodayText}>Today ⏎ 🐞</Text>
+                <Text style={styles.backToTodayText}>Back to Today 🐞</Text>
               </Animated.View>
             </Pressable>
           )}
@@ -1065,32 +1065,35 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   backToTodayButton: {
-    backgroundColor: "#f0e7b8",
-    padding: 4,
-    borderRadius: 5,
-    borderColor: "#4e4933",
+    backgroundColor: "#F3F9E7",
+    borderColor: "#A3CE26",
+    borderRadius: 999,
     borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   backToTodaySlot: {
     alignItems: "center",
-    height: 24,
+    height: 26,
     justifyContent: "center",
     position: "absolute",
-    right: 20,
-    width: 100,
+    right: 12,
+    width: 116,
     zIndex: 1,
   },
   backToTodayText: {
-    color: "#000000",
+    color: "#5F7F00",
     fontFamily: "AlanSans_700Bold",
-    fontSize: 13,
-    lineHeight: 16,
+    fontSize: 11,
+    lineHeight: 14,
   },
   dateRow: {
     alignItems: "flex-end",
+    alignSelf: "stretch",
     flexDirection: "row",
     gap: 12,
     justifyContent: "center",
+    overflow: "hidden",
   },
   dateText: {
     color: "#A3CE26",

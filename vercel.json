@@ -1,0 +1,12 @@
+{
+  "buildCommand": "npm run build:web",
+  "outputDirectory": "dist",
+  "framework": null,
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/backend/:path*",
+      "destination": "https://api-gdff.onrender.com/:path*"
+    }
+  ]
+}

@@ -31,6 +31,7 @@ import { SafeKeyboardAvoidingView } from "@/components/safe-keyboard";
 import { API_BASE_URL } from "@/constants/computer-ip";
 import { getAnnouncements, updateAnnouncement } from "@/services/announcements";
 import type { Announcement } from "@/types/announcement";
+import { authRequest } from "@/utils/auth-request";
 import { getEmail, getJwt } from "@/utils/auth-token";
 import { saveUserSession } from "@/utils/session";
 import { getInfo, saveInfo } from "@/utils/user-info";
@@ -84,15 +85,9 @@ export default function HomePage() {
 
         if (!jwt || !email || !active) return;
 
-        // Use expo/fetch + credentials: "omit" so a manual Cookie header is sent.
-        // RN's built-in fetch treats Cookie as managed and often strips it (403).
         const response = await fetch(`${API_BASE_URL}/api/users/${email}`, {
           method: "GET",
-          credentials: "omit",
-          headers: {
-            "Content-Type": "application/json",
-            Cookie: `token=${jwt}`,
-          },
+          ...authRequest(jwt),
         });
 
         if (!response.ok) {
@@ -214,12 +209,13 @@ export default function HomePage() {
           throw new Error("Please sign in to post announcements.");
         }
 
+        const auth = authRequest(jwt);
         const response = await fetch(`${API_BASE_URL}/api/announcements`, {
           method: "POST",
-          credentials: "omit",
+          ...auth,
           headers: {
+            ...auth.headers,
             "Content-Type": "application/json",
-            Cookie: `token=${jwt}`,
           },
           body: JSON.stringify({
             title,
