@@ -27,11 +27,13 @@ import {
   Keyboard,
   Modal,
   PanResponder,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
+  type TextStyle,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -208,6 +210,26 @@ function GradientDateText({
   muted?: boolean;
 }) {
   const isYesterday = direction === "yesterday";
+  const colors = muted
+    ? ([
+        "rgba(154, 154, 154, 0.28)",
+        "rgba(154, 154, 154, 0.82)",
+      ] as const)
+    : ([
+        "rgba(163, 206, 38, 0.12)",
+        "rgba(163, 206, 38, 0.72)",
+      ] as const);
+
+  if (Platform.OS === "web") {
+    const direction = isYesterday ? "to right" : "to left";
+    const webGradientStyle = {
+      backgroundClip: "text",
+      backgroundImage: `linear-gradient(${direction}, ${colors.join(", ")})`,
+      color: "transparent",
+    } as TextStyle;
+
+    return <Text style={[styles.dateText, webGradientStyle]}>{date}</Text>;
+  }
 
   return (
     <MaskedView
@@ -216,11 +238,7 @@ function GradientDateText({
       }
     >
       <LinearGradient
-        colors={
-          muted
-            ? ["rgba(154, 154, 154, 0.28)", "rgba(154, 154, 154, 0.82)"]
-            : ["rgba(163, 206, 38, 0.12)", "rgba(163, 206, 38, 0.72)"]
-        }
+        colors={colors}
         start={{ x: isYesterday ? 0 : 1, y: 0.5 }}
         end={{ x: isYesterday ? 1 : 0, y: 0.5 }}
       >

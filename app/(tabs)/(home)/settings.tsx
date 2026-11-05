@@ -1,5 +1,6 @@
 import { DefaultPfp } from "@/components/home/default-pfp";
 import { API_BASE_URL } from "@/constants/computer-ip";
+import { authRequest } from "@/utils/auth-request";
 import {
   AlanSans_400Regular,
   AlanSans_500Medium,
@@ -34,6 +35,15 @@ import { getInfo } from "../../../utils/user-info";
 function paramValue(value: string | string[] | undefined): string {
   if (Array.isArray(value)) return value[0] ?? "";
   return value ?? "";
+}
+
+function showMessage(title: string, message: string) {
+  if (Platform.OS === "web") {
+    window.alert(`${title}\n\n${message}`);
+    return;
+  }
+
+  Alert.alert(title, message);
 }
 
 export default function SettingsScreen() {
@@ -134,48 +144,64 @@ export default function SettingsScreen() {
     ]);
   };
 
+  const performDeleteAccount = async () => {
+    const jwt = await getJwt();
+    const accountEmail = email || (await getEmail());
+
+    if (!jwt || !accountEmail) {
+      showMessage(
+        "Delete account",
+        "Could not find your account. Try logging in again.",
+      );
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/users/${encodeURIComponent(accountEmail)}`,
+        {
+          method: "DELETE",
+          ...authRequest(jwt),
+        },
+      );
+
+      if (!response.ok) {
+        showMessage(
+          "Delete account",
+          "Could not delete your account. Please try again.",
+        );
+        return;
+      }
+
+      await performLogout();
+    } catch {
+      showMessage(
+        "Delete account",
+        "Could not connect to the server. Please try again.",
+      );
+    }
+  };
+
   const handleDeleteAccount = () => {
+    const message =
+      "This permanently deletes your account. This cannot be undone.";
+
+    if (Platform.OS === "web") {
+      if (window.confirm(message)) {
+        void performDeleteAccount();
+      }
+      return;
+    }
+
     Alert.alert(
       "Delete account",
-      "This permanently deletes your account. This cannot be undone.",
+      message,
       [
         { text: "Cancel", style: "cancel" },
         {
           text: "Delete",
           style: "destructive",
-          onPress: async () => {
-            const jwt = await getJwt();
-            const accountEmail = email || (await getEmail());
-            if (!jwt || !accountEmail) {
-              Alert.alert(
-                "Delete account",
-                "Could not find your account. Try logging in again.",
-              );
-              return;
-            }
-
-            const response = await fetch(
-              `${API_BASE_URL}/api/users/${encodeURIComponent(accountEmail)}`,
-              {
-                method: "DELETE",
-                credentials: "omit",
-                headers: {
-                  "Content-Type": "application/json",
-                  Cookie: `token=${jwt}`,
-                },
-              },
-            );
-
-            if (!response.ok) {
-              Alert.alert(
-                "Delete account",
-                "Could not delete your account. Please try again.",
-              );
-              return;
-            }
-
-            await performLogout();
-          },
+          onPress: () => void performDeleteAccount(),
         },
       ],
     );
