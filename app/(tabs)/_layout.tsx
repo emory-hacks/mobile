@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   corners: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     opacity: 0.4,
     overflow: "hidden",
   },

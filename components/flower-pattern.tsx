@@ -46,7 +46,7 @@ export function FlowerPattern({ radius = 24 }: FlowerPatternProps) {
 
 const styles = StyleSheet.create({
   clip: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     opacity: 0.14,
     overflow: "hidden",
   },

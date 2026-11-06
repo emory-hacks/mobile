@@ -7,8 +7,7 @@ import { authRequest } from "@/utils/auth-request";
 import { getJwt, getRole } from "@/utils/auth-token";
 import { Fredoka_700Bold, useFonts } from "@expo-google-fonts/fredoka";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useFocusEffect, useIsFocused } from "@react-navigation/native";
-import { Buffer } from "buffer";
+import { useFocusEffect, useIsFocused } from "expo-router";
 import * as Brightness from "expo-brightness";
 import {
   CameraView,
@@ -38,6 +37,15 @@ type ScannedAttendee = {
   checkInValid: boolean;
   email: string;
 };
+
+function arrayBufferToBase64(data: ArrayBuffer) {
+  const bytes = new Uint8Array(data);
+  let binary = "";
+  for (let index = 0; index < bytes.length; index += 1) {
+    binary += String.fromCharCode(bytes[index]);
+  }
+  return btoa(binary);
+}
 
 function formatUsername(name: string) {
   const trimmed = name.trim();
@@ -207,7 +215,7 @@ function QRCodeScreenBody() {
           const contentType =
             response.headers.get("content-type") ?? "image/png";
           const arrayBuffer = await response.arrayBuffer();
-          const base64 = Buffer.from(arrayBuffer).toString("base64");
+          const base64 = arrayBufferToBase64(arrayBuffer);
           if (active) {
             setQrCode(`data:${contentType};base64,${base64}`);
           }
@@ -718,7 +726,7 @@ function QRCodeScreenBody() {
             <View style={styles.scannerViewport}>
               {cameraReady ? (
                 <CameraView
-                  style={StyleSheet.absoluteFillObject}
+                  style={StyleSheet.absoluteFill}
                   facing="back"
                   mute
                   barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
@@ -972,11 +980,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#f2f2f2",
   },
   scannerPlaceholder: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "#dcd6d6",
   },
   crosshair: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1013,7 +1021,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   participantQrTint: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "#fdfdfd",
     mixBlendMode: "multiply",
   },

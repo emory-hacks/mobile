@@ -1,7 +1,8 @@
 /*
 Mainly for finding urls in schedule text and rendering properly
 */
-import { Linking, Text, type TextProps, type TextStyle } from "react-native";
+import type { ComponentProps } from "react";
+import { Linking, Text, type TextStyle } from "react-native";
 import Animated from "react-native-reanimated";
 
 function splitTrailingPunctuation(value: string) {
@@ -15,7 +16,9 @@ const linkStyle: TextStyle = {
   textDecorationLine: "underline",
 };
 
-export function LinkedText({ children, ...rest }: TextProps) {
+type LinkedTextProps = ComponentProps<typeof Animated.Text>;
+
+export function LinkedText({ children, ...rest }: LinkedTextProps) {
   const text = typeof children === "string" ? children : "";
   const parts = text.split(/(https?:\/\/[^\s]+)/gi);
 

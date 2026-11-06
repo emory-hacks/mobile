@@ -14,6 +14,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  type TextInputInstance,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -28,7 +29,7 @@ export default function ForgotPassword() {
   const [awaitingCode, setAwaitingCode] = useState(false);
   const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
   const [submitting, setSubmitting] = useState(false);
-  const digitRefs = useRef<(TextInput | null)[]>([]);
+  const digitRefs = useRef<(TextInputInstance | null)[]>([]);
   const [fontsLoaded] = useFonts({
     Fredoka_600SemiBold,
     Fredoka_700Bold,

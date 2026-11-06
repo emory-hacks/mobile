@@ -14,11 +14,20 @@ import {
   AlanSans_700Bold,
 } from "@expo-google-fonts/alan-sans";
 import { Grandstander_900Black } from "@expo-google-fonts/grandstander";
-import MaskedView from "@react-native-masked-view/masked-view";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import MaskedViewBase from "@react-native-masked-view/masked-view";
+import { useFocusEffect, useNavigation } from "expo-router";
 import { useFonts } from "expo-font";
 import { LinearGradient } from "expo-linear-gradient";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentType,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -30,6 +39,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  type ScrollViewInstance,
   StyleSheet,
   Text,
   TextInput,
@@ -37,6 +47,12 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+// SDK 58 removed NativeMethods, which this package's types still extend.
+const MaskedView = MaskedViewBase as unknown as ComponentType<{
+  children?: ReactNode;
+  maskElement: ReactElement;
+}>;
 
 const ESTIMATED_SCHEDULE_ITEM_HEIGHT = 112;
 const FOCUSED_EVENT_TOP_OFFSET = ESTIMATED_SCHEDULE_ITEM_HEIGHT;
@@ -253,7 +269,7 @@ function GradientDateText({
 export default function ScheduleScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<ScrollViewInstance>(null);
   const transitionAnim = useRef(new Animated.Value(1)).current;
   const todayPressAnim = useRef(new Animated.Value(0)).current;
   const [selectedDate, setSelectedDate] = useState(scheduleHomeDate);
