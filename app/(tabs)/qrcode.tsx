@@ -7,8 +7,8 @@ import { authRequest } from "@/utils/auth-request";
 import { getJwt, getRole } from "@/utils/auth-token";
 import { Fredoka_700Bold, useFonts } from "@expo-google-fonts/fredoka";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useFocusEffect, useIsFocused } from "expo-router";
 import * as Brightness from "expo-brightness";
+import { useFocusEffect, useIsFocused } from "expo-router";
 import {
   CameraView,
   useCameraPermissions,
@@ -140,10 +140,19 @@ function QRCodeScreenBody() {
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
+      let originalBrightness: number | null = null;
 
       (async () => {
+        if (Platform.OS === "ios") {
+          try {
+            originalBrightness = await Brightness.getBrightnessAsync();
+          } catch {
+            // keep going so the screen still brightens
+          }
+        }
+        if (cancelled) return;
+
         try {
-          if (cancelled) return;
           await Brightness.setBrightnessAsync(1);
         } catch {
           // brightness control not available
@@ -152,10 +161,13 @@ function QRCodeScreenBody() {
 
       return () => {
         cancelled = true;
-        if (Platform.OS !== "android") return;
         (async () => {
           try {
-            await Brightness.restoreSystemBrightnessAsync();
+            if (Platform.OS === "android") {
+              await Brightness.restoreSystemBrightnessAsync();
+            } else if (originalBrightness != null) {
+              await Brightness.setBrightnessAsync(originalBrightness);
+            }
           } catch {
             // brightness control not available
           }
