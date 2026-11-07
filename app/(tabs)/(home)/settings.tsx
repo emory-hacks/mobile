@@ -16,6 +16,7 @@ import {
   Alert,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -212,7 +213,12 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView edges={["top"]} style={styles.screen}>
-      <View style={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        style={styles.scroll}
+      >
         <View style={styles.profileHeader}>
           <View style={styles.identity}>
             <View style={styles.nameWrap}>
@@ -308,7 +314,7 @@ export default function SettingsScreen() {
             <Text style={styles.deleteText}>DELETE ACCOUNT</Text>
           </Pressable>
         ) : null}
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -355,9 +361,12 @@ const styles = StyleSheet.create({
     width: 44,
   },
   content: {
-    flex: 1,
+    paddingBottom: 40,
     paddingHorizontal: 32,
     paddingTop: 26,
+  },
+  scroll: {
+    flex: 1,
   },
   deleteButton: {
     marginTop: 40,
