@@ -369,10 +369,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   deleteButton: {
+    alignItems: "center",
+    backgroundColor: "#E53935",
+    borderRadius: 12,
+    justifyContent: "center",
     marginTop: 40,
+    minHeight: 48,
+    paddingHorizontal: 20,
   },
   deleteText: {
-    color: "#E53935",
+    color: "#FFFFFF",
     fontFamily: "AlanSans_500Medium",
     fontSize: 13,
   },

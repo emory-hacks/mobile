@@ -1,4 +1,3 @@
-import { FlowerPattern } from "@/components/flower-pattern";
 import { DefaultPfp } from "@/components/home/default-pfp";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -22,7 +21,6 @@ export function ProfileComponent({
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        <FlowerPattern />
         <View style={{ paddingTop: insets.top }}>
           <View style={styles.headingRow}>
             <Text style={styles.greeting}>Emory Hacks 2026</Text>

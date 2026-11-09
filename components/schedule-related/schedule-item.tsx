@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingBottom: 14,
     paddingLeft: 12,
-    paddingRight: 28,
+    paddingRight: 16,
     paddingTop: 14,
   },
   expandedBodyText: {
@@ -375,9 +375,9 @@ const styles = StyleSheet.create({
   leftColumn: {
     alignItems: "flex-end",
     minHeight: 112,
-    paddingRight: 8,
+    paddingRight: 6,
     paddingTop: 16,
-    width: 96,
+    width: 72,
   },
   metadataPill: {
     backgroundColor: "#F3F3F3",
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
   },
   timeline: {
     bottom: 0,
-    left: 96,
+    left: 72,
     position: "absolute",
     top: 0,
     width: 1,
