@@ -1,4 +1,3 @@
-import { FlowerPattern } from "@/components/flower-pattern";
 import { SafeKeyboardAvoidingView } from "@/components/safe-keyboard";
 import ScheduleItem from "@/components/schedule-related/schedule-item";
 import {
@@ -612,8 +611,8 @@ export default function ScheduleScreen() {
 
   return (
     <View style={styles.screen}>
-      <View style={[styles.header, { paddingTop: insets.top + 24 }]}>
-        <FlowerPattern />
+      <View style={styles.contentShell}>
+        <View style={[styles.header, { paddingTop: insets.top + 24 }]}>
         <View
           pointerEvents="box-none"
           style={[styles.backToTodaySlot, { top: insets.top + 26 }]}
@@ -716,30 +715,30 @@ export default function ScheduleScreen() {
             );
           })}
         </View>
-      </View>
+        </View>
 
-      <View style={styles.panel}>
-        <View style={styles.panelContent}>
-          <ScrollView
-            ref={scrollViewRef}
-            style={styles.scrollView}
-            contentContainerStyle={[
-              styles.scrollContent,
-              {
-                paddingBottom: insets.bottom + 32,
-              },
-            ]}
-            showsVerticalScrollIndicator={false}
-          >
-            <Animated.View style={transitionStyle}>
-              {isLoadingSchedule ? (
-                <Text style={styles.statusText}>Loading schedule...</Text>
-              ) : scheduleError ? (
-                <Text style={styles.errorText}>{scheduleError}</Text>
-              ) : selectedScheduleItems.length === 0 ? (
-                <Text style={styles.statusText}>No events scheduled.</Text>
-              ) : (
-                selectedScheduleItems.map((item) => {
+        <View style={styles.panel}>
+          <View style={styles.panelContent}>
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.scrollView}
+              contentContainerStyle={[
+                styles.scrollContent,
+                {
+                  paddingBottom: insets.bottom + 32,
+                },
+              ]}
+              showsVerticalScrollIndicator={false}
+            >
+              <Animated.View style={transitionStyle}>
+                {isLoadingSchedule ? (
+                  <Text style={styles.statusText}>Loading schedule...</Text>
+                ) : scheduleError ? (
+                  <Text style={styles.errorText}>{scheduleError}</Text>
+                ) : selectedScheduleItems.length === 0 ? (
+                  <Text style={styles.statusText}>No events scheduled.</Text>
+                ) : (
+                  selectedScheduleItems.map((item) => {
                   const itemKey = `${item.startTime}-${item.title}`;
                   const now = new Date();
                   // Green means this event is happening now.
@@ -751,8 +750,8 @@ export default function ScheduleScreen() {
                     isSelectedDatePast ||
                     (!isActive && new Date(item.endTime) <= now);
 
-                  return (
-                    <ScheduleItem
+                    return (
+                      <ScheduleItem
                       key={itemKey}
                       time={formatEventTime(item.startTime)}
                       title={item.title}
@@ -769,23 +768,24 @@ export default function ScheduleScreen() {
                       onEdit={() => openEdit(item)}
                       onPress={() => toggleSchedule(itemKey)}
                       showEdit={isAdmin}
-                    />
-                  );
-                })
-              )}
-            </Animated.View>
-          </ScrollView>
+                      />
+                    );
+                  })
+                )}
+              </Animated.View>
+            </ScrollView>
 
-          <LinearGradient
-            colors={[
-              "rgba(237, 243, 247, 0)",
-              "rgba(237, 243, 247, 0.72)",
-              "rgba(237, 243, 247, 0.98)",
-            ]}
-            locations={[0, 0.55, 1]}
-            pointerEvents="none"
-            style={styles.scheduleFade}
-          />
+            <LinearGradient
+              colors={[
+                "rgba(237, 243, 247, 0)",
+                "rgba(237, 243, 247, 0.72)",
+                "rgba(237, 243, 247, 0.98)",
+              ]}
+              locations={[0, 0.55, 1]}
+              pointerEvents="none"
+              style={styles.scheduleFade}
+            />
+          </View>
         </View>
       </View>
 
@@ -1071,6 +1071,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingTop: 40,
     textAlign: "center",
+  },
+  contentShell: {
+    alignSelf: "center",
+    flex: 1,
+    maxWidth: 900,
+    width: "100%",
   },
   screen: {
     backgroundColor: "#EDF3F7",

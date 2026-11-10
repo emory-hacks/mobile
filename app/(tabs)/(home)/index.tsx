@@ -10,7 +10,7 @@ import { useFonts } from "expo-font";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useNavigation, useRouter } from "expo-router";
 import { fetch } from "expo/fetch";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -22,8 +22,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { NoticeBar } from "@/components/home/notice-bar";
-import { NoticeDetailComponent } from "@/components/home/notice-detail-component";
 import { NoticeListItem } from "@/components/home/notice-list-item";
 import { ProfileComponent } from "@/components/home/profile-component";
 import { SafeKeyboardAvoidingView } from "@/components/safe-keyboard";
@@ -35,13 +33,20 @@ import { getEmail, getJwt } from "@/utils/auth-token";
 import { saveUserSession } from "@/utils/session";
 import { getInfo, saveInfo } from "@/utils/user-info";
 
+function announcementKey(notice: Announcement) {
+  return `${notice.createdAt}|${notice.publisher}`;
+}
+
 export default function HomePage() {
   const navigation = useNavigation();
   const router = useRouter();
-  const [isNoticeExpanded, setIsNoticeExpanded] = useState(false);
-  const [lastReadCreatedAt, setLastReadCreatedAt] = useState<string | null>(
-    null,
+  const [readAnnouncementKeys, setReadAnnouncementKeys] = useState<string[]>(
+    [],
   );
+  const readAnnouncementKeysRef = useRef<string[]>([]);
+  const [expandedAnnouncementKey, setExpandedAnnouncementKey] = useState<
+    string | null
+  >(null);
   const [fontsLoaded] = useFonts({
     AlanSans_400Regular,
     AlanSans_500Medium,
@@ -65,12 +70,6 @@ export default function HomePage() {
   const [announcementError, setAnnouncementError] = useState<string | null>(
     null,
   );
-
-  const featuredAnnouncement = announcements[0];
-  const followingAnnouncements = announcements.slice(1);
-  const showUnreadNotice =
-    !!featuredAnnouncement &&
-    featuredAnnouncement.createdAt !== lastReadCreatedAt;
 
   useFocusEffect(
     //this will mount every time the tab is focused on. change back to useEffect
@@ -125,12 +124,16 @@ export default function HomePage() {
           new Date(right.createdAt).getTime() -
           new Date(left.createdAt).getTime(),
       );
-      const savedCreatedAt = await getInfo("lastReadAnnouncement");
+      const savedReadKeys = await getInfo("readAnnouncements");
+      const parsedReadKeys = savedReadKeys
+        ? (JSON.parse(savedReadKeys) as unknown)
+        : [];
+      const nextReadKeys = Array.isArray(parsedReadKeys)
+        ? parsedReadKeys.filter((value): value is string => typeof value === "string")
+        : [];
 
-      setLastReadCreatedAt(savedCreatedAt);
-      if (newestFirst[0]?.createdAt !== savedCreatedAt) {
-        setIsNoticeExpanded(false);
-      }
+      readAnnouncementKeysRef.current = nextReadKeys;
+      setReadAnnouncementKeys(nextReadKeys);
       setAnnouncements(newestFirst);
       if (silent) setAnnouncementError(null);
     } catch (error) {
@@ -146,13 +149,26 @@ export default function HomePage() {
     }
   }, []);
 
-  const handleNoticePress = async () => {
-    if (!featuredAnnouncement) return;
+  const markAnnouncementRead = useCallback(async (notice: Announcement) => {
+    const key = announcementKey(notice);
+    if (readAnnouncementKeysRef.current.includes(key)) return;
 
-    setIsNoticeExpanded(true);
-    setLastReadCreatedAt(featuredAnnouncement.createdAt);
-    await saveInfo("lastReadAnnouncement", featuredAnnouncement.createdAt);
-  };
+    const nextReadKeys = [...readAnnouncementKeysRef.current, key];
+    readAnnouncementKeysRef.current = nextReadKeys;
+    setReadAnnouncementKeys(nextReadKeys);
+    await saveInfo("readAnnouncements", JSON.stringify(nextReadKeys));
+  }, []);
+
+  const handleAnnouncementPress = useCallback(
+    (notice: Announcement) => {
+      const key = announcementKey(notice);
+      setExpandedAnnouncementKey((current) =>
+        current === key ? null : key,
+      );
+      void markAnnouncementRead(notice);
+    },
+    [markAnnouncementRead],
+  );
 
   const openCreate = () => {
     setEditingAnnouncement(null);
@@ -283,83 +299,73 @@ export default function HomePage() {
 
   return (
     <View style={styles.screen}>
-      <View style={{ paddingTop: 0 }}>
+      <View style={styles.contentShell}>
         <ProfileComponent
           isAdmin={isAdmin}
           name={name}
           onSettingsPress={() => router.push("/settings")}
           teamName={teamName}
         />
-      </View>
 
-      <View style={styles.noticeSection}>
-        {isLoadingAnnouncements ? (
-          <Text style={styles.statusText}>Loading announcements...</Text>
-        ) : announcementError ? (
-          <Text style={styles.errorText}>{announcementError}</Text>
-        ) : !featuredAnnouncement ? (
-          <Text style={styles.statusText}>No announcements yet.</Text>
-        ) : (
-          <>
-            {showUnreadNotice && (
-              <View style={styles.featuredNotice}>
-                <NoticeBar
-                  notice={featuredAnnouncement}
-                  onPress={handleNoticePress}
-                />
-              </View>
-            )}
+        <View style={styles.noticeSection}>
+          {isLoadingAnnouncements ? (
+            <Text style={styles.statusText}>Loading announcements...</Text>
+          ) : announcementError ? (
+            <Text style={styles.errorText}>{announcementError}</Text>
+        ) : announcements.length === 0 ? (
+            <Text style={styles.statusText}>No announcements yet.</Text>
+          ) : (
+          <View style={styles.noticeListViewport}>
+            <ScrollView
+              contentContainerStyle={styles.noticeList}
+              showsVerticalScrollIndicator={false}
+              style={styles.noticeScroll}
+            >
+              {announcements.map((notice, index) => {
+                const readKey = announcementKey(notice);
+                return (
+                  <NoticeListItem
+                    isExpanded={expandedAnnouncementKey === readKey}
+                    isUnread={!readAnnouncementKeys.includes(readKey)}
+                    key={`${notice.createdAt}-${notice.publisher}-${notice.title}`}
+                    nextNotice={announcements[index + 1]}
+                    notice={notice}
+                    onEdit={isAdmin ? openEdit : undefined}
+                    onPress={() => handleAnnouncementPress(notice)}
+                    previousNotice={announcements[index - 1]}
+                  />
+                );
+              })}
+            </ScrollView>
 
-            {isNoticeExpanded ? (
-              <NoticeDetailComponent
-                followingNotices={followingAnnouncements}
-                notice={featuredAnnouncement}
-                onClose={() => setIsNoticeExpanded(false)}
-              />
-            ) : (
-              <View style={styles.noticeListViewport}>
-                <ScrollView
-                  contentContainerStyle={styles.noticeList}
-                  showsVerticalScrollIndicator={false}
-                  style={styles.noticeScroll}
-                >
-                  {announcements.map((notice, index) => (
-                    <NoticeListItem
-                      key={`${notice.createdAt}-${notice.publisher}-${notice.title}`}
-                      nextNotice={announcements[index + 1]}
-                      notice={notice}
-                      onEdit={isAdmin ? openEdit : undefined}
-                      previousNotice={announcements[index - 1]}
-                    />
-                  ))}
-                </ScrollView>
+            <LinearGradient
+              colors={[
+                "rgba(237, 243, 247, 0)",
+                "rgba(237, 243, 247, 0.72)",
+                "rgba(237, 243, 247, 0.98)",
+              ]}
+              locations={[0, 0.55, 1]}
+              pointerEvents="none"
+              style={styles.noticeFade}
+            />
+          </View>
+          )}
+        </View>
 
-                <LinearGradient
-                  colors={[
-                    "rgba(237, 243, 247, 0)",
-                    "rgba(237, 243, 247, 0.72)",
-                    "rgba(237, 243, 247, 0.98)",
-                  ]}
-                  locations={[0, 0.55, 1]}
-                  pointerEvents="none"
-                  style={styles.noticeFade}
-                />
-              </View>
-            )}
-          </>
+        {isAdmin && (
+          <Pressable
+            accessibilityLabel="Create announcement"
+            accessibilityRole="button"
+            onPress={openCreate}
+            style={({ pressed }) => [
+              styles.fab,
+              { opacity: pressed ? 0.85 : 1 },
+            ]}
+          >
+            <Ionicons color="#FFFFFF" name="add" size={32} />
+          </Pressable>
         )}
       </View>
-
-      {isAdmin && (
-        <Pressable
-          accessibilityLabel="Create announcement"
-          accessibilityRole="button"
-          onPress={openCreate}
-          style={({ pressed }) => [styles.fab, { opacity: pressed ? 0.85 : 1 }]}
-        >
-          <Ionicons color="#FFFFFF" name="add" size={32} />
-        </Pressable>
-      )}
 
       <Modal
         animationType="slide"
@@ -459,6 +465,12 @@ const styles = StyleSheet.create({
     fontFamily: "AlanSans_500Medium",
     fontSize: 15,
   },
+  contentShell: {
+    alignSelf: "center",
+    flex: 1,
+    maxWidth: 900,
+    width: "100%",
+  },
   errorText: {
     color: "#C93D2A",
     fontFamily: "AlanSans_400Regular",
@@ -481,11 +493,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     width: 56,
-  },
-  featuredNotice: {
-    height: 40,
-    marginBottom: 28,
-    marginHorizontal: 32,
   },
   modalActions: {
     flexDirection: "row",

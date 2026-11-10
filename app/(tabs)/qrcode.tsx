@@ -1,10 +1,9 @@
 import { ErrorBoundary } from "@/components/error-boundary";
-import { FlowerPattern } from "@/components/flower-pattern";
 import { API_BASE_URL } from "@/constants/computer-ip";
 import { getUpcomingEvents } from "@/services/schedule";
 import type { ScheduleEvent } from "@/types/schedule-event";
 import { authRequest } from "@/utils/auth-request";
-import { getJwt, getRole } from "@/utils/auth-token";
+import { getEmail, getJwt, getRole } from "@/utils/auth-token";
 import { Fredoka_700Bold, useFonts } from "@expo-google-fonts/fredoka";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Brightness from "expo-brightness";
@@ -101,6 +100,9 @@ function QRCodeScreenBody() {
     Fredoka_700Bold,
   });
   const [qrCode, setQrCode] = useState("");
+  const [participantPoints, setParticipantPoints] = useState<number | null>(
+    null,
+  );
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [upcomingEvents, setUpcomingEvents] = useState<ScheduleEvent[]>([]);
   const [eventId, setEventId] = useState("");
@@ -211,28 +213,42 @@ function QRCodeScreenBody() {
       let active = true;
       (async () => {
         try {
-          const jwt = await getJwt();
-          if (!jwt) return;
+          const [jwt, email] = await Promise.all([getJwt(), getEmail()]);
+          if (!jwt || !email) return;
 
-          const response = await fetch(`${API_BASE_URL}/api/users/me/qr`, {
-            method: "GET",
-            ...authRequest(jwt),
-          });
+          const [qrResponse, userResponse] = await Promise.all([
+            fetch(`${API_BASE_URL}/api/users/me/qr`, {
+              method: "GET",
+              ...authRequest(jwt),
+            }),
+            fetch(`${API_BASE_URL}/api/users/${encodeURIComponent(email)}`, {
+              method: "GET",
+              ...authRequest(jwt),
+            }),
+          ]);
 
-          if (!response.ok) {
-            console.log(response.status, await response.text());
-            return;
+          if (qrResponse.ok) {
+            const contentType =
+              qrResponse.headers.get("content-type") ?? "image/png";
+            const arrayBuffer = await qrResponse.arrayBuffer();
+            const base64 = arrayBufferToBase64(arrayBuffer);
+            if (active) {
+              setQrCode(`data:${contentType};base64,${base64}`);
+            }
+          } else {
+            console.log(qrResponse.status, await qrResponse.text());
           }
 
-          const contentType =
-            response.headers.get("content-type") ?? "image/png";
-          const arrayBuffer = await response.arrayBuffer();
-          const base64 = arrayBufferToBase64(arrayBuffer);
-          if (active) {
-            setQrCode(`data:${contentType};base64,${base64}`);
+          if (userResponse.ok) {
+            const userData = (await userResponse.json()) as {
+              points?: unknown;
+            };
+            if (active) setParticipantPoints(Number(userData.points ?? 0));
+          } else {
+            console.log(userResponse.status, await userResponse.text());
           }
         } catch (error) {
-          console.log("Failed to load QR code", error);
+          console.log("Failed to load participant QR information", error);
         }
       })();
 
@@ -533,7 +549,6 @@ function QRCodeScreenBody() {
             { paddingTop: Math.max(insets.top, 16) + 8 },
           ]}
         >
-          <FlowerPattern radius={28} />
           <View style={styles.titleRow}>
             <View style={styles.scanTitleGroup}>
               <Text
@@ -542,13 +557,8 @@ function QRCodeScreenBody() {
                   fontsLoaded && { fontFamily: "Fredoka_700Bold" },
                 ]}
               >
-                Scan
+                QR Code
               </Text>
-              <Image
-                accessibilityIgnoresInvertColors
-                source={require("@/assets/images/bug-caterpillar.png")}
-                style={styles.scanBug}
-              />
             </View>
           </View>
 
@@ -583,59 +593,62 @@ function QRCodeScreenBody() {
             </Pressable>
           </View>
 
-          <View style={styles.selectorRow}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.selectorButton,
-                styles.purchaseButton,
-                isPurchaseEvent(eventId) && styles.purchaseButtonSelected,
-                pressed && styles.selectorButtonPressed,
-              ]}
-              onPress={() => setEventId(PURCHASE_EVENT_ID)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: isPurchaseEvent(eventId) }}
-              accessibilityLabel="Select purchase"
-            >
-              <Text
-                numberOfLines={1}
-                style={[
-                  styles.selectorButtonText,
-                  styles.purchaseButtonText,
-                  isPurchaseEvent(eventId) && styles.selectorButtonTextSelected,
+          {upcomingEvents.length > 0 ? (
+            <View style={styles.selectorRow}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.selectorButton,
+                  styles.purchaseButton,
+                  isPurchaseEvent(eventId) && styles.purchaseButtonSelected,
+                  pressed && styles.selectorButtonPressed,
                 ]}
+                onPress={() => setEventId(PURCHASE_EVENT_ID)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isPurchaseEvent(eventId) }}
+                accessibilityLabel="Select purchase"
               >
-                Purchase
-              </Text>
-            </Pressable>
-            {upcomingEvents.map((event) => {
-              const id = eventKey(event);
-              const selected = eventId === id;
-              return (
-                <Pressable
-                  key={`${event.startTime}-${id}`}
-                  style={({ pressed }) => [
-                    styles.selectorButton,
-                    selected && styles.selectorButtonSelected,
-                    pressed && styles.selectorButtonPressed,
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles.selectorButtonText,
+                    styles.purchaseButtonText,
+                    isPurchaseEvent(eventId) &&
+                      styles.selectorButtonTextSelected,
                   ]}
-                  onPress={() => setEventId(id)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={`Select event ${event.title}`}
                 >
-                  <Text
-                    numberOfLines={1}
-                    style={[
-                      styles.selectorButtonText,
-                      selected && styles.selectorButtonTextSelected,
+                  Purchase
+                </Text>
+              </Pressable>
+              {upcomingEvents.map((event) => {
+                const id = eventKey(event);
+                const selected = eventId === id;
+                return (
+                  <Pressable
+                    key={`${event.startTime}-${id}`}
+                    style={({ pressed }) => [
+                      styles.selectorButton,
+                      selected && styles.selectorButtonSelected,
+                      pressed && styles.selectorButtonPressed,
                     ]}
+                    onPress={() => setEventId(id)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    accessibilityLabel={`Select event ${event.title}`}
                   >
-                    {event.title}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+                    <Text
+                      numberOfLines={1}
+                      style={[
+                        styles.selectorButtonText,
+                        selected && styles.selectorButtonTextSelected,
+                      ]}
+                    >
+                      {event.title}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : null}
           {upcomingEvents.length === 0 ? (
             <Text style={styles.selectorEmptyText}>
               No events in the next 30 minutes
@@ -783,7 +796,6 @@ function QRCodeScreenBody() {
           { paddingTop: Math.max(insets.top, 16) + 8 },
         ]}
       >
-        <FlowerPattern radius={28} />
         <View style={styles.titleRow}>
           <View style={styles.scanTitleGroup}>
             <Text
@@ -792,13 +804,8 @@ function QRCodeScreenBody() {
                 fontsLoaded && { fontFamily: "Fredoka_700Bold" },
               ]}
             >
-              Show
+              QR Code
             </Text>
-            <Image
-              accessibilityIgnoresInvertColors
-              source={require("@/assets/images/bug-caterpillar.png")}
-              style={styles.scanBug}
-            />
           </View>
         </View>
       </View>
@@ -809,6 +816,13 @@ function QRCodeScreenBody() {
           <View style={styles.participantQr}>
             <Image source={{ uri: qrCode }} style={styles.participantQrImage} />
             <View pointerEvents="none" style={styles.participantQrTint} />
+          </View>
+        ) : null}
+        {participantPoints !== null ? (
+          <View style={styles.participantPointsCard}>
+            <Text style={styles.participantPointsText}>
+              Total points: {participantPoints}
+            </Text>
           </View>
         ) : null}
         <Text style={styles.instructionText}>
@@ -855,12 +869,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     gap: 10,
-  },
-  scanBug: {
-    height: 44,
-    width: 132,
-    marginLeft: 10,
-    marginTop: 10,
   },
   searchRow: {
     flexDirection: "row",
@@ -913,6 +921,7 @@ const styles = StyleSheet.create({
   },
   purchaseButton: {
     flex: 0,
+    minWidth: 96,
     backgroundColor: "#FDECEC",
     borderWidth: 1,
     borderColor: "#E53935",
@@ -1036,6 +1045,18 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     backgroundColor: "#fdfdfd",
     mixBlendMode: "multiply",
+  },
+  participantPointsCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    marginTop: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  participantPointsText: {
+    color: "#111111",
+    fontSize: 18,
+    fontWeight: "700",
   },
   instructionHighlight: {
     color: "#A3CE26",
