@@ -14,18 +14,18 @@ import {
 } from "@expo-google-fonts/alan-sans";
 import { Grandstander_900Black } from "@expo-google-fonts/grandstander";
 import MaskedViewBase from "@react-native-masked-view/masked-view";
-import { useFocusEffect, useNavigation } from "expo-router";
 import { useFonts } from "expo-font";
 import { LinearGradient } from "expo-linear-gradient";
+import { useFocusEffect, useNavigation } from "expo-router";
 import {
+  type ComponentType,
+  type ReactElement,
+  type ReactNode,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
-  type ComponentType,
-  type ReactElement,
-  type ReactNode,
 } from "react";
 import {
   ActivityIndicator,
@@ -226,14 +226,8 @@ function GradientDateText({
 }) {
   const isYesterday = direction === "yesterday";
   const colors = muted
-    ? ([
-        "rgba(154, 154, 154, 0.28)",
-        "rgba(154, 154, 154, 0.82)",
-      ] as const)
-    : ([
-        "rgba(163, 206, 38, 0.12)",
-        "rgba(163, 206, 38, 0.72)",
-      ] as const);
+    ? (["rgba(154, 154, 154, 0.28)", "rgba(154, 154, 154, 0.82)"] as const)
+    : (["rgba(163, 206, 38, 0.12)", "rgba(163, 206, 38, 0.72)"] as const);
 
   if (Platform.OS === "web") {
     const direction = isYesterday ? "to right" : "to left";
@@ -360,15 +354,21 @@ export default function ScheduleScreen() {
     loadSchedule();
   }, [loadSchedule]);
 
-  //refresh while the user is on home or qr, so opening schedule does not reload
+  // Refresh while the user is on home or QR, so opening schedule does not reload.
+  // Schedule is a direct tab, so its own navigation state is the tab navigator.
   useEffect(() => {
     let tabs = navigation.getParent();
-    while (tabs) {
-      const names = tabs.getState()?.routeNames ?? [];
-      if (names.includes("(home)") && names.includes("qrcode")) {
-        break;
+    const ownNames = navigation.getState()?.routeNames ?? [];
+    if (ownNames.includes("(home)") && ownNames.includes("qrcode")) {
+      tabs = navigation;
+    } else {
+      while (tabs) {
+        const names = tabs.getState()?.routeNames ?? [];
+        if (names.includes("(home)") || names.includes("qrcode")) {
+          break;
+        }
+        tabs = tabs.getParent();
       }
-      tabs = tabs.getParent();
     }
     if (!tabs) {
       return;
@@ -613,108 +613,108 @@ export default function ScheduleScreen() {
     <View style={styles.screen}>
       <View style={styles.contentShell}>
         <View style={[styles.header, { paddingTop: insets.top + 24 }]}>
-        <View
-          pointerEvents="box-none"
-          style={[styles.backToTodaySlot, { top: insets.top + 26 }]}
-        >
-          {!isSelectedDateToday && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Back to today's schedule"
-              hitSlop={8}
-              onPress={() => selectDate(new Date())}
-              onPressIn={() => {
-                Animated.timing(todayPressAnim, {
-                  toValue: 1,
-                  duration: 80,
-                  easing: Easing.out(Easing.quad),
-                  useNativeDriver: true,
-                }).start();
-              }}
-              onPressOut={() => {
-                Animated.timing(todayPressAnim, {
-                  toValue: 0,
-                  duration: 110,
-                  easing: Easing.out(Easing.quad),
-                  useNativeDriver: true,
-                }).start();
-              }}
-            >
-              <Animated.View
-                style={[
-                  styles.backToTodayButton,
-                  {
-                    opacity: todayPressAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [1, 0.65],
-                    }),
-                    transform: [
-                      {
-                        scale: todayPressAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [1, 0.94],
-                        }),
-                      },
-                    ],
-                  },
-                ]}
-              >
-                <Text style={styles.backToTodayText}>Back to Today 🐞</Text>
-              </Animated.View>
-            </Pressable>
-          )}
-        </View>
-        <View style={styles.dateRow} {...dateSwipeResponder.panHandlers}>
-          {visibleDates.map((date, index) => {
-            const formattedDate = formatDate(date);
-            const weekday = formatWeekday(date);
-            const isSelected = index === 1;
-            const hackathonDate = isHackathonDate(date);
-
-            if (isSelected) {
-              return (
-                <Animated.View
-                  key={formattedDate}
-                  style={[styles.selectedDateColumn, selectedDateStyle]}
-                >
-                  <Text
-                    style={[
-                      styles.weekdayText,
-                      !hackathonDate && styles.mutedDateText,
-                    ]}
-                  >
-                    {weekday}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.dateText,
-                      styles.selectedDateText,
-                      !hackathonDate && styles.mutedDateText,
-                    ]}
-                  >
-                    {formattedDate}
-                  </Text>
-                </Animated.View>
-              );
-            }
-
-            return (
+          <View
+            pointerEvents="box-none"
+            style={[styles.backToTodaySlot, { top: insets.top + 26 }]}
+          >
+            {!isSelectedDateToday && (
               <Pressable
-                key={formattedDate}
                 accessibilityRole="button"
-                accessibilityLabel={`View schedule for ${formattedDate}`}
-                hitSlop={12}
-                onPress={() => selectDate(date)}
+                accessibilityLabel="Back to today's schedule"
+                hitSlop={8}
+                onPress={() => selectDate(new Date())}
+                onPressIn={() => {
+                  Animated.timing(todayPressAnim, {
+                    toValue: 1,
+                    duration: 80,
+                    easing: Easing.out(Easing.quad),
+                    useNativeDriver: true,
+                  }).start();
+                }}
+                onPressOut={() => {
+                  Animated.timing(todayPressAnim, {
+                    toValue: 0,
+                    duration: 110,
+                    easing: Easing.out(Easing.quad),
+                    useNativeDriver: true,
+                  }).start();
+                }}
               >
-                <GradientDateText
-                  date={formattedDate}
-                  direction={index === 0 ? "yesterday" : "tomorrow"}
-                  muted={!hackathonDate}
-                />
+                <Animated.View
+                  style={[
+                    styles.backToTodayButton,
+                    {
+                      opacity: todayPressAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [1, 0.65],
+                      }),
+                      transform: [
+                        {
+                          scale: todayPressAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [1, 0.94],
+                          }),
+                        },
+                      ],
+                    },
+                  ]}
+                >
+                  <Text style={styles.backToTodayText}>Back to Today 🐞</Text>
+                </Animated.View>
               </Pressable>
-            );
-          })}
-        </View>
+            )}
+          </View>
+          <View style={styles.dateRow} {...dateSwipeResponder.panHandlers}>
+            {visibleDates.map((date, index) => {
+              const formattedDate = formatDate(date);
+              const weekday = formatWeekday(date);
+              const isSelected = index === 1;
+              const hackathonDate = isHackathonDate(date);
+
+              if (isSelected) {
+                return (
+                  <Animated.View
+                    key={formattedDate}
+                    style={[styles.selectedDateColumn, selectedDateStyle]}
+                  >
+                    <Text
+                      style={[
+                        styles.weekdayText,
+                        !hackathonDate && styles.mutedDateText,
+                      ]}
+                    >
+                      {weekday}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.dateText,
+                        styles.selectedDateText,
+                        !hackathonDate && styles.mutedDateText,
+                      ]}
+                    >
+                      {formattedDate}
+                    </Text>
+                  </Animated.View>
+                );
+              }
+
+              return (
+                <Pressable
+                  key={formattedDate}
+                  accessibilityRole="button"
+                  accessibilityLabel={`View schedule for ${formattedDate}`}
+                  hitSlop={12}
+                  onPress={() => selectDate(date)}
+                >
+                  <GradientDateText
+                    date={formattedDate}
+                    direction={index === 0 ? "yesterday" : "tomorrow"}
+                    muted={!hackathonDate}
+                  />
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
 
         <View style={styles.panel}>
@@ -739,35 +739,35 @@ export default function ScheduleScreen() {
                   <Text style={styles.statusText}>No events scheduled.</Text>
                 ) : (
                   selectedScheduleItems.map((item) => {
-                  const itemKey = `${item.startTime}-${item.title}`;
-                  const now = new Date();
-                  // Green means this event is happening now.
-                  const isActive =
-                    isSameDay(selectedDate, now) &&
-                    new Date(item.startTime) <= now &&
-                    now < new Date(item.endTime);
-                  const isPassed =
-                    isSelectedDatePast ||
-                    (!isActive && new Date(item.endTime) <= now);
+                    const itemKey = `${item.startTime}-${item.title}`;
+                    const now = new Date();
+                    // Green means this event is happening now.
+                    const isActive =
+                      isSameDay(selectedDate, now) &&
+                      new Date(item.startTime) <= now &&
+                      now < new Date(item.endTime);
+                    const isPassed =
+                      isSelectedDatePast ||
+                      (!isActive && new Date(item.endTime) <= now);
 
                     return (
                       <ScheduleItem
-                      key={itemKey}
-                      time={formatEventTime(item.startTime)}
-                      title={item.title}
-                      startTime={formatEventTime(item.startTime)}
-                      endTime={formatEventTime(item.endTime)}
-                      location={item.location}
-                      points={item.points}
-                      isDeadline={item.isDeadline === true}
-                      body={item.body}
-                      isActive={isActive}
-                      isExpanded={expandedScheduleId === itemKey}
-                      isPassed={isPassed}
-                      activeDate={formatFullDate(selectedDate)}
-                      onEdit={() => openEdit(item)}
-                      onPress={() => toggleSchedule(itemKey)}
-                      showEdit={isAdmin}
+                        key={itemKey}
+                        time={formatEventTime(item.startTime)}
+                        title={item.title}
+                        startTime={formatEventTime(item.startTime)}
+                        endTime={formatEventTime(item.endTime)}
+                        location={item.location}
+                        points={item.points}
+                        isDeadline={item.isDeadline === true}
+                        body={item.body}
+                        isActive={isActive}
+                        isExpanded={expandedScheduleId === itemKey}
+                        isPassed={isPassed}
+                        activeDate={formatFullDate(selectedDate)}
+                        onEdit={() => openEdit(item)}
+                        onPress={() => toggleSchedule(itemKey)}
+                        showEdit={isAdmin}
                       />
                     );
                   })
