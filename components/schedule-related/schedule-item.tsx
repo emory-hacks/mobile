@@ -204,7 +204,7 @@ export default function ScheduleItem({
               {startTime} ~ {endTime}
             </Animated.Text>
           </Animated.View>
-          {points != null && !isDeadline ? (
+          {points !== null && points !== 0 && !isDeadline ? (
             <Animated.View
               style={[
                 styles.metadataPill,
