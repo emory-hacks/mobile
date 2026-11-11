@@ -593,62 +593,59 @@ function QRCodeScreenBody() {
             </Pressable>
           </View>
 
-          {upcomingEvents.length > 0 ? (
-            <View style={styles.selectorRow}>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.selectorButton,
-                  styles.purchaseButton,
-                  isPurchaseEvent(eventId) && styles.purchaseButtonSelected,
-                  pressed && styles.selectorButtonPressed,
+          <View style={styles.selectorRow}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.selectorButton,
+                styles.purchaseButton,
+                isPurchaseEvent(eventId) && styles.purchaseButtonSelected,
+                pressed && styles.selectorButtonPressed,
+              ]}
+              onPress={() => setEventId(PURCHASE_EVENT_ID)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isPurchaseEvent(eventId) }}
+              accessibilityLabel="Select purchase"
+            >
+              <Text
+                numberOfLines={1}
+                style={[
+                  styles.selectorButtonText,
+                  styles.purchaseButtonText,
+                  isPurchaseEvent(eventId) && styles.selectorButtonTextSelected,
                 ]}
-                onPress={() => setEventId(PURCHASE_EVENT_ID)}
-                accessibilityRole="button"
-                accessibilityState={{ selected: isPurchaseEvent(eventId) }}
-                accessibilityLabel="Select purchase"
               >
-                <Text
-                  numberOfLines={1}
-                  style={[
-                    styles.selectorButtonText,
-                    styles.purchaseButtonText,
-                    isPurchaseEvent(eventId) &&
-                      styles.selectorButtonTextSelected,
+                Purchase
+              </Text>
+            </Pressable>
+            {upcomingEvents.map((event) => {
+              const id = eventKey(event);
+              const selected = eventId === id;
+              return (
+                <Pressable
+                  key={`${event.startTime}-${id}`}
+                  style={({ pressed }) => [
+                    styles.selectorButton,
+                    selected && styles.selectorButtonSelected,
+                    pressed && styles.selectorButtonPressed,
                   ]}
+                  onPress={() => setEventId(id)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={`Select event ${event.title}`}
                 >
-                  Purchase
-                </Text>
-              </Pressable>
-              {upcomingEvents.map((event) => {
-                const id = eventKey(event);
-                const selected = eventId === id;
-                return (
-                  <Pressable
-                    key={`${event.startTime}-${id}`}
-                    style={({ pressed }) => [
-                      styles.selectorButton,
-                      selected && styles.selectorButtonSelected,
-                      pressed && styles.selectorButtonPressed,
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.selectorButtonText,
+                      selected && styles.selectorButtonTextSelected,
                     ]}
-                    onPress={() => setEventId(id)}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected }}
-                    accessibilityLabel={`Select event ${event.title}`}
                   >
-                    <Text
-                      numberOfLines={1}
-                      style={[
-                        styles.selectorButtonText,
-                        selected && styles.selectorButtonTextSelected,
-                      ]}
-                    >
-                      {event.title}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          ) : null}
+                    {event.title}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
           {upcomingEvents.length === 0 ? (
             <Text style={styles.selectorEmptyText}>
               No events in the next 30 minutes
