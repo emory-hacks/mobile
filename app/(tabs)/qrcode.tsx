@@ -141,6 +141,8 @@ function QRCodeScreenBody() {
 
   useFocusEffect(
     useCallback(() => {
+      if (isAdmin !== false) return;
+
       let cancelled = false;
       let originalBrightness: number | null = null;
 
@@ -175,7 +177,7 @@ function QRCodeScreenBody() {
           }
         })();
       };
-    }, []),
+    }, [isAdmin]),
   );
 
   useFocusEffect(
