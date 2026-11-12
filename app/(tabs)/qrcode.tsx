@@ -7,12 +7,12 @@ import { getEmail, getJwt, getRole } from "@/utils/auth-token";
 import { Fredoka_700Bold, useFonts } from "@expo-google-fonts/fredoka";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Brightness from "expo-brightness";
-import { useFocusEffect, useIsFocused } from "expo-router";
 import {
   CameraView,
   useCameraPermissions,
   type BarcodeScanningResult,
 } from "expo-camera";
+import { useFocusEffect, useIsFocused } from "expo-router";
 import { fetch } from "expo/fetch";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -61,14 +61,20 @@ function eventAwardAmount(event: ScheduleEvent | undefined) {
 }
 
 const PURCHASE_EVENT_ID = "purchase";
+const CHECK_IN_EVENT_ID = "Registration";
 
 function isPurchaseEvent(id: string) {
   return id.trim() === PURCHASE_EVENT_ID;
 }
 
+function isCheckInEvent(id: string) {
+  return id.trim() === CHECK_IN_EVENT_ID;
+}
+
 function emailFromAwardResponse(data: Record<string, unknown>) {
   if (typeof data.user === "string" && data.user) return data.user;
-  if (typeof data.userEmail === "string" && data.userEmail) return data.userEmail;
+  if (typeof data.userEmail === "string" && data.userEmail)
+    return data.userEmail;
   const user = data.user;
   if (user && typeof user === "object" && "email" in user) {
     const email = (user as { email?: unknown }).email;
@@ -196,7 +202,7 @@ function QRCodeScreenBody() {
               );
               setUpcomingEvents(events);
               setEventId((prev) => {
-                if (isPurchaseEvent(prev)) return prev;
+                if (isPurchaseEvent(prev) || isCheckInEvent(prev)) return prev;
                 if (prev && events.some((event) => eventKey(event) === prev)) {
                   return prev;
                 }
@@ -314,6 +320,39 @@ function QRCodeScreenBody() {
     );
 
     const auth = authRequest(jwt);
+    if (isCheckInEvent(selectedEventId)) {
+      const checkInResponse = await fetch(`${API_BASE_URL}/api/admin/check-in`, {
+        method: "POST",
+        ...auth,
+        headers: {
+          ...auth.headers,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: userEmail }),
+      });
+      if (!checkInResponse.ok) {
+        console.log(checkInResponse.status, await checkInResponse.text());
+        Alert.alert("Check-in failed", "Could not check in this attendee.");
+        setIsLoadingScan(false);
+        return;
+      }
+      const checkInData = (await checkInResponse.json()) as {
+        checkedIn?: unknown;
+        points?: unknown;
+      };
+      setScannedAttendee({
+        username: formatUsername(userData.name ?? query),
+        teamName: userData.teamName ?? "",
+        points: Number(checkInData.points ?? points),
+        maxPoints: userData.maxPoints ?? 100,
+        checkInValid: !!checkInData.checkedIn,
+        email: userEmail,
+      });
+      setScanned(true);
+      setIsLoadingScan(false);
+      return;
+    }
+
     const awardResponse = await fetch(
       `${API_BASE_URL}/api/admin/award-points-search`,
       {
@@ -396,6 +435,49 @@ function QRCodeScreenBody() {
         }
 
         const auth = authRequest(jwt);
+        if (isCheckInEvent(selectedEventId)) {
+          const checkInResponse = await fetch(
+            `${API_BASE_URL}/api/admin/check-in`,
+            {
+              method: "POST",
+              ...auth,
+              headers: {
+                ...auth.headers,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ token: result.data }),
+            },
+          );
+          if (!checkInResponse.ok) {
+            console.log(checkInResponse.status, await checkInResponse.text());
+            showScanFailure("Could not check in this attendee.");
+            return;
+          }
+          const checkInData = (await checkInResponse.json()) as Record<
+            string,
+            unknown
+          >;
+          const displayEmail = String(checkInData.email ?? "");
+          if (!displayEmail) {
+            showScanFailure("Could not load user profile.");
+            return;
+          }
+          setScannedAttendee({
+            username: formatUsername(String(checkInData.name ?? displayEmail)),
+            teamName: String(checkInData.teamName ?? ""),
+            points: Number(checkInData.points ?? 0),
+            maxPoints: 100,
+            checkInValid: !!checkInData.checkedIn,
+            email: displayEmail,
+          });
+          setPointsUsed("");
+          setIsLoadingScan(false);
+          setCameraActive(false);
+          setScanned(true);
+          scanLock.current = false;
+          return;
+        }
+
         const response = await fetch(
           `${API_BASE_URL}/api/admin/award-points-fast`,
           {
@@ -619,8 +701,32 @@ function QRCodeScreenBody() {
                 Purchase
               </Text>
             </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                styles.selectorButton,
+                styles.checkInButton,
+                isCheckInEvent(eventId) && styles.checkInButtonSelected,
+                pressed && styles.selectorButtonPressed,
+              ]}
+              onPress={() => setEventId(CHECK_IN_EVENT_ID)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isCheckInEvent(eventId) }}
+              accessibilityLabel="Select check in"
+            >
+              <Text
+                numberOfLines={1}
+                style={[
+                  styles.selectorButtonText,
+                  styles.checkInButtonText,
+                  isCheckInEvent(eventId) && styles.checkInButtonTextSelected,
+                ]}
+              >
+                Check in
+              </Text>
+            </Pressable>
             {upcomingEvents.map((event) => {
               const id = eventKey(event);
+              if (isCheckInEvent(id)) return null;
               const selected = eventId === id;
               return (
                 <Pressable
@@ -931,6 +1037,23 @@ const styles = StyleSheet.create({
   },
   purchaseButtonText: {
     color: "#E53935",
+  },
+  checkInButton: {
+    flex: 0,
+    minWidth: 96,
+    backgroundColor: "#FFF6D8",
+    borderWidth: 1,
+    borderColor: "#F5C400",
+    paddingHorizontal: 14,
+  },
+  checkInButtonSelected: {
+    backgroundColor: "#F5C400",
+  },
+  checkInButtonText: {
+    color: "#C49200",
+  },
+  checkInButtonTextSelected: {
+    color: "#111",
   },
   purchaseForm: {
     flexDirection: "row",
