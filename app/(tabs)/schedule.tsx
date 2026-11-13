@@ -762,7 +762,7 @@ export default function ScheduleScreen() {
               </Animated.View>
             </ScrollView>
 
-            <LinearGradient
+            {/* <LinearGradient
               colors={[
                 "rgba(237, 243, 247, 0)",
                 "rgba(237, 243, 247, 0.72)",
@@ -771,7 +771,7 @@ export default function ScheduleScreen() {
               locations={[0, 0.55, 1]}
               pointerEvents="none"
               style={styles.scheduleFade}
-            />
+            /> */}
           </View>
         </View>
       </View>

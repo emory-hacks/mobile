@@ -1,3 +1,13 @@
+import { NoticeListItem } from "@/components/home/notice-list-item";
+import { ProfileComponent } from "@/components/home/profile-component";
+import { SafeKeyboardAvoidingView } from "@/components/safe-keyboard";
+import { API_BASE_URL } from "@/constants/computer-ip";
+import { getAnnouncements, updateAnnouncement } from "@/services/announcements";
+import type { Announcement } from "@/types/announcement";
+import { authRequest } from "@/utils/auth-request";
+import { getEmail, getJwt } from "@/utils/auth-token";
+import { saveUserSession } from "@/utils/session";
+import { getInfo, saveInfo } from "@/utils/user-info";
 import {
   AlanSans_400Regular,
   AlanSans_500Medium,
@@ -7,7 +17,6 @@ import {
 import { Grandstander_900Black } from "@expo-google-fonts/grandstander";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFonts } from "expo-font";
-import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useNavigation, useRouter } from "expo-router";
 import { fetch } from "expo/fetch";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -22,16 +31,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { NoticeListItem } from "@/components/home/notice-list-item";
-import { ProfileComponent } from "@/components/home/profile-component";
-import { SafeKeyboardAvoidingView } from "@/components/safe-keyboard";
-import { API_BASE_URL } from "@/constants/computer-ip";
-import { getAnnouncements, updateAnnouncement } from "@/services/announcements";
-import type { Announcement } from "@/types/announcement";
-import { authRequest } from "@/utils/auth-request";
-import { getEmail, getJwt } from "@/utils/auth-token";
-import { saveUserSession } from "@/utils/session";
-import { getInfo, saveInfo } from "@/utils/user-info";
 
 function announcementKey(notice: Announcement) {
   return `${notice.createdAt}|${notice.publisher}`;
@@ -129,7 +128,9 @@ export default function HomePage() {
         ? (JSON.parse(savedReadKeys) as unknown)
         : [];
       const nextReadKeys = Array.isArray(parsedReadKeys)
-        ? parsedReadKeys.filter((value): value is string => typeof value === "string")
+        ? parsedReadKeys.filter(
+            (value): value is string => typeof value === "string",
+          )
         : [];
 
       readAnnouncementKeysRef.current = nextReadKeys;
@@ -162,9 +163,7 @@ export default function HomePage() {
   const handleAnnouncementPress = useCallback(
     (notice: Announcement) => {
       const key = announcementKey(notice);
-      setExpandedAnnouncementKey((current) =>
-        current === key ? null : key,
-      );
+      setExpandedAnnouncementKey((current) => (current === key ? null : key));
       void markAnnouncementRead(notice);
     },
     [markAnnouncementRead],
@@ -312,33 +311,33 @@ export default function HomePage() {
             <Text style={styles.statusText}>Loading announcements...</Text>
           ) : announcementError ? (
             <Text style={styles.errorText}>{announcementError}</Text>
-        ) : announcements.length === 0 ? (
+          ) : announcements.length === 0 ? (
             <Text style={styles.statusText}>No announcements yet.</Text>
           ) : (
-          <View style={styles.noticeListViewport}>
-            <ScrollView
-              contentContainerStyle={styles.noticeList}
-              showsVerticalScrollIndicator={false}
-              style={styles.noticeScroll}
-            >
-              {announcements.map((notice, index) => {
-                const readKey = announcementKey(notice);
-                return (
-                  <NoticeListItem
-                    isExpanded={expandedAnnouncementKey === readKey}
-                    isUnread={!readAnnouncementKeys.includes(readKey)}
-                    key={`${notice.createdAt}-${notice.publisher}-${notice.title}`}
-                    nextNotice={announcements[index + 1]}
-                    notice={notice}
-                    onEdit={isAdmin ? openEdit : undefined}
-                    onPress={() => handleAnnouncementPress(notice)}
-                    previousNotice={announcements[index - 1]}
-                  />
-                );
-              })}
-            </ScrollView>
+            <View style={styles.noticeListViewport}>
+              <ScrollView
+                contentContainerStyle={styles.noticeList}
+                showsVerticalScrollIndicator={false}
+                style={styles.noticeScroll}
+              >
+                {announcements.map((notice, index) => {
+                  const readKey = announcementKey(notice);
+                  return (
+                    <NoticeListItem
+                      isExpanded={expandedAnnouncementKey === readKey}
+                      isUnread={!readAnnouncementKeys.includes(readKey)}
+                      key={`${notice.createdAt}-${notice.publisher}-${notice.title}`}
+                      nextNotice={announcements[index + 1]}
+                      notice={notice}
+                      onEdit={isAdmin ? openEdit : undefined}
+                      onPress={() => handleAnnouncementPress(notice)}
+                      previousNotice={announcements[index - 1]}
+                    />
+                  );
+                })}
+              </ScrollView>
 
-            <LinearGradient
+              {/* <LinearGradient
               colors={[
                 "rgba(237, 243, 247, 0)",
                 "rgba(237, 243, 247, 0.72)",
@@ -347,8 +346,8 @@ export default function HomePage() {
               locations={[0, 0.55, 1]}
               pointerEvents="none"
               style={styles.noticeFade}
-            />
-          </View>
+            /> */}
+            </View>
           )}
         </View>
 
