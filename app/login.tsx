@@ -143,7 +143,6 @@ export default function Login() {
 
       await saveJwt(jwt);
       await saveEmail(email);
-      console.log(jwt);
       router.replace("/(tabs)/(home)");
     } catch {
       setErrorMessage("Unable to connect to server");

@@ -357,28 +357,15 @@ export default function ScheduleScreen() {
   // Refresh while the user is on home or QR, so opening schedule does not reload.
   // Schedule is a direct tab, so its own navigation state is the tab navigator.
   useEffect(() => {
-    let tabs = navigation.getParent();
-    const ownNames = navigation.getState()?.routeNames ?? [];
-    if (ownNames.includes("(home)") && ownNames.includes("qrcode")) {
-      tabs = navigation;
-    } else {
-      while (tabs) {
-        const names = tabs.getState()?.routeNames ?? [];
-        if (names.includes("(home)") || names.includes("qrcode")) {
-          break;
-        }
-        tabs = tabs.getParent();
-      }
-    }
-    if (!tabs) {
-      return;
-    }
+    const tabNav = navigation;
+    const initialState = tabNav.getState();
+    if (!initialState) return;
 
-    const tabNav = tabs;
-    let previousTab = tabNav.getState().routes[tabNav.getState().index]?.name;
+    let previousTab = initialState.routes[initialState.index]?.name;
 
     return tabNav.addListener("state", () => {
       const state = tabNav.getState();
+      if (!state) return;
       const currentTab = state.routes[state.index]?.name;
       if (!currentTab || currentTab === previousTab) {
         return;

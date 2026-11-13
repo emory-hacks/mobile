@@ -6,6 +6,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 try {
   // Static import cannot be caught, and a missing native module crashes launch.
@@ -46,33 +47,35 @@ export default function RootLayout() {
   }
 
   return (
-    <ErrorBoundary
-      key={resetKey}
-      fallback={<RootError onRetry={() => setResetKey((key) => key + 1)} />}
-    >
-      <SafeKeyboardProvider>
-        <ThemeProvider value={DefaultTheme}>
-          <SafeKeyboardAvoidingView
-            behavior="padding"
-            keyboardVerticalOffset={0}
-            style={styles.flex}
-          >
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="index" />
-              <Stack.Screen name="login" />
-              <Stack.Screen name="signup" />
-              <Stack.Screen name="forgot-password" />
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen
-                name="modal"
-                options={{ presentation: "modal", title: "Modal" }}
-              />
-            </Stack>
-          </SafeKeyboardAvoidingView>
-          <StatusBar style="dark" />
-        </ThemeProvider>
-      </SafeKeyboardProvider>
-    </ErrorBoundary>
+    <SafeAreaProvider>
+      <ErrorBoundary
+        key={resetKey}
+        fallback={<RootError onRetry={() => setResetKey((key) => key + 1)} />}
+      >
+        <SafeKeyboardProvider>
+          <ThemeProvider value={DefaultTheme}>
+            <SafeKeyboardAvoidingView
+              behavior="padding"
+              keyboardVerticalOffset={0}
+              style={styles.flex}
+            >
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" />
+                <Stack.Screen name="login" />
+                <Stack.Screen name="signup" />
+                <Stack.Screen name="forgot-password" />
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen
+                  name="modal"
+                  options={{ presentation: "modal", title: "Modal" }}
+                />
+              </Stack>
+            </SafeKeyboardAvoidingView>
+            <StatusBar style="dark" />
+          </ThemeProvider>
+        </SafeKeyboardProvider>
+      </ErrorBoundary>
+    </SafeAreaProvider>
   );
 }
 
