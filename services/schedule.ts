@@ -5,6 +5,16 @@ import type { ScheduleEvent } from "@/types/schedule-event";
 import { authRequest } from "@/utils/auth-request";
 import { getJwt } from "@/utils/auth-token";
 
+export type ScheduleEventInput = {
+  body: string;
+  endTime: string;
+  isDeadline: boolean;
+  location: string;
+  points: number;
+  startTime: string;
+  title: string;
+};
+
 export type ScheduleEventUpdate = {
   correctedBody?: string;
   correctedEndTime?: string;
@@ -34,24 +44,75 @@ export async function getSchedule(): Promise<ScheduleEvent[]> {
   return data as ScheduleEvent[];
 }
 
-export async function updateScheduleEvent(
-  updates: ScheduleEventUpdate,
-): Promise<void> {
+async function readError(response: Response, fallback: string) {
+  const text = (await response.text()).trim();
+  if (!text) return `${fallback} (${response.status}).`;
+
+  try {
+    const data = JSON.parse(text) as { message?: unknown };
+    if (typeof data.message === "string" && data.message.trim()) {
+      return data.message;
+    }
+  } catch {
+    // The API sometimes returns plain text.
+  }
+
+  return text;
+}
+
+async function authorizedFetch(path: string, init: RequestInit) {
   const jwt = await getJwt();
   const auth = authRequest(jwt ?? "");
 
-  const response = await fetch(`${API_BASE_URL}/schedule`, {
-    method: "PATCH",
+  return fetch(`${API_BASE_URL}${path}`, {
+    ...init,
     ...auth,
     headers: {
       ...auth.headers,
+      ...init.headers,
+    },
+  });
+}
+
+export async function createScheduleEvent(
+  event: ScheduleEventInput,
+): Promise<void> {
+  const response = await authorizedFetch("/schedule", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(event),
+  });
+
+  if (!response.ok) {
+    throw new Error(await readError(response, "Failed to add event"));
+  }
+}
+
+export async function updateScheduleEvent(
+  updates: ScheduleEventUpdate,
+): Promise<void> {
+  const response = await authorizedFetch("/schedule", {
+    method: "PATCH",
+    headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(updates),
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || `Failed to edit event (${response.status}).`);
+    throw new Error(await readError(response, "Failed to edit event"));
+  }
+}
+
+export async function deleteScheduleEvent(title: string): Promise<void> {
+  const response = await authorizedFetch(
+    `/schedule/${encodeURIComponent(title)}`,
+    { method: "DELETE" },
+  );
+
+  if (!response.ok) {
+    throw new Error(await readError(response, "Failed to delete event"));
   }
 }

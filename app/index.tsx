@@ -2,7 +2,7 @@ import { AdminLoginSheet } from "@/components/schedule-related/admin-login-sheet
 import { EditEventSheet } from "@/components/schedule-related/edit-event-sheet";
 import ScheduleItem from "@/components/schedule-related/schedule-item";
 import { hasAdminSession, signOut } from "@/services/auth";
-import { getSchedule } from "@/services/schedule";
+import { deleteScheduleEvent, getSchedule } from "@/services/schedule";
 import type { ScheduleEvent } from "@/types/schedule-event";
 import {
   AlanSans_400Regular,
@@ -24,6 +24,7 @@ import {
   useState,
 } from "react";
 import {
+  Alert,
   Animated,
   AppState,
   Easing,
@@ -57,6 +58,11 @@ function addDays(date: Date, days: number) {
 
 function formatDate(date: Date) {
   return `${date.getMonth() + 1}/${date.getDate()}`;
+}
+
+function formatInputDate(date: Date) {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${pad(date.getMonth() + 1)}/${pad(date.getDate())}/${date.getFullYear()}`;
 }
 
 function formatFullDate(date: Date) {
@@ -212,6 +218,7 @@ export default function ScheduleScreen() {
   const [scheduleError, setScheduleError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [isCreatingEvent, setIsCreatingEvent] = useState(false);
   const [editingEvent, setEditingEvent] = useState<ScheduleEvent | null>(null);
   const [fontsLoaded] = useFonts({
     AlanSans_400Regular,
@@ -374,6 +381,39 @@ export default function ScheduleScreen() {
     },
   });
 
+  const confirmDeleteEvent = (item: ScheduleEvent) => {
+    const removeEvent = async () => {
+      try {
+        await deleteScheduleEvent(item.title);
+        if (editingEvent?.title === item.title) setEditingEvent(null);
+        await loadSchedule();
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Could not delete event.";
+        if (Platform.OS === "web") {
+          window.alert(message);
+        } else {
+          Alert.alert("Could not delete event", message);
+        }
+      }
+    };
+
+    const message = `Delete "${item.title}"?`;
+    if (Platform.OS === "web") {
+      if (window.confirm(message)) void removeEvent();
+      return;
+    }
+
+    Alert.alert("Delete event", message, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => void removeEvent(),
+      },
+    ]);
+  };
+
   const toggleSchedule = (scheduleId: string) => {
     setExpandedScheduleId((currentId) =>
       currentId === scheduleId ? null : scheduleId,
@@ -399,6 +439,7 @@ export default function ScheduleScreen() {
               onPress={() => {
                 if (isAdmin) {
                   setEditingEvent(null);
+                  setIsCreatingEvent(false);
                   setIsAdmin(false);
                   void signOut();
                   return;
@@ -513,6 +554,22 @@ export default function ScheduleScreen() {
               );
             })}
           </View>
+          {isAdmin && (
+            <Pressable
+              accessibilityLabel="Add event"
+              accessibilityRole="button"
+              onPress={() => {
+                setEditingEvent(null);
+                setIsCreatingEvent(true);
+              }}
+              style={({ pressed }) => [
+                styles.addEventButton,
+                { opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <Text style={styles.addEventText}>Add event</Text>
+            </Pressable>
+          )}
         </View>
 
         <View style={styles.panel}>
@@ -562,7 +619,11 @@ export default function ScheduleScreen() {
                         isExpanded={expandedScheduleId === itemKey}
                         isPassed={isPassed}
                         activeDate={formatFullDate(selectedDate)}
-                        onEdit={() => setEditingEvent(item)}
+                        onDelete={() => confirmDeleteEvent(item)}
+                        onEdit={() => {
+                          setIsCreatingEvent(false);
+                          setEditingEvent(item);
+                        }}
                         onPress={() => toggleSchedule(itemKey)}
                         showEdit={isAdmin}
                       />
@@ -593,8 +654,13 @@ export default function ScheduleScreen() {
         visible={loginOpen}
       />
       <EditEventSheet
-        event={isAdmin ? editingEvent : null}
-        onClose={() => setEditingEvent(null)}
+        creating={isAdmin && isCreatingEvent}
+        defaultDate={formatInputDate(selectedDate)}
+        event={isAdmin && !isCreatingEvent ? editingEvent : null}
+        onClose={() => {
+          setEditingEvent(null);
+          setIsCreatingEvent(false);
+        }}
         onSaved={() => loadSchedule()}
       />
     </View>
@@ -658,6 +724,17 @@ const styles = StyleSheet.create({
     right: 12,
     width: 116,
     zIndex: 1,
+  },
+  addEventButton: {
+    alignSelf: "center",
+    marginTop: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  addEventText: {
+    color: "#5F7F00",
+    fontFamily: "AlanSans_700Bold",
+    fontSize: 13,
   },
   signInSlot: {
     height: 26,

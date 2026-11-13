@@ -25,6 +25,7 @@ type Props = {
   isExpanded?: boolean;
   isPassed?: boolean;
   location?: string;
+  onDelete?: () => void;
   onEdit?: () => void;
   onPress?: () => void;
   points?: number;
@@ -43,6 +44,7 @@ export default function ScheduleItem({
   isExpanded = false,
   isPassed = false,
   location = "Space",
+  onDelete,
   onEdit,
   onPress,
   points,
@@ -143,23 +145,49 @@ export default function ScheduleItem({
             </Animated.View>
           </View>
           {showEdit && (
-            <Pressable
-              accessibilityLabel={`Edit ${title}`}
-              accessibilityRole="button"
-              hitSlop={8}
-              onPress={(event) => {
-                event.stopPropagation();
-                onEdit?.();
-              }}
-              style={({ pressed }) => [
-                styles.editButton,
-                { opacity: pressed ? 0.6 : 1 },
-              ]}
-            >
-              <Text style={[styles.editText, isActive && styles.activeEditText]}>
-                Edit
-              </Text>
-            </Pressable>
+            <View style={styles.adminActions}>
+              <Pressable
+                accessibilityLabel={`Edit ${title}`}
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={(pressEvent) => {
+                  pressEvent.stopPropagation();
+                  onEdit?.();
+                }}
+                style={({ pressed }) => [
+                  styles.editButton,
+                  { opacity: pressed ? 0.6 : 1 },
+                ]}
+              >
+                <Text
+                  style={[styles.editText, isActive && styles.activeEditText]}
+                >
+                  Edit
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityLabel={`Delete ${title}`}
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={(pressEvent) => {
+                  pressEvent.stopPropagation();
+                  onDelete?.();
+                }}
+                style={({ pressed }) => [
+                  styles.editButton,
+                  { opacity: pressed ? 0.6 : 1 },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.deleteText,
+                    isActive && styles.activeEditText,
+                  ]}
+                >
+                  Delete
+                </Text>
+              </Pressable>
+            </View>
           )}
         </View>
 
@@ -348,12 +376,20 @@ const styles = StyleSheet.create({
     fontSize: 19,
     lineHeight: 23,
   },
+  adminActions: {
+    flexDirection: "row",
+  },
   activeEditText: {
     color: "#FFFFFF",
   },
   editButton: {
     paddingHorizontal: 8,
     paddingVertical: 6,
+  },
+  deleteText: {
+    color: "#C93D2A",
+    fontFamily: "AlanSans_500Medium",
+    fontSize: 16,
   },
   editText: {
     color: "#7DA515",

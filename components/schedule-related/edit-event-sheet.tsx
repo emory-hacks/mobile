@@ -1,4 +1,5 @@
 import {
+  createScheduleEvent,
   updateScheduleEvent,
   type ScheduleEventUpdate,
 } from "@/services/schedule";
@@ -6,7 +7,6 @@ import type { ScheduleEvent } from "@/types/schedule-event";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
@@ -20,6 +20,8 @@ import {
 } from "react-native";
 
 type Props = {
+  creating?: boolean;
+  defaultDate?: string;
   event: ScheduleEvent | null;
   onClose: () => void;
   onSaved: () => Promise<void> | void;
@@ -69,7 +71,13 @@ function combineEventDateTime(dateValue: string, timeValue: string) {
   return `${year}-${pad(month)}-${pad(day)}T${pad(hours)}:${minutes}:00`;
 }
 
-export function EditEventSheet({ event, onClose, onSaved }: Props) {
+export function EditEventSheet({
+  creating = false,
+  defaultDate = "",
+  event,
+  onClose,
+  onSaved,
+}: Props) {
   const [eventName, setEventName] = useState("");
   const [eventLocation, setEventLocation] = useState("");
   const [eventStartDate, setEventStartDate] = useState("");
@@ -79,9 +87,23 @@ export function EditEventSheet({ event, onClose, onSaved }: Props) {
   const [eventBody, setEventBody] = useState("");
   const [eventPoints, setEventPoints] = useState("");
   const [eventIsDeadline, setEventIsDeadline] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [isSavingEvent, setIsSavingEvent] = useState(false);
 
   useEffect(() => {
+    setFormError(null);
+    if (creating) {
+      setEventName("");
+      setEventLocation("");
+      setEventStartDate(defaultDate);
+      setEventStartTime("");
+      setEventEndDate(defaultDate);
+      setEventEndTime("");
+      setEventBody("");
+      setEventPoints("0");
+      setEventIsDeadline(false);
+      return;
+    }
     if (!event) return;
     const start = splitEventDateTime(event.startTime);
     const end = splitEventDateTime(event.endTime);
@@ -94,10 +116,10 @@ export function EditEventSheet({ event, onClose, onSaved }: Props) {
     setEventBody(event.body ?? "");
     setEventPoints(String(event.points ?? 0));
     setEventIsDeadline(event.isDeadline === true);
-  }, [event]);
+  }, [creating, defaultDate, event]);
 
   const handleSaveEvent = async () => {
-    if (!event) return;
+    if (!creating && !event) return;
 
     const name = eventName.trim();
     const location = eventLocation.trim();
@@ -116,7 +138,7 @@ export function EditEventSheet({ event, onClose, onSaved }: Props) {
       !endDate ||
       !endTimeValue
     ) {
-      Alert.alert("Missing fields", "Every event field is required.");
+      setFormError("Name, location, start, and end are required.");
       return;
     }
 
@@ -124,12 +146,12 @@ export function EditEventSheet({ event, onClose, onSaved }: Props) {
     const endTime = combineEventDateTime(endDate, endTimeValue);
 
     if (!startTime || !endTime) {
-      Alert.alert("Invalid date or time", "Use MM/DD/YYYY and h:mm AM/PM.");
+      setFormError("Use MM/DD/YYYY and h:mm AM/PM.");
       return;
     }
 
     if (new Date(endTime) <= new Date(startTime)) {
-      Alert.alert("Invalid time range", "End must be after start.");
+      setFormError("End must be after start.");
       return;
     }
 
@@ -138,40 +160,57 @@ export function EditEventSheet({ event, onClose, onSaved }: Props) {
       !Number.isInteger(pointsValue) ||
       pointsValue < 0
     ) {
-      Alert.alert("Invalid points", "Points must be a whole number.");
-      return;
-    }
-
-    const updates: ScheduleEventUpdate = { title: event.title };
-    if (name !== event.title) updates.correctedTitle = name;
-    if (body !== (event.body ?? "")) updates.correctedBody = body;
-    if (location !== event.location) updates.correctedLocation = location;
-    if (new Date(startTime).getTime() !== new Date(event.startTime).getTime()) {
-      updates.correctedStartTime = startTime;
-    }
-    if (new Date(endTime).getTime() !== new Date(event.endTime).getTime()) {
-      updates.correctedEndTime = endTime;
-    }
-    if (eventIsDeadline !== (event.isDeadline === true)) {
-      updates.correctedIsDeadline = eventIsDeadline;
-    }
-    if (pointsValue !== (event.points ?? 0)) updates.correctedPoints = pointsValue;
-
-    if (Object.keys(updates).length === 1) {
-      Alert.alert("No changes", "Nothing was changed.");
+      setFormError("Points must be a whole number.");
       return;
     }
 
     setIsSavingEvent(true);
+    setFormError(null);
     try {
-      await updateScheduleEvent(updates);
+      if (creating) {
+        await createScheduleEvent({
+          title: name,
+          body,
+          location,
+          startTime,
+          endTime,
+          points: pointsValue,
+          isDeadline: eventIsDeadline,
+        });
+      } else if (event) {
+        const updates: ScheduleEventUpdate = { title: event.title };
+        if (name !== event.title) updates.correctedTitle = name;
+        if (body !== (event.body ?? "")) updates.correctedBody = body;
+        if (location !== event.location) updates.correctedLocation = location;
+        if (
+          new Date(startTime).getTime() !== new Date(event.startTime).getTime()
+        ) {
+          updates.correctedStartTime = startTime;
+        }
+        if (new Date(endTime).getTime() !== new Date(event.endTime).getTime()) {
+          updates.correctedEndTime = endTime;
+        }
+        if (eventIsDeadline !== (event.isDeadline === true)) {
+          updates.correctedIsDeadline = eventIsDeadline;
+        }
+        if (pointsValue !== (event.points ?? 0)) {
+          updates.correctedPoints = pointsValue;
+        }
+
+        if (Object.keys(updates).length === 1) {
+          setFormError("Nothing was changed.");
+          setIsSavingEvent(false);
+          return;
+        }
+
+        await updateScheduleEvent(updates);
+      }
+
       await onSaved();
       onClose();
-      Alert.alert("Updated", "Event updated.");
     } catch (error) {
-      Alert.alert(
-        "Error",
-        error instanceof Error ? error.message : "Could not update event.",
+      setFormError(
+        error instanceof Error ? error.message : "Could not save event.",
       );
     } finally {
       setIsSavingEvent(false);
@@ -183,7 +222,7 @@ export function EditEventSheet({ event, onClose, onSaved }: Props) {
       animationType="slide"
       onRequestClose={onClose}
       transparent
-      visible={event !== null}
+      visible={creating || event !== null}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -196,7 +235,9 @@ export function EditEventSheet({ event, onClose, onSaved }: Props) {
         />
         <View style={styles.card}>
           <ScrollView keyboardShouldPersistTaps="handled">
-            <Text style={styles.heading}>Edit event</Text>
+            <Text style={styles.heading}>
+              {creating ? "Add event" : "Edit event"}
+            </Text>
             <TextInput
               autoCorrect={false}
               onChangeText={setEventName}
@@ -305,6 +346,7 @@ export function EditEventSheet({ event, onClose, onSaved }: Props) {
                 />
               </View>
             </View>
+            {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
             <View style={styles.actions}>
               <Pressable
                 disabled={isSavingEvent}
@@ -327,7 +369,9 @@ export function EditEventSheet({ event, onClose, onSaved }: Props) {
                 {isSavingEvent ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.saveButtonText}>Save</Text>
+                  <Text style={styles.saveButtonText}>
+                    {creating ? "Add" : "Save"}
+                  </Text>
                 )}
               </Pressable>
             </View>
@@ -416,6 +460,12 @@ const styles = StyleSheet.create({
     color: "#111111",
     fontFamily: "AlanSans_500Medium",
     fontSize: 15,
+  },
+  errorText: {
+    color: "#C93D2A",
+    fontFamily: "AlanSans_400Regular",
+    fontSize: 13,
+    marginBottom: 12,
   },
   dismissArea: {
     flex: 1,
