@@ -141,9 +141,6 @@ export default function Signup() {
     },
   });
 
-  const isEduEmail = (value: string) =>
-    value.trim().slice(-4).toLowerCase() === ".edu";
-
   const invalidPassword = (password: string) => {
     let hasAlpha = false; // anything that's alphabetic
     let hasNumber = false; // anything that's a number
@@ -244,11 +241,6 @@ export default function Signup() {
 
     if (!name || !email || !password || !confirmPassword) {
       setErrorMessage("Please fill in all fields");
-      return;
-    }
-
-    if (!isEduEmail(email)) {
-      setErrorMessage("Your email should be .edu");
       return;
     }
 
