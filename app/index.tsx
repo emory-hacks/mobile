@@ -1,8 +1,12 @@
+import { AdminLoginSheet } from "@/components/schedule-related/admin-login-sheet";
+import { EditEventSheet } from "@/components/schedule-related/edit-event-sheet";
 import ScheduleItem from "@/components/schedule-related/schedule-item";
+import { hasAdminSession, signOut } from "@/services/auth";
 import { getSchedule } from "@/services/schedule";
 import type { ScheduleEvent } from "@/types/schedule-event";
 import {
   AlanSans_400Regular,
+  AlanSans_500Medium,
   AlanSans_700Bold,
 } from "@expo-google-fonts/alan-sans";
 import { Grandstander_900Black } from "@expo-google-fonts/grandstander";
@@ -206,8 +210,12 @@ export default function ScheduleScreen() {
   const [scheduleItems, setScheduleItems] = useState<ScheduleEvent[]>([]);
   const [isLoadingSchedule, setIsLoadingSchedule] = useState(true);
   const [scheduleError, setScheduleError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<ScheduleEvent | null>(null);
   const [fontsLoaded] = useFonts({
     AlanSans_400Regular,
+    AlanSans_500Medium,
     AlanSans_700Bold,
     Grandstander_900Black,
   });
@@ -225,6 +233,16 @@ export default function ScheduleScreen() {
       todayPressAnim.setValue(0);
     }
   }, [isSelectedDateToday, todayPressAnim]);
+
+  useEffect(() => {
+    let active = true;
+    hasAdminSession().then((admin) => {
+      if (active) setIsAdmin(admin);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const selectedScheduleItems = useMemo(
     () =>
@@ -370,6 +388,29 @@ export default function ScheduleScreen() {
     <View style={styles.screen}>
       <View style={styles.contentShell}>
         <View style={[styles.header, { paddingTop: insets.top + 24 }]}>
+          <View
+            pointerEvents="box-none"
+            style={[styles.signInSlot, { top: insets.top + 26 }]}
+          >
+            <Pressable
+              accessibilityLabel={isAdmin ? "Sign out" : "Sign in"}
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={() => {
+                if (isAdmin) {
+                  setEditingEvent(null);
+                  setIsAdmin(false);
+                  void signOut();
+                  return;
+                }
+                setLoginOpen(true);
+              }}
+            >
+              <Text style={[styles.signInText, isAdmin && styles.signInTextActive]}>
+                {isAdmin ? "Sign out" : "Sign in"}
+              </Text>
+            </Pressable>
+          </View>
           <View
             pointerEvents="box-none"
             style={[styles.backToTodaySlot, { top: insets.top + 26 }]}
@@ -521,7 +562,9 @@ export default function ScheduleScreen() {
                         isExpanded={expandedScheduleId === itemKey}
                         isPassed={isPassed}
                         activeDate={formatFullDate(selectedDate)}
+                        onEdit={() => setEditingEvent(item)}
                         onPress={() => toggleSchedule(itemKey)}
+                        showEdit={isAdmin}
                       />
                     );
                   })
@@ -541,6 +584,19 @@ export default function ScheduleScreen() {
           style={styles.bottomRight}
         />
       </View>
+      <AdminLoginSheet
+        onClose={() => setLoginOpen(false)}
+        onSignedIn={() => {
+          setIsAdmin(true);
+          setLoginOpen(false);
+        }}
+        visible={loginOpen}
+      />
+      <EditEventSheet
+        event={isAdmin ? editingEvent : null}
+        onClose={() => setEditingEvent(null)}
+        onSaved={() => loadSchedule()}
+      />
     </View>
   );
 }
@@ -602,6 +658,23 @@ const styles = StyleSheet.create({
     right: 12,
     width: 116,
     zIndex: 1,
+  },
+  signInSlot: {
+    height: 26,
+    justifyContent: "center",
+    left: 16,
+    position: "absolute",
+    zIndex: 1,
+  },
+  signInText: {
+    color: "#8A8A8A",
+    fontFamily: "AlanSans_400Regular",
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  signInTextActive: {
+    color: "#5F7F00",
+    fontFamily: "AlanSans_700Bold",
   },
   backToTodayText: {
     color: "#5F7F00",
