@@ -1,5 +1,4 @@
 import { ErrorBoundary } from "@/components/error-boundary";
-import { SafeKeyboardAvoidingView, SafeKeyboardProvider } from "@/components/safe-keyboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -52,28 +51,12 @@ export default function RootLayout() {
         key={resetKey}
         fallback={<RootError onRetry={() => setResetKey((key) => key + 1)} />}
       >
-        <SafeKeyboardProvider>
-          <ThemeProvider value={DefaultTheme}>
-            <SafeKeyboardAvoidingView
-              behavior="padding"
-              keyboardVerticalOffset={0}
-              style={styles.flex}
-            >
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="index" />
-                <Stack.Screen name="login" />
-                <Stack.Screen name="signup" />
-                <Stack.Screen name="forgot-password" />
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen
-                  name="modal"
-                  options={{ presentation: "modal", title: "Modal" }}
-                />
-              </Stack>
-            </SafeKeyboardAvoidingView>
-            <StatusBar style="dark" />
-          </ThemeProvider>
-        </SafeKeyboardProvider>
+        <ThemeProvider value={DefaultTheme}>
+          <View style={styles.flex}>
+            <Stack screenOptions={{ headerShown: false }} />
+          </View>
+          <StatusBar style="dark" />
+        </ThemeProvider>
       </ErrorBoundary>
     </SafeAreaProvider>
   );

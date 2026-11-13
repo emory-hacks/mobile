@@ -19,10 +19,6 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.WRITE_SETTINGS"
-      ],
       "package": "com.EmoryHacks.mobile"
     },
     "web": {
@@ -39,18 +35,7 @@
           "resizeMode": "contain",
           "backgroundColor": "#EDF3F7"
         }
-      ],
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan QR codes",
-          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
-          "barcodeScannerEnabled": true,
-          "recordAudioAndroid": false
-        }
-      ],
-      "expo-brightness",
-      "expo-secure-store"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

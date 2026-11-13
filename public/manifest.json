@@ -2,7 +2,7 @@
   "id": "/",
   "name": "Emory Hacks 2026",
   "short_name": "Emory Hacks",
-  "description": "Schedules, announcements, QR attendance, and points for Emory Hacks 2026.",
+  "description": "The Emory Hacks 2026 schedule.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
